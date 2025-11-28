@@ -146,19 +146,13 @@ def generate_pairs(
     """
     # Collect list of drugs and diseases
     diseases_lst = diseases["id"].tolist()
-    if "ec_id" in drugs.columns:
+    # This try/except is to make modelling_run pipeline compatible with old drug list (pre-migration)
+    try:
         drugs_df = drugs[["id", "ec_id"]]
-        if "subject_ec_id" in known_pairs.columns:
-            drugs_column_remapping = {"ec_id": "source", "id": "source_curie"}
-            known_pairs_column_remapping = {"subject_ec_id": "source", "source": "source_curie"}
-        else:
-            logger.warning("subject_ec_id column not found in known pairs dataframe; using source column instead")
-            drugs_column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
-            known_pairs_column_remapping = {}
-    else:
+        drugs_column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
+    except KeyError:
         logger.warning("ec_id column not found in drugs dataframe; using id column instead")
         drugs_column_remapping = {"id": "source"}
-        known_pairs_column_remapping = {}
         drugs_df = drugs[["id"]]
 
     # Remove duplicates
@@ -180,7 +174,6 @@ def generate_pairs(
     matrix = pd.concat(matrix_slices, ignore_index=True)
 
     # Remove training set
-    known_pairs = known_pairs.rename(known_pairs_column_remapping, axis=1)
     train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
     train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
     is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
@@ -236,20 +229,15 @@ def make_predictions_and_sort(
             how="left",
         )
         .join(
-            embeddings.withColumnsRenamed({"id": "source_curie", "topological_embedding": "source_embedding"}),
-            on="source_curie",
+            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            on="source",
             how="left",
         )
         .filter(F.col("source_embedding").isNotNull() & F.col("target_embedding").isNotNull())
     )
 
     def model_predict(partition_df: pd.DataFrame) -> pd.DataFrame:
-        other_source_columns = [
-            col
-            for col in partition_df.columns
-            if col.startswith("source_") and col not in ["source_embedding", "target_embedding"]
-        ]
-        model_predictions = model.predict_proba(partition_df.drop(columns=other_source_columns))
+        model_predictions = model.predict_proba(partition_df)
 
         # Assign averaged predictions to columns
         partition_df[not_treat_score_col_name] = model_predictions[:, 0]
