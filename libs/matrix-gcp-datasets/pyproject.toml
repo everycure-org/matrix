@@ -23,6 +23,8 @@ dependencies = [
     "s3fs",
     "tqdm",
     "asyncio",
+    "datasets",
+    "huggingface-hub",
     "semantic-version>=2.10.0",
     "typer>=0.20.0",
     "pydantic",
