@@ -47,6 +47,7 @@ def sample_known_pairs():
     return pd.DataFrame(
         {
             "source": ["drug_1", "drug_2", "drug_3"],
+            "source_ec_id": ["ec_drug_1", "ec_drug_2", "ec_drug_3"],
             "target": ["disease_1", "disease_2", "disease_3"],
             "split": ["TRAIN", "TEST", "TRAIN"],
             "y": [1, 0, 1],
@@ -60,6 +61,7 @@ def sample_clinical_trials():
     return pd.DataFrame(
         {
             "source": ["drug_1"],
+            "source_ec_id": ["ec_drug_1"],
             "target": ["disease_2"],
             "significantly_better": [1],
             "non_significantly_better": [0],
@@ -75,6 +77,7 @@ def sample_off_label():
     return pd.DataFrame(
         {
             "source": ["drug_1"],
+            "source_ec_id": ["ec_drug_1"],
             "target": ["disease_2"],
             "off_label": [1],
         }
@@ -87,6 +90,7 @@ def sample_orchard():
     return pd.DataFrame(
         {
             "source": ["drug_1"],
+            "source_ec_id": ["ec_drug_1"],
             "target": ["disease_2"],
             "high_evidence_matrix": [1],
             "high_evidence_crowdsourced": [0],
@@ -154,47 +158,6 @@ def mock_model_2():
     model = Mock()
     model.predict_proba = lambda x: np.array([[1, 0, 0]] * len(x))
     return model
-
-
-@pytest.fixture
-def sample_data():
-    """Fixture that provides sample data for testing matrix generation functions."""
-    drugs = pd.DataFrame(
-        {
-            "id": ["drug_1", "drug_2", "drug_3", "drug_4"],
-            "name": ["Drug 1", "Drug 2", "Drug 3", "Drug 4"],
-            "is_steroid": [True, False, False, False],
-        }
-    )
-
-    diseases = pd.DataFrame(
-        {
-            "id": ["disease_1", "disease_2", "disease_3", "disease_4"],
-            "name": ["Disease 1", "Disease 2", "Disease 3", "Disease 4"],
-            "is_cancer": [True, False, False, False],
-        }
-    )
-
-    known_pairs = pd.DataFrame(
-        {
-            "source": ["drug_1", "drug_2", "drug_3", "drug_4"],
-            "target": ["disease_1", "disease_2", "disease_3", "disease_4"],
-            "split": ["TRAIN", "TEST", "TRAIN", "TRAIN"],
-            "y": [1, 0, 1, 1],
-        }
-    )
-
-    nodes = pd.DataFrame(
-        {
-            "id": ["drug_1", "drug_2", "disease_1", "disease_2", "disease_3", "disease_4"],
-            "is_drug": [True, True, False, False, False, False],
-            "is_disease": [False, False, True, True, True, True],
-            "topological_embedding": [np.ones(3) * n for n in range(6)],
-        }
-    )
-    graph = KnowledgeGraph(nodes)
-
-    return drugs, diseases, known_pairs, graph
 
 
 def test_generate_pairs(

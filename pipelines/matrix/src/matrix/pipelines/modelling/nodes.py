@@ -86,7 +86,7 @@ def filter_valid_pairs(
         nodes.filter(f.size(f.array_intersect(f.col("all_categories"), categories_array)) > 0).select("id").cache()
     )
     # Divide edges_gt into positive and negative pairs to know ratio retained for each
-    edges_gt = edges_gt.withColumnRenamed("subject", "source").withColumnRenamed("object", "target")
+    edges_gt = edges_gt.withColumnRenamed({"subject": "source", "object": "target", "subject_ec_id": "source_ec_id"})
     raw_tp = edges_gt.filter(f.col("y") == 1).cache()
     raw_tn = edges_gt.filter(f.col("y") == 0).cache()
 
