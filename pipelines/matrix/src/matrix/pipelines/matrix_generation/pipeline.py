@@ -49,19 +49,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
                         inputs={
-                            "known_pairs": "modelling.model_input.splits@pandas",
-                            "drugs": "integration.int.drug_list.nodes.norm@pandas",
-                            "diseases": "integration.int.disease_list.nodes.norm@pandas",
-                            "graph": "matrix_generation.feat.nodes@kg",
-                            "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@pandas",
-                            "off_label": "integration.int.off_label.edges.norm@pandas",
+                            "known_pairs": "modelling.model_input.splits@spark",
+                            "drugs": "integration.int.drug_list.nodes.norm@spark",
+                            "diseases": "integration.int.disease_list.nodes.norm@spark",
+                            # TODO: remove matrix_generation.feat.nodes@kg from the catalog
+                            "graph_nodes": "matrix_generation.feat.nodes@spark",
+                            "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@spark",
+                            "off_label": "integration.int.off_label.edges.norm@spark",
                             **(
-                                {"orchard": "integration.int.orchard.edges.norm@pandas"}
+                                {"orchard": "integration.int.orchard.edges.norm@spark"}
                                 if "orchard" in private_sources
                                 else {}
                             ),
                         },
-                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@pandas",
+                        # TODO: remove .matrix_pairs@pandas from the catalog
+                        outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     ),
                 ]

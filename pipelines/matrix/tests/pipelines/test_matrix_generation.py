@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pytest
-from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.nodes import (
     generate_pairs,
     generate_reports,
@@ -17,118 +16,127 @@ from matrix.pipelines.modelling.transformers import FlatArrayTransformer
 
 
 @pytest.fixture
-def sample_drugs():
+def sample_drugs(spark):
     """Fixture that provides sample drugs data for testing."""
-    return pd.DataFrame(
-        {
-            "ec_id": ["ec_drug_1", "ec_drug_2"],
-            "id": ["drug_1", "drug_2"],
-            "name": ["Drug 1", "Drug 2"],
-            "description": ["Description 1", "Description 2"],
-        }
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "ec_id": ["ec_drug_1", "ec_drug_2"],
+                "id": ["drug_1", "drug_2"],
+                "name": ["Drug 1", "Drug 2"],
+                "description": ["Description 1", "Description 2"],
+            }
+        )
     )
 
 
 @pytest.fixture
-def sample_diseases():
+def sample_diseases(spark):
     """Fixture that provides sample diseases data for testing."""
-    return pd.DataFrame(
-        {
-            "id": ["disease_1", "disease_2"],
-            "name": ["Disease 1", "Disease 2"],
-            "description": ["Description A", "Description B"],
-        }
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "id": ["disease_1", "disease_2"],
+                "name": ["Disease 1", "Disease 2"],
+                "description": ["Description A", "Description B"],
+            }
+        )
     )
 
 
 @pytest.fixture
-def sample_known_pairs():
+def sample_known_pairs(spark):
     """Fixture that provides sample known pairs data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["drug_1", "drug_2", "drug_3"],
-            "source_ec_id": ["ec_drug_1", "ec_drug_2", "ec_drug_3"],
-            "target": ["disease_1", "disease_2", "disease_3"],
-            "split": ["TRAIN", "TEST", "TRAIN"],
-            "y": [1, 0, 1],
-        }
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "source": ["drug_1", "drug_2", "drug_3"],
+                "source_ec_id": ["ec_drug_1", "ec_drug_2", "ec_drug_3"],
+                "target": ["disease_1", "disease_2", "disease_3"],
+                "split": ["TRAIN", "TEST", "TRAIN"],
+                "y": [1, 0, 1],
+            }
+        )
     )
 
 
 @pytest.fixture
-def sample_clinical_trials():
+def sample_clinical_trials(spark):
     """Fixture that provides sample clinical trials data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["drug_1"],
-            "source_ec_id": ["ec_drug_1"],
-            "target": ["disease_2"],
-            "significantly_better": [1],
-            "non_significantly_better": [0],
-            "non_significantly_worse": [0],
-            "significantly_worse": [0],
-        }
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "subject": ["drug_1"],
+                "subject_ec_id": ["ec_drug_1"],
+                "object": ["disease_2"],
+                "significantly_better": [1],
+                "non_significantly_better": [0],
+                "non_significantly_worse": [0],
+                "significantly_worse": [0],
+            }
+        )
     )
 
 
 @pytest.fixture
-def sample_off_label():
+def sample_off_label(spark):
     """Fixture that provides sample off label data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["drug_1"],
-            "source_ec_id": ["ec_drug_1"],
-            "target": ["disease_2"],
-            "off_label": [1],
-        }
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "subject": ["drug_1"],
+                "subject_ec_id": ["ec_drug_1"],
+                "object": ["disease_2"],
+                "off_label": [1],
+            }
+        )
     )
 
 
 @pytest.fixture
-def sample_orchard():
+def sample_orchard(spark):
     """Fixture that provides sample orchard data for testing."""
-    return pd.DataFrame(
-        {
-            "source": ["drug_1"],
-            "source_ec_id": ["ec_drug_1"],
-            "target": ["disease_2"],
-            "high_evidence_matrix": [1],
-            "high_evidence_crowdsourced": [0],
-            "mid_evidence_matrix": [0],
-            "mid_evidence_crowdsourced": [0],
-            "archive_biomedical_review": [0],
-        }
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "subject": ["drug_1"],
+                "object": ["disease_2"],
+                "high_evidence_matrix": [1],
+                "high_evidence_crowdsourced": [0],
+                "mid_evidence_matrix": [0],
+                "mid_evidence_crowdsourced": [0],
+                "archive_biomedical_review": [0],
+            }
+        )
     )
 
 
 @pytest.fixture
-def sample_node_embeddings():
-    """Fixture that provides a sample KnowledgeGraph for testing."""
-    nodes = pd.DataFrame(
-        {
-            "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
-            "is_drug": [True, True, False, False],
-            "is_disease": [False, False, True, True],
-            "topological_embedding": [np.ones(3).tolist() * n for n in range(4)],
-        }
+def sample_node_embeddings(spark):
+    """Fixture that provides sample node embeddings for testing."""
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "id": ["drug_1", "drug_2", "disease_1", "disease_2"],
+                "is_drug": [True, True, False, False],
+                "is_disease": [False, False, True, True],
+                "topological_embedding": [np.ones(3).tolist() * n for n in range(4)],
+            }
+        )
     )
-    return nodes
 
 
 @pytest.fixture
-def sample_graph(sample_node_embeddings):
-    return KnowledgeGraph(sample_node_embeddings)
-
-
-@pytest.fixture
-def sample_matrix_data():
-    return pd.DataFrame(
-        [
-            {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_1"},
-            {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_1"},
-            {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_2"},
-            {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_2"},
-        ]
+def sample_matrix_data(spark):
+    return spark.createDataFrame(
+        pd.DataFrame(
+            [
+                {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_1"},
+                {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_1"},
+                {"ec_drug_id": "ec_drug_1", "source": "drug_1", "target": "disease_2"},
+                {"ec_drug_id": "ec_drug_2", "source": "drug_2", "target": "disease_2"},
+            ]
+        )
     )
 
 
@@ -163,7 +171,7 @@ def mock_model_2():
 def test_generate_pairs(
     sample_drugs,
     sample_diseases,
-    sample_graph,
+    sample_node_embeddings,
     sample_known_pairs,
     sample_clinical_trials,
     sample_off_label,
@@ -175,21 +183,97 @@ def test_generate_pairs(
     result = generate_pairs(
         drugs=sample_drugs,
         diseases=sample_diseases,
-        graph=sample_graph,
+        node_embeddings=sample_node_embeddings,
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
         off_label=sample_off_label,
         orchard=sample_orchard,
+    ).toPandas()
+
+    # Then the output is of the correct format and shape
+    assert isinstance(result, pd.DataFrame)
+    assert {"source", "target"}.issubset(set(result.columns))
+    assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
+    # Doesn't contain training pairs
+    assert not result.apply(
+        lambda row: (row["source"], row["source_ec_id"], row["target"]) in [("drug_1", "ec_drug_1", "disease_1")],
+        axis=1,
+    ).any()
+
+    # Boolean flag columns are present
+    def check_col(col_name):
+        return (col_name in result.columns) and result[col_name].dtype == bool
+
+    assert all(
+        check_col(col)
+        for col in [
+            "is_known_positive",
+            "is_known_negative",
+            "trial_sig_better",
+            "trial_non_sig_better",
+            "trial_sig_worse",
+            "trial_non_sig_worse",
+        ]
     )
-    result_public_only = generate_pairs(
-        drugs=sample_drugs,
+    assert all(
+        check_col(col)
+        for col in [
+            "is_known_positive",
+            "is_known_negative",
+            "trial_sig_better",
+            "trial_non_sig_better",
+            "trial_sig_worse",
+            "trial_non_sig_worse",
+        ]
+    )
+    # Flag columns set correctly
+    assert all(
+        [
+            sum(result[col_name]) == 1
+            for col_name in (
+                "is_known_negative",
+                "trial_sig_better",
+                "high_evidence_matrix",
+            )
+        ]
+    )
+    assert all(
+        [
+            sum(result[col_name]) == 0
+            for col_name in (
+                "is_known_positive",
+                "trial_non_sig_better",
+                "trial_sig_worse",
+                "trial_non_sig_worse",
+                "mid_evidence_matrix",
+                "mid_evidence_crowdsourced",
+                "archive_biomedical_review",
+            )
+        ]
+    )
+
+
+def test_generate_pairs_without_ec_id(
+    sample_drugs: ps.DataFrame,
+    sample_diseases: ps.DataFrame,
+    sample_node_embeddings: ps.DataFrame,
+    sample_known_pairs: ps.DataFrame,
+    sample_clinical_trials: ps.DataFrame,
+    sample_off_label: ps.DataFrame,
+    sample_orchard: ps.DataFrame,
+):
+    """Test the generate_pairs function with ."""
+    # Given drug list, disease list and ground truth pairs
+    # When generating the matrix dataset
+    result = generate_pairs(
+        drugs=sample_drugs.drop("ec_id"),
         diseases=sample_diseases,
-        graph=sample_graph,
-        known_pairs=sample_known_pairs,
-        clinical_trials=sample_clinical_trials,
-        off_label=sample_off_label,
-        orchard=None,
-    )
+        node_embeddings=sample_node_embeddings,
+        known_pairs=sample_known_pairs.drop("source_ec_id"),
+        clinical_trials=sample_clinical_trials.drop("source_ec_id"),
+        off_label=sample_off_label.drop("source_ec_id"),
+        orchard=sample_orchard,
+    ).toPandas()
 
     # Then the output is of the correct format and shape
     assert isinstance(result, pd.DataFrame)
@@ -277,8 +361,8 @@ def test_make_predictions_and_sort(
     ensemble_model = ModelWrapper([model_wrapper_1, model_wrapper_2], np.mean)
 
     result = make_predictions_and_sort(
-        spark.createDataFrame(sample_node_embeddings),  # node_embeddings
-        spark.createDataFrame(sample_matrix_data),  # pairs
+        sample_node_embeddings,  # node_embeddings
+        sample_matrix_data,  # pairs
         "treat score",
         "not treat score",
         "unknown score",

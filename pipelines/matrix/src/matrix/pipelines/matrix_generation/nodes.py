@@ -6,7 +6,6 @@ import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from matplotlib.figure import Figure
-from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
@@ -14,7 +13,6 @@ from matrix.pipelines.modelling.preprocessing_model import ModelWithTransformers
 from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql.types import DoubleType, StructField, StructType
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -42,71 +40,11 @@ def enrich_embeddings(
     )
 
 
-def _add_flag_columns(
-    matrix: pd.DataFrame,
-    known_pairs: pd.DataFrame,
-    clinical_trials: Optional[pd.DataFrame] = None,
-    off_label: Optional[pd.DataFrame] = None,
-    orchard: Optional[pd.DataFrame] = None,
-) -> pd.DataFrame:
-    """Adds boolean columns flagging known positives and known negatives.
-
-    Args:
-        matrix: Drug-disease pairs dataset.
-        known_pairs: Labelled ground truth drug-disease pairs dataset.
-        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
-        off_label: Pairs dataset representing off label usage.
-        orchard: Pairs dataset representing orchard feedback data.
-
-    Returns:
-        Pairs dataset with flag columns.
-    """
-
-    def create_flag_column(pairs):
-        pairs_set = set(zip(pairs["source"], pairs["target"]))
-        # Ensure the function returns a Series
-        result = matrix.apply(lambda row: (row["source"], row["target"]) in pairs_set, axis=1)
-
-        return result.astype(bool)
-
-    # Flag known positives and negatives
-    test_pairs = known_pairs[known_pairs["split"].eq("TEST")]
-    test_pair_is_pos = test_pairs["y"].eq(1)
-    test_pos_pairs = test_pairs[test_pair_is_pos]
-    test_neg_pairs = test_pairs[~test_pair_is_pos]
-    matrix["is_known_positive"] = create_flag_column(test_pos_pairs)
-    matrix["is_known_negative"] = create_flag_column(test_neg_pairs)
-
-    # TODO: Need to make this dynamic
-    # Flag clinical trials data
-    clinical_trials = clinical_trials.rename(columns={"subject": "source", "object": "target"})
-    matrix["trial_sig_better"] = create_flag_column(clinical_trials[clinical_trials["significantly_better"] == 1])
-    matrix["trial_non_sig_better"] = create_flag_column(
-        clinical_trials[clinical_trials["non_significantly_better"] == 1]
-    )
-    matrix["trial_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["non_significantly_worse"] == 1])
-    matrix["trial_non_sig_worse"] = create_flag_column(clinical_trials[clinical_trials["significantly_worse"] == 1])
-
-    # Flag off label data
-    off_label = off_label.rename(columns={"subject": "source", "object": "target"})
-    matrix["off_label"] = create_flag_column(off_label)  # all pairs are positive
-
-    # Flag orchard data if available
-    if orchard is not None:
-        orchard = orchard.rename(columns={"subject": "source", "object": "target"})
-        matrix["high_evidence_matrix"] = create_flag_column(orchard[orchard["high_evidence_matrix"] == 1])
-        matrix["mid_evidence_matrix"] = create_flag_column(orchard[orchard["mid_evidence_matrix"] == 1])
-        matrix["high_evidence_crowdsourced"] = create_flag_column(orchard[orchard["high_evidence_crowdsourced"] == 1])
-        matrix["mid_evidence_crowdsourced"] = create_flag_column(orchard[orchard["mid_evidence_crowdsourced"] == 1])
-        matrix["archive_biomedical_review"] = create_flag_column(orchard[orchard["archive_biomedical_review"] == 1])
-
-    return matrix
-
-
 @check_output(
     schema=DataFrameSchema(
         columns={
             "source": Column(str, nullable=False),
+            # "source_ec_id": Column(str, nullable=False), # Column present only if drugs dataframe has ec_id column
             "target": Column(str, nullable=False),
             "is_known_positive": Column(bool, nullable=False),
             "is_known_negative": Column(bool, nullable=False),
@@ -114,72 +52,135 @@ def _add_flag_columns(
             "trial_non_sig_better": Column(bool, nullable=False),
             "trial_sig_worse": Column(bool, nullable=False),
             "trial_non_sig_worse": Column(bool, nullable=False),
+            "off_label": Column(bool, nullable=False),
         },
         unique=["source", "target"],
     )
 )
 @inject_object()
 def generate_pairs(
-    known_pairs: pd.DataFrame,
-    drugs: pd.DataFrame,
-    diseases: pd.DataFrame,
-    graph: KnowledgeGraph,
-    clinical_trials: Optional[pd.DataFrame] = None,
-    off_label: Optional[pd.DataFrame] = None,
-    orchard: Optional[pd.DataFrame] = None,
-) -> pd.DataFrame:
+    known_pairs: ps.DataFrame,
+    drugs: ps.DataFrame,
+    diseases: ps.DataFrame,
+    node_embeddings: ps.DataFrame,
+    clinical_trials: Optional[ps.DataFrame] = None,
+    off_label: Optional[ps.DataFrame] = None,
+    orchard: Optional[ps.DataFrame] = None,
+) -> ps.DataFrame:
     """Function to generate matrix dataset.
-
-    FUTURE: Consider rewriting operations in PySpark for speed
 
     Args:
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
-        graph: Object containing node embeddings.
-        clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
-        off_label: Pairs dataset representing off label drug disease uses.
-        orchard: Pairs dataset representing orchard feedback data.
+        graph_nodes: pyspark dataframe containing node embeddings.
+        clinical_trials: pyspark dataframe representing outcomes of recent clinical trials.
+        off_label: pyspark dataframe representing off label drug disease uses.
+        orchard: pyspark dataframe representing orchard feedback data.
 
     Returns:
-        Pairs dataframe containing all combinations of drugs and diseases that do not lie in the training set.
+        pyspark dataframe containing all combinations of drugs and diseases that do not lie in the training set with flags
     """
-    # Collect list of drugs and diseases
-    diseases_lst = diseases["id"].tolist()
-    # This try/except is to make modelling_run pipeline compatible with old drug list (pre-migration)
-    try:
-        drugs_df = drugs[["id", "ec_id"]]
-        drugs_column_remapping = {"ec_id": "ec_drug_id", "id": "source"}
-    except KeyError:
-        logger.warning("ec_id column not found in drugs dataframe; using id column instead")
-        drugs_column_remapping = {"id": "source"}
-        drugs_df = drugs[["id"]]
 
-    # Remove duplicates
-    drugs_df = drugs_df.drop_duplicates()
-    diseases_lst = list(set(diseases_lst))
+    def get_join_columns(left_columns: list[str], right_columns: list[str]) -> list[str]:
+        if "source_ec_id" in left_columns and "source_ec_id" in right_columns:
+            return ["source_ec_id", "target"]
+        else:
+            return ["source", "target"]
 
-    # Remove drugs and diseases without embeddings
-    nodes_with_embeddings = set(graph._nodes["id"])
-    drugs_df = drugs_df[drugs_df["id"].isin(nodes_with_embeddings)]
-    diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
+    # 1. Filter out drugs and diseases without embeddings
+    drugs_in_graph = drugs.alias("drugs").join(node_embeddings, on="id", how="inner")
+    if "ec_id" in drugs.columns:
+        drugs_in_graph = drugs_in_graph.select(
+            F.col("drugs.id").alias("source"), F.col("drugs.ec_id").alias("source_ec_id")
+        )
+    else:
+        drugs_in_graph = drugs_in_graph.select(F.col("drugs.id").alias("source"))
 
-    # Generate all drug disease combinations
-    matrix_slices = []
-    for disease in tqdm(diseases_lst):
-        matrix_slice = pd.DataFrame(drugs_df.rename(drugs_column_remapping, axis=1).assign(target=disease))
-        matrix_slices.append(matrix_slice)
+    diseases_in_graph = (
+        diseases.alias("diseases")
+        .join(node_embeddings, on="id", how="inner")
+        .select(F.col("diseases.id").alias("target"))
+    )
 
-    # Concatenate all slices at once
-    matrix = pd.concat(matrix_slices, ignore_index=True)
+    # 2. Generate all drug / disease combinations that are not in the training set
+    matrix = drugs_in_graph.crossJoin(diseases_in_graph)
 
-    # Remove training set
-    train_pairs = known_pairs[~known_pairs["split"].eq("TEST")]
-    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-    is_in_train = matrix.apply(lambda row: (row["source"], row["target"]) in train_pairs_set, axis=1)
-    matrix = matrix[~is_in_train]
-    # Add flag columns for known positives and negatives
-    matrix = _add_flag_columns(matrix, known_pairs, clinical_trials, off_label, orchard)
+    matrix_known_pairs_join_columns = get_join_columns(matrix.columns, known_pairs.columns)
+    train_pairs = known_pairs.filter(F.col("split") == "TRAIN")
+    matrix = matrix.join(train_pairs, on=matrix_known_pairs_join_columns, how="leftanti")
+
+    # 3. Add known pairs flags
+    test_pairs = known_pairs.filter(F.col("split") == "TEST")
+    matrix = (
+        matrix.alias("matrix")
+        .join(test_pairs.alias("test_pairs"), on=matrix_known_pairs_join_columns, how="left")
+        .select(
+            F.col("matrix.*"),
+            (F.coalesce(F.col("test_pairs.y") == 1, F.lit(False))).alias("is_known_positive"),
+            (F.coalesce(F.col("test_pairs.y") != 1, F.lit(False))).alias("is_known_negative"),
+        )
+    )
+
+    # 4. Add clinical trials flags
+    if clinical_trials is not None:
+        matrix_clinical_trials_join_columns = get_join_columns(matrix.columns, clinical_trials.columns)
+        clinical_trials = clinical_trials.withColumnsRenamed({"subject": "source", "object": "target"})
+        matrix = (
+            matrix.alias("matrix")
+            .join(clinical_trials.alias("clinical_trials"), on=matrix_clinical_trials_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("clinical_trials.significantly_better") == 1, F.lit(False))).alias(
+                    "trial_sig_better"
+                ),
+                (F.coalesce(F.col("clinical_trials.non_significantly_better") == 1, F.lit(False))).alias(
+                    "trial_non_sig_better"
+                ),
+                (F.coalesce(F.col("clinical_trials.significantly_worse") == 1, F.lit(False))).alias("trial_sig_worse"),
+                (F.coalesce(F.col("clinical_trials.non_significantly_worse") == 1, F.lit(False))).alias(
+                    "trial_non_sig_worse"
+                ),
+            )
+        )
+
+    # 5. Add off label flags
+    if off_label is not None:
+        matrix_off_label_join_columns = get_join_columns(matrix.columns, off_label.columns)
+        off_label = off_label.withColumnsRenamed(
+            colsMap={"subject": "source", "subject_ec_id": "source_ec_id", "object": "target"}
+        )
+        matrix = (
+            matrix.alias("matrix")
+            .join(off_label.alias("off_label"), on=matrix_off_label_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("off_label.off_label") == 1, F.lit(False))).alias("off_label"),
+            )
+        )
+
+    # 6. Add orchard flags
+    if orchard is not None:
+        matrix_orchard_join_columns = get_join_columns(matrix.columns, orchard.columns)
+        orchard = orchard.withColumnsRenamed({"subject": "source", "object": "target"})
+        matrix = (
+            matrix.alias("matrix")
+            .join(orchard.alias("orchard"), on=matrix_orchard_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("orchard.high_evidence_matrix") == 1, F.lit(False))).alias("high_evidence_matrix"),
+                (F.coalesce(F.col("orchard.mid_evidence_matrix") == 1, F.lit(False))).alias("mid_evidence_matrix"),
+                (F.coalesce(F.col("orchard.high_evidence_crowdsourced") == 1, F.lit(False))).alias(
+                    "high_evidence_crowdsourced"
+                ),
+                (F.coalesce(F.col("orchard.mid_evidence_crowdsourced") == 1, F.lit(False))).alias(
+                    "mid_evidence_crowdsourced"
+                ),
+                (F.coalesce(F.col("orchard.archive_biomedical_review") == 1, F.lit(False))).alias(
+                    "archive_biomedical_review"
+                ),
+            )
+        )
     return matrix
 
 
