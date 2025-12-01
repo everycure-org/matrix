@@ -9,8 +9,8 @@ _spark_parquet_ds: &_spark_parquet
 
 integration.prm.unified_nodes:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration_sample}/prm/unified/nodes
+  filepath: ${globals:paths.integration_sample}/nodes
 
 integration.prm.unified_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration_sample}/prm/unified/edges
+  filepath: ${globals:paths.integration_sample}/edges
