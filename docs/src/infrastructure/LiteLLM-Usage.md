@@ -9,3 +9,7 @@ If you are a developer looking to connect your application to LiteLLM, please re
 ## For Administrators
 
 If you are an administrator responsible for deploying and managing the LiteLLM service, please refer to the **[Admin Guide](./LiteLLM-Admin-Guide.md)**. This guide covers deployment procedures, configuration details, architecture overview, and troubleshooting tips.
+
+## Adding New Providers
+
+To expose an additional LLM vendor through LiteLLM, follow the **[New Provider Guide](./LiteLLM-New-Provider-Guide.md)** for the required secret, ArgoCD, and model routing changes.

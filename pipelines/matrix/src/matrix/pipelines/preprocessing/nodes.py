@@ -876,7 +876,7 @@ def process_medical_edges(int_nodes: pd.DataFrame, raw_edges: pd.DataFrame) -> p
         # unique=["drug_curie", "disease_curie"],
     )
 )
-def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str, batch_size: int) -> pd.DataFrame:
+def add_source_and_target_to_clinical_trials(df: pd.DataFrame, resolver_url: str, batch_size: int) -> pd.DataFrame:
     """Resolve names to curies for source and target columns in clinical trials data.
 
     Args:
@@ -926,7 +926,7 @@ def add_source_and_target_to_clinical_trails(df: pd.DataFrame, resolver_url: str
     df_name="edges",
 )
 def clean_clinical_trial_data(df: pd.DataFrame) -> Dict[str, pd.DataFrame]:
-    """Clean clinical trails data.
+    """Clean clinical trials data.
 
     Function to clean the mapped clinical trial dataset for use in time-split evaluation metrics.
 

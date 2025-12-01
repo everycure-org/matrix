@@ -60,7 +60,6 @@ from faker import Faker
 from pandas.api.types import is_list_like
 
 # --- Configuration ---
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Default path for loading functions if namespace isn't specified
