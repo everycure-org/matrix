@@ -6,9 +6,16 @@ cluster:
   poolers:
       - name: rw
         type: rw
+        instances: 1
+        poolMode: transaction
         parameters:
           ignore_startup_parameters: "search_path"
-        instances: 1
+          default_pool_size: "50"
+          max_client_conn: "200"
+          query_wait_timeout: "300"
+          server_lifetime: "3600"
+          server_idle_timeout: "600"
+          server_connect_timeout: "15"
         monitoring:
           enabled: true
           podMonitor:
@@ -26,9 +33,16 @@ cluster:
             effect: "NoSchedule"
       - name: ro
         type: ro
+        instances: 1
+        poolMode: transaction
         parameters:
           ignore_startup_parameters: "search_path"
-        instances: 1
+          default_pool_size: "50"
+          max_client_conn: "200"
+          query_wait_timeout: "300"
+          server_lifetime: "3600"
+          server_idle_timeout: "600"
+          server_connect_timeout: "15"
         monitoring:
           enabled: true
           podMonitor:
