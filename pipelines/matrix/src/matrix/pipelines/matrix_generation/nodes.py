@@ -89,7 +89,7 @@ def generate_pairs(
             return ["source", "target"]
 
     # 1. Filter out drugs and diseases without embeddings
-    drugs_in_graph = drugs.alias("drugs").join(node_embeddings, on="id", how="inner")
+    drugs_in_graph = drugs.alias("drugs").join(node_embeddings.select("id"), on="id", how="inner")
     if "ec_id" in drugs.columns:
         drugs_in_graph = drugs_in_graph.select(
             F.col("drugs.id").alias("source"), F.col("drugs.ec_id").alias("source_ec_id")
