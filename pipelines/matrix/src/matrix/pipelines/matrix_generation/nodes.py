@@ -73,7 +73,7 @@ def generate_pairs(
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
-        graph_nodes: pyspark dataframe containing node embeddings.
+        node_embeddings: pyspark dataframe containing node embeddings.
         clinical_trials: pyspark dataframe representing outcomes of recent clinical trials.
         off_label: pyspark dataframe representing off label drug disease uses.
         orchard: pyspark dataframe representing orchard feedback data.
