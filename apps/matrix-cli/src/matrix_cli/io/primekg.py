@@ -1,5 +1,5 @@
 """
-Python port of src/bin/primekg.rs.
+Python port of https://github.com/jdr0887/rusty-matrix-io/blob/main/src/bin/primekg.rs.
 
 Subcommands:
 - build-edges: Transform a PrimeKG edges TSV into KGX-like edges with Biolink predicates.
@@ -22,19 +22,9 @@ import polars as pl
 import typer
 from matrix_io_utils.primekg import coalesce_duplicate_columns, fix_curies, mondo_grouped_exploded
 
+from matrix_cli.io import read_tsv_lazy
+
 app = typer.Typer()
-
-
-def read_tsv_lazy(path: Path) -> pl.LazyFrame:
-    """Read TSV to a LazyFrame."""
-    return pl.scan_csv(
-        path,
-        separator=",",
-        infer_schema_length=0,
-        has_header=True,
-        ignore_errors=True,
-        truncate_ragged_lines=True,
-    )
 
 
 @app.command()
@@ -187,10 +177,24 @@ def build_nodes(
         )
         .with_columns(
             [
-                pl.when(pl.col("node_source").str.contains("HPO|MONDO|UBERON"))
+                pl.when(pl.col("node_source").str.contains("MONDO|UBERON"))
                 .then(
                     pl.concat_str(
                         [pl.col("node_source"), pl.col("node_id").cast(pl.Utf8).str.pad_start(7, "0")],
+                        separator=":",
+                        ignore_nulls=True,
+                    )
+                )
+                .otherwise(pl.col("node_source"))
+                .alias("node_source"),
+            ]
+        )
+        .with_columns(
+            [
+                pl.when(pl.col("node_source").str.contains("HPO"))
+                .then(
+                    pl.concat_str(
+                        [pl.lit("HP"), pl.col("node_id").cast(pl.Utf8).str.pad_start(7, "0")],
                         separator=":",
                         ignore_nulls=True,
                     )

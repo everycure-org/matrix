@@ -87,7 +87,6 @@ def check_input(schema: DataFrameSchema, df_name: str):
 
             if value is not None:
                 try:
-                    # breakpoint()
                     df_schema.validate(value, lazy=False)
                 except pa.errors.SchemaError as e:
                     _handle_schema_error("check_input", func, df_schema, value, e)
