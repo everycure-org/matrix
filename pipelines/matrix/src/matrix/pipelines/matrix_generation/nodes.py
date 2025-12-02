@@ -88,6 +88,66 @@ def generate_pairs(
         else:
             return ["source", "target"]
 
+    def add_clinical_trials_flags(matrix: ps.DataFrame, clinical_trials: ps.DataFrame) -> ps.DataFrame:
+        matrix_clinical_trials_join_columns = get_join_columns(matrix.columns, clinical_trials.columns)
+        clinical_trials = clinical_trials.withColumnsRenamed({"subject": "source", "object": "target"})
+        matrix = (
+            matrix.alias("matrix")
+            .join(clinical_trials.alias("clinical_trials"), on=matrix_clinical_trials_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("clinical_trials.significantly_better") == 1, F.lit(False))).alias(
+                    "trial_sig_better"
+                ),
+                (F.coalesce(F.col("clinical_trials.non_significantly_better") == 1, F.lit(False))).alias(
+                    "trial_non_sig_better"
+                ),
+                (F.coalesce(F.col("clinical_trials.significantly_worse") == 1, F.lit(False))).alias("trial_sig_worse"),
+                (F.coalesce(F.col("clinical_trials.non_significantly_worse") == 1, F.lit(False))).alias(
+                    "trial_non_sig_worse"
+                ),
+            )
+        )
+        return matrix
+
+    def add_off_label_flags(matrix: ps.DataFrame, off_label: ps.DataFrame) -> ps.DataFrame:
+        matrix_off_label_join_columns = get_join_columns(matrix.columns, off_label.columns)
+        off_label = off_label.withColumnsRenamed(
+            colsMap={"subject": "source", "subject_ec_id": "source_ec_id", "object": "target"}
+        )
+        matrix = (
+            matrix.alias("matrix")
+            .join(off_label.alias("off_label"), on=matrix_off_label_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("off_label.off_label") == 1, F.lit(False))).alias("off_label"),
+            )
+        )
+        return matrix
+
+    def add_orchard_flags(matrix: ps.DataFrame, orchard: ps.DataFrame) -> ps.DataFrame:
+        matrix_orchard_join_columns = get_join_columns(matrix.columns, orchard.columns)
+        orchard = orchard.withColumnsRenamed({"subject": "source", "object": "target"})
+        matrix = (
+            matrix.alias("matrix")
+            .join(orchard.alias("orchard"), on=matrix_orchard_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("orchard.high_evidence_matrix") == 1, F.lit(False))).alias("high_evidence_matrix"),
+                (F.coalesce(F.col("orchard.mid_evidence_matrix") == 1, F.lit(False))).alias("mid_evidence_matrix"),
+                (F.coalesce(F.col("orchard.high_evidence_crowdsourced") == 1, F.lit(False))).alias(
+                    "high_evidence_crowdsourced"
+                ),
+                (F.coalesce(F.col("orchard.mid_evidence_crowdsourced") == 1, F.lit(False))).alias(
+                    "mid_evidence_crowdsourced"
+                ),
+                (F.coalesce(F.col("orchard.archive_biomedical_review") == 1, F.lit(False))).alias(
+                    "archive_biomedical_review"
+                ),
+            )
+        )
+        return matrix
+
     # 1. Filter out drugs and diseases without embeddings
     drugs_in_graph = drugs.alias("drugs").join(node_embeddings.select("id"), on="id", how="inner")
     if "ec_id" in drugs.columns:
@@ -124,63 +184,16 @@ def generate_pairs(
 
     # 4. Add clinical trials flags
     if clinical_trials is not None:
-        matrix_clinical_trials_join_columns = get_join_columns(matrix.columns, clinical_trials.columns)
-        clinical_trials = clinical_trials.withColumnsRenamed({"subject": "source", "object": "target"})
-        matrix = (
-            matrix.alias("matrix")
-            .join(clinical_trials.alias("clinical_trials"), on=matrix_clinical_trials_join_columns, how="left")
-            .select(
-                F.col("matrix.*"),
-                (F.coalesce(F.col("clinical_trials.significantly_better") == 1, F.lit(False))).alias(
-                    "trial_sig_better"
-                ),
-                (F.coalesce(F.col("clinical_trials.non_significantly_better") == 1, F.lit(False))).alias(
-                    "trial_non_sig_better"
-                ),
-                (F.coalesce(F.col("clinical_trials.significantly_worse") == 1, F.lit(False))).alias("trial_sig_worse"),
-                (F.coalesce(F.col("clinical_trials.non_significantly_worse") == 1, F.lit(False))).alias(
-                    "trial_non_sig_worse"
-                ),
-            )
-        )
+        matrix = add_clinical_trials_flags(matrix, clinical_trials)
 
     # 5. Add off label flags
     if off_label is not None:
-        matrix_off_label_join_columns = get_join_columns(matrix.columns, off_label.columns)
-        off_label = off_label.withColumnsRenamed(
-            colsMap={"subject": "source", "subject_ec_id": "source_ec_id", "object": "target"}
-        )
-        matrix = (
-            matrix.alias("matrix")
-            .join(off_label.alias("off_label"), on=matrix_off_label_join_columns, how="left")
-            .select(
-                F.col("matrix.*"),
-                (F.coalesce(F.col("off_label.off_label") == 1, F.lit(False))).alias("off_label"),
-            )
-        )
+        matrix = add_off_label_flags(matrix, off_label)
 
     # 6. Add orchard flags
     if orchard is not None:
-        matrix_orchard_join_columns = get_join_columns(matrix.columns, orchard.columns)
-        orchard = orchard.withColumnsRenamed({"subject": "source", "object": "target"})
-        matrix = (
-            matrix.alias("matrix")
-            .join(orchard.alias("orchard"), on=matrix_orchard_join_columns, how="left")
-            .select(
-                F.col("matrix.*"),
-                (F.coalesce(F.col("orchard.high_evidence_matrix") == 1, F.lit(False))).alias("high_evidence_matrix"),
-                (F.coalesce(F.col("orchard.mid_evidence_matrix") == 1, F.lit(False))).alias("mid_evidence_matrix"),
-                (F.coalesce(F.col("orchard.high_evidence_crowdsourced") == 1, F.lit(False))).alias(
-                    "high_evidence_crowdsourced"
-                ),
-                (F.coalesce(F.col("orchard.mid_evidence_crowdsourced") == 1, F.lit(False))).alias(
-                    "mid_evidence_crowdsourced"
-                ),
-                (F.coalesce(F.col("orchard.archive_biomedical_review") == 1, F.lit(False))).alias(
-                    "archive_biomedical_review"
-                ),
-            )
-        )
+        matrix = add_orchard_flags(matrix, orchard)
+
     return matrix
 
 
