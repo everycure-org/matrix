@@ -2,7 +2,7 @@
 
 ## Overview
 
-The EC Drug List is a manually curated list of drug entities used by the MATRIX project for drug repurposing predictions. The EC Drug List provides stable identifiers for drugs throughout the MATRIX pipeline, to ensure that drug repurposing opportunities are stably tracked over time, and crosslinks to external IDs (CURIEs) using the NCATS Node Normalizer and Name Resolver services. For reference, the version (`v1.2.0`) contains **1,812 drugs** with metadata including approval status, drug class flags, and ATC classifications.
+The EC Drug List is a manually curated list of drug entities used by the MATRIX project for drug repurposing predictions. The EC Drug List provides stable identifiers for drugs throughout the MATRIX pipeline, to ensure that drug repurposing opportunities are stably tracked over time, and crosslinks to external IDs (CURIEs) using the NCATS Node Normalizer and Name Resolver services. For reference, the list contains **~1,800 drugs** with metadata including approval status, drug class flags, and ATC classifications.
 
 Key characteristics of the EC Drug List:
 
