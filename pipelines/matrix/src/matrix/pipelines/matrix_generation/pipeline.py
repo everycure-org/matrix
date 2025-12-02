@@ -52,7 +52,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "known_pairs": "modelling.model_input.splits@spark",
                             "drugs": "integration.int.drug_list.nodes.norm@spark",
                             "diseases": "integration.int.disease_list.nodes.norm@spark",
-                            "graph_nodes": "matrix_generation.feat.nodes@spark",
+                            "node_embeddings": "matrix_generation.feat.nodes@spark",
                             "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@spark",
                             "off_label": "integration.int.off_label.edges.norm@spark",
                             **(
