@@ -1,0 +1,14 @@
+known_entity_removal:
+  datasets_to_include:
+    kgml_xdtd_ground_truth:
+      positives: true
+      negatives: true
+    ec_ground_truth:
+      positives: true
+      negatives: true
+    drugbank_ground_truth:
+      positives: true
+      negatives: true
+    off_label:
+      positives: true
+      negatives: false # NOTE: off label is only positive pairs
