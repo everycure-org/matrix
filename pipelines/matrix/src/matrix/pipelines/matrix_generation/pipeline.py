@@ -52,7 +52,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "known_pairs": "modelling.model_input.splits@spark",
                             "drugs": "integration.int.drug_list.nodes.norm@spark",
                             "diseases": "integration.int.disease_list.nodes.norm@spark",
-                            # TODO: remove matrix_generation.feat.nodes@kg from the catalog
                             "graph_nodes": "matrix_generation.feat.nodes@spark",
                             "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@spark",
                             "off_label": "integration.int.off_label.edges.norm@spark",
@@ -62,7 +61,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 else {}
                             ),
                         },
-                        # TODO: remove .matrix_pairs@pandas from the catalog
                         outputs=f"matrix_generation.prm.fold_{fold}.matrix_pairs@spark",
                         name=f"generate_matrix_pairs_fold_{fold}",
                     ),
