@@ -228,3 +228,9 @@ without explicit written permission from Every Cure.
 
 This project is open source and available under the terms of its license, but the Every Cure brand
 and trademarks remain protected. Please respect these intellectual property rights.
+
+## FAQ
+
+### I am getting `FileNotFoundError: [Errno 2] No such file or directory: 'cmake'` error
+
+If you are using MacOS, please run `brew install cmake` (assuming you have `brew` installed). This should fix the problem. For Windows, please download `cmake` and install it from: `https://cmake.org/download/`

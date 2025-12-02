@@ -11,6 +11,8 @@ nav:
         - matrix_generation.md
         - matrix_transformation.md
         - evaluation.md
+    - Cross run:
+        - run_comparison.md
 
     - Other:
         - preprocessing.md
