@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 
 from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_nodes_to_kgx
@@ -6,7 +6,7 @@ from matrix.pipelines.data_release.nodes import unified_edges_to_kgx, unified_no
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create release pipeline."""
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=unified_edges_to_kgx,

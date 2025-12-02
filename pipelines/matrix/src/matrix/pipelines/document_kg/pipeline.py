@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 
 from matrix import settings
 
@@ -21,9 +21,9 @@ def _create_source_parsing_pipeline(
 
     if source_type == "matrix_curated":
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
-                    node(
+                    Node(
                         func=nodes.parse_pks_source,
                         inputs={
                             "parser": f"params:document_kg.pks_parsing.sources.{source}.parser",
@@ -38,9 +38,9 @@ def _create_source_parsing_pipeline(
         )
     else:
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
-                    node(
+                    Node(
                         func=nodes.parse_pks_source,
                         inputs={
                             "parser": f"params:document_kg.pks_parsing.sources.{source}.parser",
@@ -64,7 +64,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     for source in settings.DYNAMIC_PIPELINES_MAPPING()["document_kg"]:
         pipelines.append(
-            pipeline(
+            Pipeline(
                 _create_source_parsing_pipeline(
                     source=source["name"],
                     source_type=source.get("source_type", "external_registry"),
@@ -74,9 +74,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
-                node(
+                Node(
                     func=nodes.merge_all_pks_metadata,
                     inputs=[
                         *[
@@ -87,7 +87,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="document_kg.int.all_pks_metadata",
                     name="merge_all_pks_metadata",
                 ),
-                node(
+                Node(
                     func=nodes.integrate_all_metadata,
                     inputs=[
                         "document_kg.int.all_pks_metadata",
@@ -96,7 +96,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="document_kg.prm.pks_yaml",
                     name="filter_to_relevant_pks",
                 ),
-                node(
+                Node(
                     func=nodes.create_pks_documentation,
                     inputs=["document_kg.prm.pks_yaml", "params:document_kg.pks_parsing.templates"],
                     outputs="document_kg.prm.pks_md",

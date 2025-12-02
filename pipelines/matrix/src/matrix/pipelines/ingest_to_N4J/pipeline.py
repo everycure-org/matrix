@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.embeddings.nodes import ingest_edges, ingest_nodes
 
@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         memory_limit=24,
         memory_request=24,
     )
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=ingest_nodes,

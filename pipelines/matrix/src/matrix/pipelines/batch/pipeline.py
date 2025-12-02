@@ -7,7 +7,7 @@ from functools import partial
 from typing import Any, Callable, Collection, Coroutine, Iterable, Iterator, Protocol, Sequence, TypeVar
 
 import pyarrow as pa
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
 from matrix_inject.inject import inject_object
@@ -157,7 +157,7 @@ def cached_api_enrichment_pipeline(
         ),
     ]
 
-    return pipeline(nodes)
+    return Pipeline(nodes)
 
 
 @inject_object()

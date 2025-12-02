@@ -54,11 +54,11 @@ dependencies = [
     "kedro-datasets>=6.0.0",
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
-    "kedro~=0.19.15",
+    "kedro>=0.19.15",
     "langchain",
     "langchain-openai",
     "matplotlib",
-    "mlflow==3.5.0rc0",
+    "mlflow>=3.6.0",
     "neo4j>=5.5.0",
     "notebook",
     "numpy==1.24.4", # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
@@ -107,7 +107,7 @@ torchvision = [{ index = "pytorch-cpu" }]
 [tool.kedro]
 package_name = "matrix"
 project_name = "matrix"
-kedro_init_version = "0.19.13"
+kedro_init_version = "1.0.0"
 tools = [ "Data Structure", "Kedro Viz",]
 example_pipeline = "False"
 source_dir = "src"

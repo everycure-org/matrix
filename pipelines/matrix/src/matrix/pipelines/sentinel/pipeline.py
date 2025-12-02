@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
 from matrix.pipelines.data_release import last_node_name
@@ -42,7 +42,7 @@ def sentinel_function(*args):
 
 def create_pipeline(is_patch: bool, **kwargs) -> Pipeline:
     sentinel_inputs = get_sentinel_inputs(is_patch)
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=sentinel_function,

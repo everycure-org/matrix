@@ -1,6 +1,6 @@
 from typing import Union
 
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 
 from matrix import settings
 from matrix.kedro4argo_node import (
@@ -23,7 +23,7 @@ def _create_model_shard_pipeline(model_name: str, shard: int, fold: Union[str, i
     Returns:
         Pipeline with nodes for given model and fold
     """
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=partial_fold(nodes.apply_transformers, fold),
@@ -77,7 +77,7 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
     """
     return sum(
         [
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=partial_fold(nodes.fit_transformers, fold),
@@ -92,12 +92,12 @@ def _create_fold_pipeline(model_name: str, num_shards: int, fold: Union[str, int
                 ]
             ),
             *[
-                pipeline(
+                Pipeline(
                     _create_model_shard_pipeline(model_name, shard, fold),
                 )
                 for shard in range(num_shards)
             ],
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.create_model,
@@ -152,7 +152,7 @@ def create_model_pipeline(models: list[dict], n_cross_val_folds: int) -> Pipelin
         model_name = model["model_name"]
         # Generate pipeline to enrich splits
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.create_model_input_nodes,
@@ -172,12 +172,12 @@ def create_model_pipeline(models: list[dict], n_cross_val_folds: int) -> Pipelin
 
         # Generate pipeline to predict folds (NOTE: final fold is full training data)
         for fold in range(n_cross_val_folds + 1):
-            pipelines.append(pipeline(_create_fold_pipeline(model_name, num_shards, fold)))
+            pipelines.append(Pipeline(_create_fold_pipeline(model_name, num_shards, fold)))
 
         # Gather all test set predictions from the different folds for the
         # model, and combine all the predictions.
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.combine_data,
@@ -194,7 +194,7 @@ def create_model_pipeline(models: list[dict], n_cross_val_folds: int) -> Pipelin
 
         # # Now check the performance on the combined folds
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.check_model_performance,
@@ -221,7 +221,7 @@ def create_shared_pipeline() -> Pipeline:
     Returns:
         Pipeline with shared nodes across models
     """
-    return pipeline(
+    return Pipeline(
         [
             # Construct ground_truth
             ArgoNode(

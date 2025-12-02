@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
@@ -16,7 +16,7 @@ def _create_integration_pipeline(
     pipelines = []
 
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
                 ArgoNode(
                     func=nodes.transform,
@@ -66,7 +66,7 @@ def _create_integration_pipeline(
                     batch_size="params:integration.normalization.batch_size",
                     cache_schema="params:integration.normalization.cache_schema",
                 ),
-                node(
+                Node(
                     func=nodes.normalization_summary_nodes_and_edges
                     if has_edges
                     else nodes.normalization_summary_nodes_only,
@@ -87,7 +87,7 @@ def _create_integration_pipeline(
 
     if has_edges:
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.normalize_edges,
@@ -106,7 +106,7 @@ def _create_integration_pipeline(
         )
 
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
                 ArgoNode(
                     func=nodes.normalize_core_nodes if is_core else nodes.normalize_nodes,
@@ -135,7 +135,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Create pipeline per source
     for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration"):
         pipelines.append(
-            pipeline(
+            Pipeline(
                 _create_integration_pipeline(
                     source=source["name"],
                     has_nodes=source.get("has_nodes", True),
@@ -147,9 +147,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     # Add integration pipeline
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
-                node(
+                Node(
                     func=nodes.create_core_id_mapping,
                     inputs=[
                         *[
@@ -161,7 +161,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
                 ),
-                node(
+                Node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",
@@ -175,7 +175,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
                 ),
-                node(
+                Node(
                     func=nodes.unify_ground_truth,
                     inputs=[
                         *[
@@ -201,7 +201,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="create_prm_unified_edges",
                     argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
-                node(
+                Node(
                     func=nodes._union_datasets,
                     inputs=[
                         *[
@@ -212,7 +212,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_normalization_summary",
                     name="create_unified_normalization_summary",
                 ),
-                node(
+                Node(
                     func=nodes.check_nodes_and_edges_matching,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
@@ -222,7 +222,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="check_merged_nodes_and_edges_consistency",
                     tags=["validation"],
                 ),
-                node(
+                Node(
                     func=nodes.compute_abox_tbox_metric,
                     inputs={
                         "edges": "integration.prm.unified_edges",

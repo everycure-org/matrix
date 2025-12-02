@@ -147,7 +147,6 @@ class SparkHooks:
         catalog: DataCatalog,
         conf_catalog: Dict[str, Any],
         conf_creds: Dict[str, Any],
-        feed_dict: Dict[str, Any],
         save_version: str,
         load_versions: Dict[str, str],
     ) -> None:

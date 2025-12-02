@@ -1,6 +1,6 @@
 import logging
 
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 
 from matrix.kedro4argo_node import ArgoNode
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=nodes.sample_knowledge_graph,
