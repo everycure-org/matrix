@@ -17,8 +17,6 @@ _layer_prm: &_layer_prm
 ########### INPUT DATA ############
 ###################################
 
-# DEPRECATED: No longer used - PyOxigraph Store is used instead (via mondo_graph)
-# disease_list.raw.mondo_owl:
 disease_list.raw.mondo_graph:
   type: matrix.datasets.rdf.PyOxiGraphDataset
   <<: *_layer_raw
