@@ -36,15 +36,17 @@ def _simplify_graph_for_connectivity(edges: ps.DataFrame) -> ps.DataFrame:
             subject='A', object='B'
             subject='A', object='C'
     """
-    logger.info(f"Simplifying graph: {edges.count():,} edges before deduplication")
+    num_edges = edges.count()
+    logger.info(f"Simplifying graph: {num_edges:,} edges before deduplication")
 
     # Filter self-loops and keep only unique (subject, object) pairs
     simplified = edges.select("subject", "object").filter(F.col("subject") != F.col("object")).distinct()
+    num_simplified = simplified.count()
 
-    reduction_pct = 100 * (1 - simplified.count() / edges.count()) if edges.count() > 0 else 0
+    reduction_pct = 100 * (1 - num_simplified / num_edges) if num_edges > 0 else 0
 
     logger.info(
-        f"Graph simplified: {simplified.count():,} unique edges ({reduction_pct:.1f}% reduction from {edges.count():,})"
+        f"Graph simplified: {num_simplified:,} unique edges ({reduction_pct:.1f}% reduction from {num_edges:,})"
     )
 
     return simplified
