@@ -87,6 +87,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "bracex>=2.6",
     "xgboost>=3.1.2",
+    "owlready2>=0.49",
 ]
 
 

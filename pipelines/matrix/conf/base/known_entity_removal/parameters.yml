@@ -12,3 +12,7 @@ known_entity_removal:
     off_label:
       positives: true
       negatives: false # NOTE: off label is only positive pairs
+
+  mondo_ontology:
+    _object: matrix.pipelines.known_entity_removal.mondo_ontology.OntologyMONDO
+    owl_url: https://purl.obolibrary.org/obo/mondo.owl

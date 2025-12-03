@@ -9,3 +9,11 @@ _spark_parquet: &_spark_parquet
 known_entity_removal.concatenated_ground_truth:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/concatenated_ground_truth
+
+known_entity_removal.expanded_ground_truth:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.known_entity_removal}/expanded_ground_truth
+
+known_entity_removal.known_entity_matrix:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.known_entity_removal}/known_entity_matrix

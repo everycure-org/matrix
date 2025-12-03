@@ -18,6 +18,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                     **{f"{dataset}": f"integration.int.{dataset}.edges.norm@spark" for dataset in available_datasets},
                 },
                 outputs="known_entity_removal.concatenated_ground_truth",
-            )
+            ),
+            ArgoNode(
+                func=nodes.apply_mondo_expansion,
+                inputs={
+                    "mondo_ontology": "params:known_entity_removal.mondo_ontology",
+                    "concatenated_ground_truth": "known_entity_removal.concatenated_ground_truth",
+                },
+                outputs="known_entity_removal.expanded_ground_truth",
+            ),
+            ArgoNode(
+                func=nodes.create_known_entity_matrix,
+                inputs={
+                    "drug_list": "integration.int.drug_list.nodes.norm@spark",
+                    "disease_list": "integration.int.disease_list.nodes.norm@spark",
+                    "expanded_ground_truth": "known_entity_removal.expanded_ground_truth",
+                },
+                outputs="known_entity_removal.known_entity_matrix",
+            ),
         ]
     )
