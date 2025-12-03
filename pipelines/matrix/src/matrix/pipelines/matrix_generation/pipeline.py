@@ -32,6 +32,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "embeddings.feat.nodes",
                         "integration.int.drug_list.nodes.norm@spark",
                         "integration.int.disease_list.nodes.norm@spark",
+                        "embeddings.tmp.llm_drug_embeddings",
+                        "embeddings.tmp.llm_disease_embeddings",
                     ],
                     outputs="matrix_generation.feat.nodes@spark",
                     name="enrich_matrix_embeddings",
@@ -49,10 +51,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ArgoNode(
                         func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
                         inputs={
-                            "known_pairs": "modelling.model_input.splits@pandas",
+                            "known_pairs": "modelling.model_input.temp_splits@pandas",
                             "drugs": "integration.int.drug_list.nodes.norm@pandas",
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
-                            "graph": "matrix_generation.feat.nodes@kg",
+                            "drug_embeddings": "embeddings.tmp.llm_drug_embeddings",
+                            "disease_embeddings": "embeddings.tmp.llm_disease_embeddings",
                             "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
                             "off_label": "integration.int.off_label.edges.norm@pandas",
                             **(

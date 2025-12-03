@@ -30,7 +30,7 @@ def _create_evaluation_fold_pipeline(
                     partial(nodes.generate_test_dataset, score_col_name=score_col_name), fold, arg_name="known_pairs"
                 ),
                 inputs={
-                    "known_pairs": "modelling.model_input.splits@pandas",
+                    "known_pairs": "modelling.model_input.temp_splits@pandas",
                     "matrix": f"{matrix_input}.fold_{fold}.model_output.sorted_matrix_predictions@pandas",
                     "generator": f"params:evaluation.{evaluation}.evaluation_options.generator",
                 },

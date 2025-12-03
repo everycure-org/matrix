@@ -667,7 +667,7 @@ def replace_embeddings_for_splits(
     splits: pd.DataFrame,
     drug_embeddings: dict[str, Any],
     disease_embeddings: dict[str, Any],
-    embedding_type: str = "llm",  # "llm" or "combined"
+    embedding_type: str = "combined",  # "llm" or "combined"
 ) -> pd.DataFrame:
     """Function to replace embeddings in the original splits dataframe with LLM embeddings or the combination of LLM embeddings and topological embeddings.
 
@@ -690,7 +690,7 @@ def replace_embeddings_for_enriched_splits(
     enriched_splits: pd.DataFrame,
     drug_embeddings: dict[str, Any],
     disease_embeddings: dict[str, Any],
-    embedding_type: str = "llm",  # "llm" or "combined"
+    embedding_type: str = "combined",  # "llm" or "combined"
 ) -> pd.DataFrame:
     """Function to replace embeddings in the enriched splits dataframe with LLM embeddings or the combination of LLM embeddings and topological embeddings.
 

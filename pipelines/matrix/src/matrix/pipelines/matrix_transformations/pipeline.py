@@ -40,7 +40,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=partial(nodes.return_predictions, n_cross_val_folds),
                     inputs={
                         "sorted_matrix_df": f"matrix_transformations.fold_{n_cross_val_folds}.model_output.sorted_matrix_predictions@spark",
-                        "known_pairs": "modelling.model_input.splits@spark",
+                        "known_pairs": "modelling.model_input.temp_splits@spark",
                     },
                     outputs=f"matrix_transformations.full_matrix_output@spark",
                     name="store_transformed_predictions",

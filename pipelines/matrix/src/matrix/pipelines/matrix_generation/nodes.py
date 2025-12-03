@@ -1,12 +1,11 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
 from matplotlib.figure import Figure
-from matrix.datasets.graph import KnowledgeGraph
 from matrix.pipelines.matrix_generation.reporting_plots import ReportingPlotGenerator
 from matrix.pipelines.matrix_generation.reporting_tables import ReportingTableGenerator
 from matrix.pipelines.modelling.model import ModelWrapper
@@ -23,6 +22,8 @@ def enrich_embeddings(
     nodes: ps.DataFrame,
     drugs: ps.DataFrame,
     diseases: ps.DataFrame,
+    drug_embeddings: dict[str, Any],
+    disease_embeddings: dict[str, Any],
 ) -> ps.DataFrame:
     """Function to enrich drug and disease list with embeddings.
 
@@ -30,12 +31,47 @@ def enrich_embeddings(
         nodes: Dataframe with node embeddings
         drugs: List of drugs
         diseases: List of diseases
+        drug_embeddings: Dictionary mapping drug IDs to LLM embeddings
+        disease_embeddings: Dictionary mapping disease IDs to LLM embeddings
     """
+
+    # Combine drug and disease embeddings into a single dictionary
+    all_embeddings = {}
+    for node_id, embedding in {**drug_embeddings, **disease_embeddings}.items():
+        if embedding is not None:
+            # Convert to list if it's a numpy array or similar
+            if hasattr(embedding, "tolist"):
+                all_embeddings[node_id] = embedding.tolist()
+            else:
+                all_embeddings[node_id] = list(embedding) if embedding else None
+        else:
+            all_embeddings[node_id] = None
+
+    # Create a UDF to map node IDs to their LLM embeddings
+    @F.udf(returnType=T.ArrayType(T.FloatType()))
+    def get_llm_embedding(node_id: str) -> list[float]:
+        embedding = all_embeddings.get(node_id)
+        # Return the embedding if it exists and is not empty, otherwise return None
+        if embedding is not None and len(embedding) > 0:
+            return embedding
+        return None
+
+    # Add llm_embedding column to nodes and filter out rows without embeddings
+    nodes_with_llm = nodes.withColumn("llm_embedding", get_llm_embedding(F.col("id"))).filter(
+        F.col("llm_embedding").isNotNull()
+    )
+
+    # Concatenate topological and llm embeddings into a single array
+    # Use concat() which works for arrays in PySpark SQL
+    nodes_with_llm = nodes_with_llm.withColumn(
+        "combined_embedding", F.concat(F.col("topological_embedding"), F.col("llm_embedding"))
+    )
+
     return (
         drugs.withColumn("is_drug", F.lit(True))
         .unionByName(diseases.withColumn("is_disease", F.lit(True)), allowMissingColumns=True)
-        .join(nodes, on="id", how="inner")
-        .select("is_drug", "is_disease", "id", "topological_embedding")
+        .join(nodes_with_llm, on="id", how="inner")
+        .select("is_drug", "is_disease", "id", "combined_embedding")
         .withColumn("is_drug", F.coalesce(F.col("is_drug"), F.lit(False)))
         .withColumn("is_disease", F.coalesce(F.col("is_disease"), F.lit(False)))
     )
@@ -122,7 +158,8 @@ def generate_pairs(
     known_pairs: pd.DataFrame,
     drugs: pd.DataFrame,
     diseases: pd.DataFrame,
-    graph: KnowledgeGraph,
+    drug_embeddings: dict[str, Any],
+    disease_embeddings: dict[str, Any],
     clinical_trials: Optional[pd.DataFrame] = None,
     off_label: Optional[pd.DataFrame] = None,
     orchard: Optional[pd.DataFrame] = None,
@@ -135,7 +172,8 @@ def generate_pairs(
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
         diseases: Dataframe containing IDs for the list of diseases.
-        graph: Object containing node embeddings.
+        drug_embeddings: Dictionary mapping drug IDs to LLM embeddings.
+        disease_embeddings: Dictionary mapping disease IDs to LLM embeddings.
         clinical_trials: Pairs dataset representing outcomes of recent clinical trials.
         off_label: Pairs dataset representing off label drug disease uses.
         orchard: Pairs dataset representing orchard feedback data.
@@ -157,10 +195,12 @@ def generate_pairs(
     # Remove duplicates
     drugs_df = drugs_df.drop_duplicates()
     diseases_lst = list(set(diseases_lst))
-    # Remove drugs and diseases without embeddings
-    nodes_with_embeddings = set(graph._nodes["id"])
-    drugs_df = drugs_df[drugs_df["id"].isin(nodes_with_embeddings)]
-    diseases_lst = [disease for disease in diseases_lst if disease in nodes_with_embeddings]
+
+    # Remove drugs and diseases without embeddings using embedding dictionaries
+    drugs_with_embeddings = set(drug_embeddings.keys())
+    diseases_with_embeddings = set(disease_embeddings.keys())
+    drugs_df = drugs_df[drugs_df["id"].isin(drugs_with_embeddings)]
+    diseases_lst = [disease for disease in diseases_lst if disease in diseases_with_embeddings]
 
     # Generate all combinations
     matrix_slices = []
@@ -217,17 +257,17 @@ def make_predictions_and_sort(
     Returns:
         Pairs dataset sorted by score with their rank and quantile rank.
     """
-    embeddings = node_embeddings.select("id", "topological_embedding")
+    embeddings = node_embeddings.select("id", "combined_embedding")
     pairs_with_embeddings = (
         # TODO: remnant from pyarrow/pandas conversion, find in which node it is created
         pairs.drop("__index_level_0__")
         .join(
-            embeddings.withColumnsRenamed({"id": "target", "topological_embedding": "target_embedding"}),
+            embeddings.withColumnsRenamed({"id": "target", "combined_embedding": "target_embedding"}),
             on="target",
             how="left",
         )
         .join(
-            embeddings.withColumnsRenamed({"id": "source", "topological_embedding": "source_embedding"}),
+            embeddings.withColumnsRenamed({"id": "source", "combined_embedding": "source_embedding"}),
             on="source",
             how="left",
         )
