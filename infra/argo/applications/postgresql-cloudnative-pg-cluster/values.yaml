@@ -62,8 +62,10 @@ cluster:
         memory: "256Mi"
     storage:
       storageClass: "premium-rwo"
+      size: "100Gi"
     walStorage:
       storageClass: "premium-rwo"
+      size: "5Gi"
       enabled: true
   
     # Node scheduling configuration
