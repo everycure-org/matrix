@@ -16,7 +16,7 @@ class DrugsTransformer(Transformer):
         # fmt: off
         df = (
             nodes_df
-            .withColumn("category",                          f.lit("biolink:Drug"))
+            .withColumn("category", f.lit("biolink:Drug"))
             .withColumnRenamed("id", "ec_id")
             .withColumnRenamed("translator_id", "id")
         )

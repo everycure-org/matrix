@@ -77,7 +77,8 @@ class LazySparkDataset(SparkDataset):
                     """{"warning": "Dataset not found at '%s'.",  "Resolution": "providing empty dataset with unrelated schema."}""",
                     self._filepath,
                 )
-                return ps.SparkSession.getActiveSession().createDataFrame(
+                # Using SparkManager to get session instead of getActiveSession() for thread safety
+                return SparkManager.get_or_create_session().createDataFrame(
                     [], schema=ps.types.StructType().add("foo", ps.types.BooleanType())
                 )
             else:
@@ -108,7 +109,7 @@ class PandasBigQueryDataset(GBQTableDataset):
     """
 
     def __init__(  # noqa: PLR0913
-        self, *, dataset: str, table: str, project: str, shard: str, credentials: dict[str, Any] | None = None
+        self, *, dataset: str, table: str, project: str, credentials: dict[str, Any] | None = None
     ) -> None:
         """Creates a new instance of PandasBigQueryDataset.
 
@@ -116,10 +117,9 @@ class PandasBigQueryDataset(GBQTableDataset):
             dataset: BigQuery dataset name.
             table: BigQuery table name.
             project: BigQuery project ID.
-            shard: Optional table shard identifier.
             credentials: Optional credentials for BigQuery client.
         """
-        super().__init__(dataset=dataset, table_name=f"{table}_{shard}", project=project, credentials=credentials)
+        super().__init__(dataset=dataset, table_name=f"{table}", project=project, credentials=credentials)
 
     def save(self, data: Any) -> None:
         """Save operation is not supported for this dataset."""

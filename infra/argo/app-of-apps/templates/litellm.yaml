@@ -12,7 +12,7 @@ spec:
     namespace: litellm
   source:
     repoURL: https://github.com/BerriAI/litellm.git
-    targetRevision: v1.76.1-stable
+    targetRevision: v1.79.1-stable
     path: deploy/charts/litellm-helm
     helm:
       values: |
@@ -44,113 +44,44 @@ spec:
           general_settings:
             telemetry: false
           model_list:
-            # OpenAI
-            - model_name: gpt-5
+            # OpenAI Models
+            - model_name: openai/*
               litellm_params:
-                model: openai/gpt-5
+                model: openai/*
                 api_key: os.environ/OPENAI_API_KEY
+                timeout: 300
                 cache_control_injection_points:
                   - location: message
                     role: user
-            - model_name: gpt-5-2025-08-07
+            # Anthropic Models
+            - model_name: anthropic/*
               litellm_params:
-                model: openai/gpt-5-2025-08-07
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-mini
-              litellm_params:
-                model: openai/gpt-5-mini
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-mini-2025-08-07
-              litellm_params:
-                model: openai/gpt-5-mini-2025-08-07
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-nano
-              litellm_params:
-                model: openai/gpt-5-nano
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-5-nano-2025-08-07
-              litellm_params:
-                model: openai/gpt-5-nano-2025-08-07
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-4o
-              litellm_params:
-                model: openai/gpt-4o
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: claude-3-5-sonnet
-              litellm_params:
-                model: anthropic/claude-3-5-sonnet-20240620
+                model: anthropic/*
                 api_key: os.environ/ANTHROPIC_API_KEY
+                timeout: 300
                 cache_control_injection_points:
                   - location: message
                     role: user
-            - model_name: claude-4-sonnet-20250514
+            # Gemini Models via Vertex AI (supports experimental models like gemini-3-pro-preview)
+            # Note: Experimental models are in 'global' location, not regional
+            - model_name: vertex_ai/*
               litellm_params:
-                model: anthropic/claude-4-sonnet-20250514
-                api_key: os.environ/ANTHROPIC_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: gpt-4o-mini
-              litellm_params:
-                model: openai/gpt-4o-mini
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: text-embedding-3-large
-              litellm_params:
-                model: openai/text-embedding-3-large
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: text-embedding-3-small
-              litellm_params:
-                model: openai/text-embedding-3-small
-                api_key: os.environ/OPENAI_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            # OpenAI
-            - model_name: claude-3-5-haiku
-              litellm_params:
-                model: anthropic/claude-3-5-haiku-20241022
-                api_key: os.environ/ANTHROPIC_API_KEY
-                cache_control_injection_points:
-                  - location: message
-                    role: user
-            - model_name: claude-3-haiku
-              litellm_params:
-                model: anthropic/claude-3-haiku-20240307
-                api_key: os.environ/ANTHROPIC_API_KEY
+                model: vertex_ai/*
+                vertex_project: {{ .Values.spec.source.project_id }}
+                vertex_location: global
+                timeout: 300 # 5 minutes
                 cache_control_injection_points:
                   - location: message
                     role: user
           router_settings:
+            timeout: 300 # 5 minutes
             # Redis for cross-pod RPM/TPM + routing state
             redis_host: redis.redis.svc.cluster.local
             redis_port: 6379
             # redis_password: os.environ/REDIS_PASSWORD
             num_retries: 2
           litellm_settings:
+            enable_prompt_caching: true
             set_verbose: true
             cache: true
             cache_params:
@@ -159,7 +90,7 @@ spec:
               port: 6379
               # password: os.environ/REDIS_PASSWORD
               ttl: 2592000  # Cache for 30 days
-              supported_call_types: ['completion', 'acompletion', 'embedding', 'aembedding', 'atranscription', 'transcription', 'atext_completion', 'text_completion', 'arerank', 'rerank', 'responses']
+              supported_call_types: ['completion', 'acompletion', 'embedding', 'aembedding', 'atranscription', 'transcription', 'atext_completion', 'text_completion', 'arerank', 'rerank', 'responses', 'aresponses']
           ui:
             enabled: true
         masterkeySecretName: litellm-master-key

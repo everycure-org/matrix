@@ -7,7 +7,6 @@ import pyspark.sql.functions as F
 from jinja2 import Template
 from matrix_inject.inject import inject_object
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -106,7 +105,7 @@ def _create_pks_subset_relevant_to_matrix(
             missing_sources.append(source)
 
     if missing_sources:
-        logger.warning(f"Created default entries for {len(missing_sources)} PKS with no metadata: {missing_sources}")
+        logger.warning(f"Created default entries for {len(missing_sources)} PKS with no metadata.")
 
     return subset
 

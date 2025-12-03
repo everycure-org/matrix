@@ -1,4 +1,15 @@
-docker_image = us-central1-docker.pkg.dev/mtrx-hub-dev-3of/matrix-images/matrix
+# Environment configuration (dev or prod)
+ENV ?= dev
+
+# GCP project mapping based on environment
+ifeq ($(ENV),prod)
+  GCP_PROJECT ?= mtrx-hub-prod-sms
+else
+  GCP_PROJECT ?= mtrx-hub-dev-3of
+endif
+
+# Docker image path (must be after GCP_PROJECT is set)
+docker_image = us-central1-docker.pkg.dev/$(GCP_PROJECT)/matrix-images/matrix
 
 TAG ?= ${USER}
 GIT_SHA ?= $(shell git rev-parse --short HEAD)
@@ -6,7 +17,6 @@ export TQDM_DISABLE ?= 1
 TARGET_PLATFORM ?= linux/amd64
 
 # Add GCP project variables
-GCP_PROJECT ?= mtrx-hub-dev-3of
 SA_KEY_SECRET_NAME ?= storage-viewer-sa-key
 SA_KEY_PATH ?= conf/local/service-account.json
 OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
@@ -29,8 +39,7 @@ fetch_secrets:
 
 local_test: install fast_test integration_test
 
-.PHONY: always 
-
+.PHONY: always docker_cloud_build
 # steps here get run on _every_ make call, no matter the target. Make sure this is 100% idempotent and fast.
 always:
 	# never track notebooks in the pipeline subfolder
@@ -78,6 +87,14 @@ docker_test: certificate docker_build
 		--force-recreate \
 		--abort-on-container-exit \
 		--exit-code-from matrix-pipeline
+
+docker_cloud_build:
+	gcloud builds submit \
+		--region=us-central1 \
+		--project=$(GCP_PROJECT) \
+		--config=cloudbuild.yaml \
+		--substitutions=_IMAGE=$(docker_image),_TAG=$(TAG),_GIT_SHA=$(GIT_SHA),_TARGET_PLATFORM=$(TARGET_PLATFORM),_GCP_PROJECT=$(GCP_PROJECT) \
+		../..
 
 docker_build:
 	# NOTE: This Makefile was partially generated using AI assistance.
@@ -294,4 +311,6 @@ restart_services: check_docker stop_services start_services
 run_test_native_through_docker: create_spark_dirs start_services
 	@echo "Running test pipeline with Docker services, Kedro running natively..."
 	ulimit -n 10000
-	uv run kedro run --env test -p test
+	export KEDRO_DYNAMIC_PIPELINES_MAPPING_CROSS_VALIDATION_N_CROSS_VAL_FOLDS=2
+	export KEDRO_DYNAMIC_PIPELINES_MAPPING_NUM_SHARDS=2
+	uv run kedro run --env test -p test --runner=ThreadRunner

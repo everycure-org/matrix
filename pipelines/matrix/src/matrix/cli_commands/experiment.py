@@ -37,10 +37,10 @@ from matrix_mlflow_utils.mlflow_utils import (
 from matrix.git_utils import (
     BRANCH_NAME_REGEX,
     abort_if_intermediate_release,
+    get_changed_git_files,
     get_current_git_branch,
     get_current_git_sha,
     git_tag_exists,
-    has_dirty_git,
     has_legal_branch_name,
     has_unpushed_commits,
 )
@@ -124,7 +124,7 @@ def create(experiment_name):
 @click.option("--username", type=str, required=True, help="Specify the username to use")
 @click.option("--namespace", type=str, default="argo-workflows", help="Specify a custom namespace")
 @click.option("--run-name", type=str, default=None, help="Specify a custom run name, defaults to branch")
-@click.option("--release-version", type=str, required=True, help="Specify a custom release name")
+@click.option("--release-version", type=str, help="Specify a custom release name")
 @click.option("--pipeline", "-p", type=str, default="modelling_run", help="Specify which pipeline to execute")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Disable verbose output")
 @click.option("--dry-run", "-d", is_flag=True, default=False, help="Does everything except submit the workflow")
@@ -167,6 +167,9 @@ def run(
     from_run: Optional[str] = None,
 ):
     """Run an experiment."""
+    # Validate release_version requirement based on pipeline
+    if not release_version and pipeline != "run_comparison":
+        release_version = click.prompt("Please specify a release version", type=str)
 
     if not experiment_name:
         current_branch = get_current_git_branch()
@@ -298,8 +301,11 @@ def retry(run_name: str, watch: bool, workflow_file: Optional[str]):
     # convert params into '-p key=val pairs'
     parameters_str = " ".join([f"-p {arg['name']}={arg['value']}" for arg in parameters])
 
+    # Determine environment from image path
+    env = "prod" if "mtrx-hub-prod" in image_without_tag else "dev"
+
     console.print("2. Re-building the docker image")
-    build_push_docker(image_without_tag, new_image_tag, verbose=False)
+    build_push_docker(new_image_tag, env, verbose=False)
     # call argo retry
     console.print("3. Calling Argo Retry")
     watch_flag = "--watch" if watch else ""
@@ -394,9 +400,12 @@ def _submit(
         if dry_run:
             return
 
+        # Determine environment from GCP project
+        env = "prod" if "prod" in runtime_gcp_project_id else "dev"
+
         console.print("Building Docker image...")
-        build_push_docker(image, run_name, verbose=verbose)
-        console.print("[green]✓[/green] Docker image built and pushed to dev repository")
+        build_push_docker(run_name, env, verbose=verbose)
+        console.print(f"[green]✓[/green] Docker image built and pushed to {env} repository")
 
         console.print("Ensuring Kubernetes namespace...")
         if not namespace_exists(namespace):
@@ -476,9 +485,15 @@ def summarize_submission(
             raise click.Abort()
 
 
-def build_push_docker(image: str, username: str, verbose: bool):
-    """Build the docker image only once, push it to dev registry, and if running in prod, also to prod registry."""
-    run_subprocess(f"make docker_push TAG={username} docker_image={image}", stream_output=verbose)
+def build_push_docker(tag: str, env: str, verbose: bool):
+    """Build the docker image in the cloud and push it to the appropriate registry.
+
+    Args:
+        tag: The tag to apply to the image
+        env: The environment to build for ('dev' or 'prod')
+        verbose: Whether to stream output
+    """
+    run_subprocess(f"make docker_cloud_build ENV={env} TAG={tag}", stream_output=verbose)
 
 
 def build_argo_template(
@@ -569,8 +584,11 @@ def abort_if_unmet_git_requirements(release_version: str) -> None:
     """
     errors = []
 
-    if has_dirty_git():
-        errors.append("Repository has uncommitted changes or untracked files.")
+    changed_files = get_changed_git_files()
+    if len(changed_files) > 0:
+        errors.append(
+            f"Repository has {len(changed_files)} uncommitted changes or untracked files: {repr(changed_files)}"
+        )
 
     if not has_legal_branch_name():
         errors.append(f"Your branch name doesn't match the regex: {BRANCH_NAME_REGEX}")

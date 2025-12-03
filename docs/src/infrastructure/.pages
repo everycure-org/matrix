@@ -4,6 +4,10 @@ nav:
     - kubernetes_cluster.md
     - public_data_zone.md
     - observability.md
+    - LiteLLM-Usage.md
+    - LiteLLM-User-Guide.md
+    - LiteLLM-Admin-Guide.md
+    - LiteLLM-New-Provider-Guide.md
     - gcp.md
     - iap.md
     - setup.md
