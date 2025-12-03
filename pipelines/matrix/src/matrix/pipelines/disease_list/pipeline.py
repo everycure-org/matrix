@@ -43,8 +43,8 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                 inputs={
                     "icd10_codes": "disease_list.raw.icd10_cm_codes",
                     "mondo_sssom": "disease_list.raw.mondo_sssom",
-                    "icd10_billable_subset": "params:icd10_billable_subset",
-                    "icd10cm_prefix": "params:icd10cm_prefix",
+                    "icd10_billable_subset": "params:disease_list.icd10_billable_subset",
+                    "icd10cm_prefix": "params:disease_list.icd10cm_prefix",
                 },
                 outputs="disease_list.int.billable_icd10_codes",
                 name="create_billable_icd10_codes",
@@ -56,8 +56,8 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                 inputs={
                     "mondo_graph": "disease_list.raw.mondo_graph",
                     "billable_icd10": "disease_list.int.billable_icd10_codes",
-                    "subtypes_params": "params:subtypes_params",
-                    "subtype_patterns": "params:subtype_patterns",
+                    "subtypes_params": "params:disease_list.subtypes_params",
+                    "subtype_patterns": "params:disease_list.subtype_patterns",
                 },
                 outputs={
                     "mondo_metadata": "disease_list.prm.mondo_metadata",
@@ -77,7 +77,7 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                     "mondo_metrics": "disease_list.int.mondo_metrics",
                     "subtype_counts": "disease_list.int.subtype_counts",
                     "disease_list_llm_tags": "disease_list.raw.disease_list_llm_tags",
-                    "parameters": "params:disease_list_params",
+                    "parameters": "params:disease_list.disease_list_params",
                 },
                 outputs={
                     "disease_list": "disease_list.prm.disease_list",
