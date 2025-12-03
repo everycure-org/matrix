@@ -85,6 +85,7 @@ dependencies = [
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost-cpu",
     "tqdm>=4.67.1",
+    "pyoxigraph>=0.4.5", # Needed for loading Mondo
     "bracex>=2.6",
     "xgboost>=3.1.2",
 ]
