@@ -159,7 +159,7 @@ def generate_pairs(
 
     diseases_in_graph = (
         diseases.alias("diseases")
-        .join(node_embeddings, on="id", how="inner")
+        .join(node_embeddings.select("id"), on="id", how="inner")
         .select(F.col("diseases.id").alias("target"))
     )
 
