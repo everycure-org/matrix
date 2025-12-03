@@ -4,6 +4,7 @@ import logging
 from typing import Any, Callable, Iterable, Union
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pyspark.sql as ps
 import pyspark.sql.types as T
@@ -49,6 +50,74 @@ def _filter_ground_truth(edges_gt: ps.DataFrame, training_data_sources: list[str
     except AnalysisException as e:
         logger.error(f"Upstream data source column not found in ground truth; using full dataset")
         return edges_gt
+
+
+def _process_embeddings(df: pd.DataFrame, drug_emb_dict: dict, disease_emb_dict: dict, type_: str) -> pd.DataFrame:
+    """Process embeddings in a dataframe by replacing or concatenating with LLM embeddings.
+
+    Args:
+        df: DataFrame containing source, target, source_embedding, target_embedding columns
+        drug_emb_dict: Dictionary mapping drug IDs to their LLM embeddings (numpy arrays)
+        disease_emb_dict: Dictionary mapping disease IDs to their LLM embeddings (numpy arrays)
+        type_: Type of embedding replacement to perform ("llm" or "combined")
+
+    Returns:
+        DataFrame with updated embeddings, filtered to only include rows where both
+        source and target have corresponding LLM embeddings available
+    """
+    # Filter out rows where embeddings are missing
+    # Create boolean masks for valid sources and targets
+    valid_sources = df["source"].isin(drug_emb_dict.keys())
+    valid_targets = df["target"].isin(disease_emb_dict.keys())
+
+    # Filter DataFrame
+    filtered_df = df[valid_sources & valid_targets].copy()
+
+    if filtered_df.empty:
+        logger.warning("No valid pairs found after filtering for LLM embeddings.")
+        return filtered_df
+
+    # Get new embeddings
+    source_llm_embs = filtered_df["source"].map(drug_emb_dict)
+    target_llm_embs = filtered_df["target"].map(disease_emb_dict)
+
+    if type_ == "llm":
+        # Assign new embeddings, ensuring they are numpy arrays
+        filtered_df["source_embedding"] = source_llm_embs.apply(
+            lambda x: np.array(x) if not isinstance(x, np.ndarray) else x
+        )
+        filtered_df["target_embedding"] = target_llm_embs.apply(
+            lambda x: np.array(x) if not isinstance(x, np.ndarray) else x
+        )
+    elif type_ == "combined":
+        # Concatenate old and new embeddings
+        def concat_emb(old, new):
+            # Handle cases where old/new might be numpy arrays or lists
+            # Ensure uniform type as numpy array
+            if isinstance(old, np.ndarray):
+                old_arr = old
+            else:
+                old_arr = np.array(old)
+
+            if isinstance(new, np.ndarray):
+                new_arr = new
+            else:
+                new_arr = np.array(new)
+
+            # Concatenate and return as numpy array
+            return np.concatenate([old_arr, new_arr])
+
+        # Apply row-wise concatenation
+        filtered_df["source_embedding"] = [
+            concat_emb(o, n) for o, n in zip(filtered_df["source_embedding"], source_llm_embs)
+        ]
+        filtered_df["target_embedding"] = [
+            concat_emb(o, n) for o, n in zip(filtered_df["target_embedding"], target_llm_embs)
+        ]
+    else:
+        raise ValueError(f"Unknown embedding type: {type_}")
+
+    return filtered_df
 
 
 def filter_valid_pairs(
@@ -591,3 +660,49 @@ def check_model_performance(
             report[f"{split.lower()}_{name}"] = func(y_true, y_pred)
 
     return json.loads(json.dumps(report, default=float))
+
+
+@inject_object()
+def replace_embeddings_for_splits(
+    splits: pd.DataFrame,
+    drug_embeddings: dict[str, Any],
+    disease_embeddings: dict[str, Any],
+    embedding_type: str = "llm",  # "llm" or "combined"
+) -> pd.DataFrame:
+    """Function to replace embeddings in the original splits dataframe with LLM embeddings or the combination of LLM embeddings and topological embeddings.
+
+    Args:
+        splits: Original splits dataframe
+        drug_embeddings: Drug LLM embeddings dataset (dictionary mapping IDs to embeddings)
+        disease_embeddings: Disease LLM embeddings (dictionary mapping IDs to embeddings)
+        embedding_type: Type of embedding to use, "llm" or "combined"
+    Returns:
+        DataFrame with replaced embeddings
+    """
+    # Process splits
+    temp_splits = _process_embeddings(splits, drug_embeddings, disease_embeddings, embedding_type)
+
+    return temp_splits
+
+
+@inject_object()
+def replace_embeddings_for_enriched_splits(
+    enriched_splits: pd.DataFrame,
+    drug_embeddings: dict[str, Any],
+    disease_embeddings: dict[str, Any],
+    embedding_type: str = "llm",  # "llm" or "combined"
+) -> pd.DataFrame:
+    """Function to replace embeddings in the enriched splits dataframe with LLM embeddings or the combination of LLM embeddings and topological embeddings.
+
+    Args:
+        enriched_splits: Splits enriched with negative samples
+        drug_embeddings: Drug LLM embeddings dataset (dictionary mapping IDs to embeddings)
+        disease_embeddings: Disease LLM embeddings (dictionary mapping IDs to embeddings)
+        embedding_type: Type of embedding to use, "llm" or "combined"
+    Returns:
+        DataFrame with replaced embeddings
+    """
+    # Process enriched_splits
+    temp_enriched_splits = _process_embeddings(enriched_splits, drug_embeddings, disease_embeddings, embedding_type)
+
+    return temp_enriched_splits
