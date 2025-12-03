@@ -120,7 +120,7 @@ def generate_pairs(
             .join(off_label.alias("off_label"), on=matrix_off_label_join_columns, how="left")
             .select(
                 F.col("matrix.*"),
-                (F.coalesce(F.col("off_label.off_label") == 1, F.lit(False))).alias("off_label"),
+                F.lit(True).alias("off_label"),
             )
         )
         return matrix
