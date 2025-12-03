@@ -94,9 +94,7 @@ class PyOxiGraphDataset(AbstractDataset):
                 store.load(path=self._filepath, format=rdf_format)
             return store
         except Exception as e:
-            raise DatasetError(
-                f"Failed to load RDF graph from {self._filepath}: {e}"
-            ) from e
+            raise DatasetError(f"Failed to load RDF graph from {self._filepath}: {e}") from e
 
     def _save(self, store) -> None:
         """Save PyOxigraph Store to file.
@@ -108,27 +106,23 @@ class PyOxiGraphDataset(AbstractDataset):
             DatasetError: If store cannot be saved
         """
         try:
-
             # Ensure parent directory exists for local files
             filepath_obj = Path(self._filepath)
             filepath_obj.parent.mkdir(parents=True, exist_ok=True)
 
             # PyOxigraph dump() requires dataset formats (N-Quads or TriG)
             # We always use N-Quads for serialization regardless of requested format
-            
 
             logger.info("Saving PyOxigraph store as N-Quads format")
             serialized = store.dump(format=RdfFormat.N_QUADS)
 
-            with open(self._filepath, 'wb') as f:
+            with open(self._filepath, "wb") as f:
                 f.write(serialized)
 
         except DatasetError:
             raise
         except Exception as e:
-            raise DatasetError(
-                f"Failed to save RDF graph: {e}"
-            ) from e
+            raise DatasetError(f"Failed to save RDF graph: {e}") from e
 
     def _describe(self) -> dict[str, Any]:
         """Return a description of the dataset.

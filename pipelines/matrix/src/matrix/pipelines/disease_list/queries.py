@@ -788,7 +788,9 @@ def query_raw_disease_list_data_from_mondo(
         df["category_class"].isin(_query_filter_icd_billable(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_paraphilic"] = df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: True if x else False)
+    df["f_paraphilic"] = (
+        df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: True if x else False)
+    )
 
     df["f_cardiovascular"] = (
         df["category_class"].isin(_query_filter_cardiovascular(store)).apply(lambda x: True if x else False)
@@ -827,7 +829,9 @@ def query_raw_disease_list_data_from_mondo(
     )
 
     df["f_orphanet_subtype_descendant"] = (
-        df["category_class"].isin(_query_filter_orphanet_subtype_descendant(store)).apply(lambda x: True if x else False)
+        df["category_class"]
+        .isin(_query_filter_orphanet_subtype_descendant(store))
+        .apply(lambda x: True if x else False)
     )
 
     df["f_omimps"] = df["category_class"].isin(_query_filter_omimps(store)).apply(lambda x: True if x else False)

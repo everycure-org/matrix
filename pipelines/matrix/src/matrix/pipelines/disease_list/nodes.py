@@ -17,6 +17,7 @@ from pyoxigraph import Store
 
 logger = logging.getLogger(__name__)
 
+
 @pa.check_output(
     pa.DataFrameSchema(
         {
@@ -40,11 +41,13 @@ def ingest_obsoletion_candidates(mondo_obsoletion_candidates: pd.DataFrame) -> p
     """
     return mondo_obsoletion_candidates
 
+
 def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
     """Format ICD-10 code as CURIE by inserting decimal point after third character."""
     if pd.notna(code) and len(code) > 3:
         return f"{prefix}:{code[:3]}.{code[3:]}"
     return code
+
 
 @pa.check_input(
     pa.DataFrameSchema(
@@ -53,7 +56,8 @@ def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
         },
         unique=["CODE"],
         strict=False,
-    ), obj_getter="icd10_codes"
+    ),
+    obj_getter="icd10_codes",
 )
 @pa.check_input(
     pa.DataFrameSchema(
@@ -63,7 +67,8 @@ def _format_icd10_code_to_curie(code: str, prefix: str) -> str:
             "object_id": pa.Column(dtype=str, nullable=False),
         },
         strict=False,
-    ), obj_getter="mondo_sssom"
+    ),
+    obj_getter="mondo_sssom",
 )
 @pa.check_output(
     pa.DataFrameSchema(
@@ -91,15 +96,11 @@ def create_billable_icd10_codes(
         DataFrame with columns: subject_id (MONDO), predicate (subset URI), object_id (ICD10CM)
     """
 
-    icd10_codes["code"] = icd10_codes["CODE"].apply(
-        lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix)
-    )
+    icd10_codes["code"] = icd10_codes["CODE"].apply(lambda code: _format_icd10_code_to_curie(code, icd10cm_prefix))
 
     exact_matches = mondo_sssom[mondo_sssom["predicate_id"] == "skos:exactMatch"]
 
-    icd10_data = exact_matches.merge(
-        icd10_codes[["code"]], left_on="object_id", right_on="code", how="inner"
-    )
+    icd10_data = exact_matches.merge(icd10_codes[["code"]], left_on="object_id", right_on="code", how="inner")
 
     icd10_data["predicate"] = icd10_billable_subset
     return icd10_data[["subject_id", "predicate", "object_id"]]
@@ -222,14 +223,11 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
     rows = list(mondo_graph.query(q))
     if not rows:
         raise ValueError("MONDO graph query returned no results")
-    
+
     triple_count = int(rows[0]["count"].value) if rows else 0
-    
+
     if triple_count < min_triples:
-        raise ValueError(
-            f"MONDO graph seems too small: only {triple_count} triples "
-            f"(expected ≥ {min_triples})."
-        )
+        raise ValueError(f"MONDO graph seems too small: only {triple_count} triples (expected ≥ {min_triples}).")
     logger.info(f"MONDO graph validated with {triple_count} triples")
     return triple_count
 
@@ -242,7 +240,8 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             "object_id": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
-    ), obj_getter="billable_icd10"
+    ),
+    obj_getter="billable_icd10",
 )
 @pa.check_output(
     pa.DataFrameSchema(
@@ -252,7 +251,8 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             "title": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
-    ), obj_getter="mondo_metadata"
+    ),
+    obj_getter="mondo_metadata",
 )
 @pa.check_output(
     pa.DataFrameSchema(
@@ -264,7 +264,8 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             "considers": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
-    ), obj_getter="mondo_obsoletes"
+    ),
+    obj_getter="mondo_obsoletes",
 )
 @pa.check_output(
     pa.DataFrameSchema(
@@ -307,19 +308,20 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             "f_icd_category": pa.Column(dtype=bool, nullable=False),
             "f_icd_chapter_code": pa.Column(dtype=bool, nullable=False),
             "f_icd_chapter_header": pa.Column(dtype=bool, nullable=False),
-            
         },
         strict=True,
-    ), obj_getter="disease_list_raw"
+    ),
+    obj_getter="disease_list_raw",
 )
 @pa.check_output(
     pa.DataFrameSchema(
         {
             "category_class": pa.Column(dtype=str, nullable=False),
-            "count_descendants": pa.Column(dtype=int, nullable=False),  
+            "count_descendants": pa.Column(dtype=int, nullable=False),
         },
         strict=True,
-    ), obj_getter="mondo_metrics"
+    ),
+    obj_getter="mondo_metrics",
 )
 @pa.check_output(
     pa.DataFrameSchema(
@@ -338,7 +340,8 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             )
         ],
         strict=True,
-    ), obj_getter="subtype_counts"
+    ),
+    obj_getter="subtype_counts",
 )
 def extract_disease_data_from_mondo(
     mondo_graph: Store,
@@ -374,9 +377,12 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease data from MONDO ontology")
 
     from matrix.pipelines.disease_list.queries import (
-        query_matrix_disease_list_metrics, query_mondo_labels,
-        query_mondo_obsoletes, query_ontology_metadata,
-        query_raw_disease_list_data_from_mondo)
+        query_matrix_disease_list_metrics,
+        query_mondo_labels,
+        query_mondo_obsoletes,
+        query_ontology_metadata,
+        query_raw_disease_list_data_from_mondo,
+    )
 
     _validate_mondo(mondo_graph)
 
@@ -407,8 +413,7 @@ def extract_disease_data_from_mondo(
     logger.info("Extracting disease metrics")
     mondo_metrics = query_matrix_disease_list_metrics(mondo_graph)
     mondo_metrics["count_descendants"] = (
-        pd.to_numeric(mondo_metrics["count_descendants"], errors="raise").fillna(0)
-        .astype(int)
+        pd.to_numeric(mondo_metrics["count_descendants"], errors="raise").fillna(0).astype(int)
     )
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
@@ -503,13 +508,9 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_clingen"]
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_omim"]
 
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"], filter_column] = (
-        False
-    )
+    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"], filter_column] = False
     df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_paraphilic"], filter_column] = False
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"], filter_column] = (
-        False
-    )
+    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"], filter_column] = False
 
     return df_disease_list_unfiltered
 
@@ -638,13 +639,14 @@ def _extract_and_pivot_groupings(
     result = pd.concat([df[["category_class"]], groupings_extracted], axis=1)
     return result.sort_values("category_class")
 
+
 def _clean_multi_value(value, repair_invalid=True):
     if not isinstance(value, str) or not value.strip():
         return ""
 
     parts = [p.strip() for p in value.split("|")]
 
-    word_re = re.compile(r'^\w+$')
+    word_re = re.compile(r"^\w+$")
     valid = [p.lower() for p in parts if word_re.match(p)]
     invalid = [p for p in parts if not word_re.match(p)]
 
@@ -654,6 +656,7 @@ def _clean_multi_value(value, repair_invalid=True):
         valid += repaired
 
     return "|".join(valid)
+
 
 def _clean_boolean(value):
     # If actual boolean True/False, return as-is
@@ -692,9 +695,7 @@ def _merge_disease_data_sources(
     """
     merged = base_df.merge(groupings_df, on="category_class", how="left")
 
-    metrics_df_filtered = metrics_df[
-        metrics_df["category_class"].notna() & (metrics_df["category_class"] != "")
-    ]
+    metrics_df_filtered = metrics_df[metrics_df["category_class"].notna() & (metrics_df["category_class"] != "")]
     subtype_counts_df_filtered = subtype_counts_df[
         subtype_counts_df["category_class"].notna() & (subtype_counts_df["category_class"] != "")
     ]
@@ -712,14 +713,14 @@ def _merge_disease_data_sources(
         right_on="subset_id",
         how="left",
     )
-    
+
     # Preprocess and merge LLM generated tags
     # TODO this preprocessing might be better placed in the LLM tagging step and should be removed from here
     disease_list_llm_tags.columns = [col.lower() for col in disease_list_llm_tags.columns]
     llm_tag_str_columns = ["txgnn", "medical_specialization", "anatomical", "tag_qaly_lost"]
     llm_tag_bool_columns = ["is_pathogen_caused", "is_cancer", "is_glucose_dysfunction", "tag_existing_treatment"]
     llm_tag_columns = ["category_class"] + llm_tag_str_columns + llm_tag_bool_columns
-    
+
     disease_list_llm_tags_sub = disease_list_llm_tags[llm_tag_columns]
     merged = merged.merge(
         disease_list_llm_tags_sub,
@@ -727,10 +728,10 @@ def _merge_disease_data_sources(
         right_on="category_class",
         how="left",
     )
-    
+
     for col in llm_tag_str_columns:
         merged[col] = merged[col].apply(_clean_multi_value)
-    
+
     for col in llm_tag_bool_columns:
         merged[col] = merged[col].apply(_clean_boolean)
     # FINISH: Preprocess and merge LLM generated tags
@@ -779,35 +780,37 @@ def _merge_disease_data_sources(
             "f_icd_category": pa.Column(dtype=bool, nullable=False),
             "f_icd_chapter_code": pa.Column(dtype=bool, nullable=False),
             "f_icd_chapter_header": pa.Column(dtype=bool, nullable=False),
-            
         },
         strict=True,
-    ), obj_getter="disease_list_raw"
+    ),
+    obj_getter="disease_list_raw",
 )
 @pa.check_input(
     pa.DataFrameSchema(
         {
             "category_class": pa.Column(dtype=str, nullable=False),
-            "count_descendants": pa.Column(dtype=int, nullable=False),  
+            "count_descendants": pa.Column(dtype=int, nullable=False),
         },
         strict=True,
-    ), obj_getter="mondo_metrics"
+    ),
+    obj_getter="mondo_metrics",
 )
 @pa.check_input(
     pa.DataFrameSchema(
         {
             "category_class": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=True),  
-            "medical_specialization": pa.Column(dtype=str, nullable=True),  
-            "anatomical": pa.Column(dtype=str, nullable=True),  
-            "is_pathogen_caused": pa.Column(dtype=bool, nullable=True),  
-            "is_cancer": pa.Column(dtype=bool, nullable=True),  
-            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=True),  
-            "tag_existing_treatment": pa.Column(dtype=str, nullable=True),  
+            "txgnn": pa.Column(dtype=str, nullable=True),
+            "medical_specialization": pa.Column(dtype=str, nullable=True),
+            "anatomical": pa.Column(dtype=str, nullable=True),
+            "is_pathogen_caused": pa.Column(dtype=bool, nullable=True),
+            "is_cancer": pa.Column(dtype=bool, nullable=True),
+            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=True),
+            "tag_existing_treatment": pa.Column(dtype=str, nullable=True),
             "tag_QALY_lost": pa.Column(dtype=str, nullable=True),
         },
         strict=True,
-    ), obj_getter="disease_list_llm_tags"
+    ),
+    obj_getter="disease_list_llm_tags",
 )
 @pa.check_input(
     pa.DataFrameSchema(
@@ -819,7 +822,8 @@ def _merge_disease_data_sources(
             "other_subsets_count": pa.Column(dtype=int, nullable=False),
         },
         strict=True,
-    ), obj_getter="subtype_counts"
+    ),
+    obj_getter="subtype_counts",
 )
 @pa.check_output(
     pa.DataFrameSchema(
@@ -885,11 +889,13 @@ def _merge_disease_data_sources(
         strict=True,
         unique=["category_class"],
         checks=[
-            pa.Check(lambda df: df.shape[0] >= 15000, name="min_rows", error="disease_list must have at least 15000 rows")
-            ],
-    ), obj_getter="disease_list"
+            pa.Check(
+                lambda df: df.shape[0] >= 15000, name="min_rows", error="disease_list must have at least 15000 rows"
+            )
+        ],
+    ),
+    obj_getter="disease_list",
 )
-
 def create_disease_list(
     disease_list_raw: pd.DataFrame,
     mondo_metrics: pd.DataFrame,
@@ -944,15 +950,11 @@ def create_disease_list(
         filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts, disease_list_llm_tags
     )
 
-    merged_df["count_subtypes"] = (
-        pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(0).astype(int)
-    )
+    merged_df["count_subtypes"] = pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(0).astype(int)
     merged_df["count_descendants"] = (
         pd.to_numeric(merged_df["count_descendants"], errors="coerce").fillna(0).astype(int)
     )
-    merged_df["other_subsets_count"] = (
-        pd.to_numeric(merged_df["other_subsets_count"], errors="coerce").astype("Int64")
-    )
+    merged_df["other_subsets_count"] = pd.to_numeric(merged_df["other_subsets_count"], errors="coerce").astype("Int64")
     merged_df["count_descendants_without_subtypes"] = merged_df["count_descendants"] - merged_df["count_subtypes"]
 
     merged_df = _is_grouping_heuristic(merged_df, grouping_columns, not_grouping_columns, grouping_heuristic_column)
