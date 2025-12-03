@@ -118,9 +118,11 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["data_release"]
         + pipelines["document_kg"]
         + pipelines["ingest_to_N4J"]
+        + pipelines["known_entity_removal"]
     )
     pipelines["test_sample"] = (
         pipelines["feature_and_modelling_run"]
+        + pipelines["known_entity_removal"]
     )
     # fmt: on
 

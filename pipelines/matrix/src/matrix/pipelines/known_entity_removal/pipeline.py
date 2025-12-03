@@ -17,6 +17,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "datasets_to_include": "params:known_entity_removal.datasets_to_include",
                     **{f"{dataset}": f"integration.int.{dataset}.edges.norm@spark" for dataset in available_datasets},
                 },
+                name="concatenate_datasets",
                 outputs="known_entity_removal.concatenated_ground_truth",
             ),
             ArgoNode(
@@ -25,6 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "mondo_ontology": "params:known_entity_removal.mondo_ontology",
                     "concatenated_ground_truth": "known_entity_removal.concatenated_ground_truth",
                 },
+                name="apply_mondo_expansion",
                 outputs="known_entity_removal.expanded_ground_truth",
             ),
             ArgoNode(
@@ -34,6 +36,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "disease_list": "integration.int.disease_list.nodes.norm@spark",
                     "expanded_ground_truth": "known_entity_removal.expanded_ground_truth",
                 },
+                name="create_known_entity_matrix",
                 outputs="known_entity_removal.known_entity_matrix",
             ),
         ]
