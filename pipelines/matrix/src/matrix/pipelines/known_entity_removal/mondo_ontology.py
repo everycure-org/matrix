@@ -16,7 +16,7 @@ class OntologyMONDO:
     def _get_ids_from_owl_things(owl_things: list[owlready2.entity.ThingClass]) -> list[str]:
         return [thing.id[0] for thing in owl_things if hasattr(thing, "id")]
 
-    def get_related_ids(self, mondo_id: str) -> list[str]:
+    def get_related_ids(self, mondo_id: str) -> dict[str, list[str]]:
         mondo_class = self.ont.search_one(id=mondo_id)
         if mondo_class is None:
             return {"ancestors": [], "descendants": []}

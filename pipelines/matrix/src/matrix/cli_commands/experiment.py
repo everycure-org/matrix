@@ -493,7 +493,8 @@ def build_push_docker(tag: str, env: str, verbose: bool):
         env: The environment to build for ('dev' or 'prod')
         verbose: Whether to stream output
     """
-    run_subprocess(f"make docker_cloud_build ENV={env} TAG={tag}", stream_output=verbose)
+    exit()
+    run_subprocess(f"make docker_build ENV={env} TAG={tag}", stream_output=verbose)
 
 
 def build_argo_template(
