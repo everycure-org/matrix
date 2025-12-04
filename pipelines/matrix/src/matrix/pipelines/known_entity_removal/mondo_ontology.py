@@ -16,18 +16,13 @@ class OntologyMONDO:
     def _get_ids_from_owl_things(owl_things: list[owlready2.entity.ThingClass]) -> list[str]:
         return [thing.id[0] for thing in owl_things if hasattr(thing, "id")]
 
-    def get_related_ids(self, mondo_id: str) -> dict[str, list[str]]:
+    def get_equivalent_mondo_ids(self, mondo_id: str) -> list[str]:
         mondo_class = self.ont.search_one(id=mondo_id)
         if mondo_class is None:
-            return {"ancestors": [], "descendants": []}
-        return {
-            "ancestors": self._get_ids_from_owl_things(mondo_class.is_a),
-            "descendants": self._get_ids_from_owl_things(mondo_class.subclasses()),
-        }
-
-    def get_equivalent_mondo_ids(self, mondo_id: str) -> list[str]:
-        related_ids = self.get_related_ids(mondo_id)
-        return list(set(related_ids["ancestors"] + related_ids["descendants"]))
+            return []
+        ancestors = self._get_ids_from_owl_things(mondo_class.is_a)
+        descendants = self._get_ids_from_owl_things(mondo_class.subclasses())
+        return list(set(ancestors + descendants))
 
 
 class OntologyTest(OntologyMONDO):
