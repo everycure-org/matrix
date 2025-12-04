@@ -12,7 +12,6 @@ def create_pipeline() -> Pipeline:
                 outputs="kg_edges_hf_published",
                 name="publish_kg_edges_node",
             ),
-
             node(
                 func=lambda x: x,
                 inputs="integration.prm.unified_nodes@pandas",
