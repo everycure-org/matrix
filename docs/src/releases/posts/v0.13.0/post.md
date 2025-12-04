@@ -15,6 +15,7 @@ authors:
   - may-lim
   - kevinschaper
   - pascalwhoop
+  - leelancashire
 ---
 
 ### Breaking Changes 🛠
