@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 
 import matrix.pipelines.ingestion.nodes as nodes
 from matrix import settings
@@ -16,14 +16,14 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Drug list and disease list
     nodes_lst.extend(
         [
-            node(
+            Node(
                 func=nodes.write_drug_list,
                 inputs=["ingestion.raw.drug_list"],
                 outputs="ingestion.raw.drug_list.nodes@pandas",
                 name="write_drug_list",
                 tags=["drug-list"],
             ),
-            node(
+            Node(
                 func=nodes.write_disease_list,
                 inputs=["ingestion.raw.disease_list"],
                 outputs="ingestion.raw.disease_list.nodes@pandas",
@@ -35,7 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # RTX-KG2 curies
     nodes_lst.append(
-        node(
+        Node(
             func=lambda x: x,
             inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
             outputs="ingestion.int.rtx_kg2.curie_to_pmids",
@@ -61,7 +61,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 memory_request=192,
                             ),
                         ),
-                        node(
+                        Node(
                             func=lambda x: x,
                             inputs=f"ingestion.int.preprocessing.{source['name']}.nodes@spark",
                             outputs=f"ingestion.int.{source['name']}.nodes",
@@ -72,7 +72,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             else:
                 nodes_lst.append(
-                    node(
+                    Node(
                         func=lambda x: x,
                         inputs=f"ingestion.raw.{source['name']}.nodes@spark",
                         outputs=f"ingestion.int.{source['name']}.nodes",
@@ -82,7 +82,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
         if "ground_truth" in source.get("name", ""):
             nodes_lst.append(
-                node(
+                Node(
                     func=lambda x, y: [x, y],
                     inputs=[
                         f"ingestion.raw.{source['name']}.positives",
@@ -111,7 +111,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                                 memory_request=64,
                             ),
                         ),
-                        node(
+                        Node(
                             func=lambda x: x,
                             inputs=f"ingestion.int.preprocessing.{source['name']}.edges@spark",
                             outputs=f"ingestion.int.{source['name']}.edges",
@@ -122,7 +122,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             else:
                 nodes_lst.append(
-                    node(
+                    Node(
                         func=lambda x: x,
                         inputs=[f"ingestion.raw.{source['name']}.edges@spark"],
                         outputs=f"ingestion.int.{source['name']}.edges",
@@ -157,4 +157,4 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
 
-    return pipeline(nodes_lst)
+    return Pipeline(nodes_lst)

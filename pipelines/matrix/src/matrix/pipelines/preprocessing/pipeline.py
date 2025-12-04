@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 
 from . import nodes
 
@@ -7,9 +7,9 @@ from . import nodes
 
 def create_primekg_pipeline() -> Pipeline:
     """PrimeKG preprocessing"""
-    return pipeline(
+    return Pipeline(
         [
-            node(
+            Node(
                 func=nodes.primekg_build_nodes,
                 inputs={
                     "nodes": "preprocessing.raw.primekg.nodes@polars",
@@ -20,7 +20,7 @@ def create_primekg_pipeline() -> Pipeline:
                 name="primekg_build_nodes",
                 tags=["primekg"],
             ),
-            node(
+            Node(
                 func=nodes.primekg_build_edges,
                 inputs="preprocessing.raw.primekg.kg@polars",
                 outputs="preprocessing.int.primekg.edges",
@@ -33,52 +33,52 @@ def create_primekg_pipeline() -> Pipeline:
 
 def create_embiology_pipeline() -> Pipeline:
     """Embiology cleaning and preprocessing"""
-    return pipeline(
+    return Pipeline(
         [
             # Copying these data sources locally improves performance in the later steps.
-            node(
+            Node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.node_attributes",
                 outputs="preprocessing.int.embiology.node_attributes@pandas",
                 name="write_embiology_attr_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
-            node(
+            Node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.ref_pub",
                 outputs="preprocessing.int.embiology.ref_pub@pandas",
                 name="write_embiology_ref_pub_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
-            node(
+            Node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.nodes",
                 outputs="preprocessing.int.embiology.nodes@pandas",
                 name="write_embiology_nodes_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
-            node(
+            Node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.edges",
                 outputs="preprocessing.int.embiology.edges@pandas",
                 name="write_embiology_edges_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
-            node(
+            Node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.manual_id_mapping",
                 outputs="preprocessing.int.embiology.manual_id_mapping@pandas",
                 name="write_embiology_id_mapping_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
-            node(
+            Node(
                 func=lambda x: x,
                 inputs="preprocessing.raw.embiology.manual_name_mapping",
                 outputs="preprocessing.int.embiology.manual_name_mapping@pandas",
                 name="write_embiology_name_mapping_to_tmp",
                 tags=["ingest-embiology-kg"],
             ),
-            node(
+            Node(
                 func=nodes.get_embiology_node_attributes_normalised_ids,
                 inputs=[
                     "preprocessing.int.embiology.node_attributes@spark",
@@ -92,7 +92,7 @@ def create_embiology_pipeline() -> Pipeline:
                 name="get_embiology_node_attributes_normalised_ids",
                 tags=["embiology-kg"],
             ),
-            node(
+            Node(
                 func=nodes.normalise_embiology_nodes,
                 inputs=[
                     "preprocessing.int.embiology.nodes@spark",
@@ -103,7 +103,7 @@ def create_embiology_pipeline() -> Pipeline:
                 name="normalise_embiology_nodes",
                 tags=["embiology-kg"],
             ),
-            node(
+            Node(
                 func=nodes.generate_embiology_edge_attributes,
                 inputs=[
                     "preprocessing.int.embiology.ref_pub@spark",
@@ -112,7 +112,7 @@ def create_embiology_pipeline() -> Pipeline:
                 name="generate_embiology_edge_attributes",
                 tags=["embiology-kg"],
             ),
-            node(
+            Node(
                 func=nodes.prepare_embiology_edges,
                 inputs=[
                     "preprocessing.int.embiology.edges@spark",
@@ -123,7 +123,7 @@ def create_embiology_pipeline() -> Pipeline:
                 name="prepare_embiology_edges",
                 tags=["embiology-kg"],
             ),
-            node(
+            Node(
                 func=nodes.deduplicate_and_clean_embiology_kg,
                 inputs=[
                     "preprocessing.prm.embiology.nodes",
@@ -142,7 +142,7 @@ def create_embiology_pipeline() -> Pipeline:
 
 def create_pipeline() -> Pipeline:
     """Create preprocessing pipeline."""
-    return pipeline(
+    return Pipeline(
         [
             create_primekg_pipeline(),
             create_embiology_pipeline(),

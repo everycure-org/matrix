@@ -3,7 +3,7 @@ from decimal import Decimal
 import networkx as nx
 import numpy as np
 import pandas as pd
-from kedro.pipeline import Pipeline, node, pipeline
+from kedro.pipeline import Node, Pipeline
 from matrix_fabricator.fabrication import fabricate_datasets
 
 from matrix.utils.validation import validate
@@ -182,9 +182,9 @@ def format_kgregistry_yaml(fabrication_params: dict) -> dict:
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create fabricator pipeline."""
-    return pipeline(
+    return Pipeline(
         [
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.rtx_kg2"},
                 outputs={
@@ -196,13 +196,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_kg2_datasets",
             ),
-            node(
+            Node(
                 func=validate,
                 inputs={"nodes": "ingestion.raw.rtx_kg2.nodes@polars", "edges": "ingestion.raw.rtx_kg2.edges@polars"},
                 outputs="fabricator.int.rtx_kg2.violations",
                 name="validate_fabricated_kg2_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.primekg"},
                 outputs={
@@ -211,13 +211,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_primekg_datasets",
             ),
-            node(
+            Node(
                 func=validate,
                 inputs={"nodes": "ingestion.raw.primekg.nodes@polars", "edges": "ingestion.raw.primekg.edges@polars"},
                 outputs="fabricator.int.primekg.violations",
                 name="validate_fabricated_primekg_datasets",
             ),
-            node(
+            Node(
                 func=remove_overlap,
                 inputs={
                     "disease_list": "fabricator.int.disease_list",
@@ -228,7 +228,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "drug_list": "ingestion.raw.drug_list",
                 },
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.clinical_trials.graph",
@@ -240,7 +240,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_clinical_trials_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.off_label.graph",
@@ -252,7 +252,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_off_label_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.ec_medical_kg"},
                 outputs={
@@ -261,7 +261,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_medical_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.robokop"},
                 outputs={
@@ -270,13 +270,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_robokop_datasets",
             ),
-            node(
+            Node(
                 func=validate,
                 inputs={"nodes": "ingestion.raw.robokop.nodes@polars", "edges": "ingestion.raw.robokop.edges@polars"},
                 outputs="fabricator.int.robokop.violations",
                 name="validate_fabricated_robokop_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.spoke"},
                 outputs={
@@ -285,13 +285,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_spoke_datasets",
             ),
-            node(
+            Node(
                 func=validate,
                 inputs={"nodes": "ingestion.raw.spoke.nodes@polars", "edges": "ingestion.raw.spoke.edges@polars"},
                 outputs="fabricator.int.spoke.violations",
                 name="validate_fabricated_spoke_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.embiology"},
                 outputs={
@@ -300,7 +300,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_embiology_datasets",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.kgml_xdtd_ground_truth",
@@ -313,7 +313,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_kgml_xdtd_gt_pairs",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.ec_ground_truth",
@@ -326,7 +326,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_ec_ground_truth_pairs",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.drugbank_ground_truth",
@@ -339,7 +339,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_drugbank_ground_truth_pairs",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.orchard",
@@ -350,7 +350,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_orchard_datasets",
             ),
-            node(
+            Node(
                 func=generate_paths,
                 inputs=[
                     "ingestion.raw.rtx_kg2.edges@pandas",
@@ -360,49 +360,49 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="ingestion.raw.drugmech.edges@pandas",
                 name="create_drugmech_pairs",
             ),
-            node(
+            Node(
                 func=format_kgregistry_yaml,
                 inputs={"fabrication_params": "params:fabricator.document_kg.kgregistry"},
                 outputs="document_kg.raw.kgregistry",
                 name="format_kgregistry",
             ),
-            node(
+            Node(
                 func=format_reusabledata_json,
                 inputs={"fabrication_params": "params:fabricator.document_kg.reusabledata"},
                 outputs="document_kg.raw.reusabledata",
                 name="format_reusabledata",
             ),
-            node(
+            Node(
                 func=format_infores_catalog,
                 inputs={"fabrication_params": "params:fabricator.document_kg.infores_catalog"},
                 outputs="document_kg.raw.infores",
                 name="format_infores_catalog",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.document_kg.matrix_curated_pks"},
                 outputs={"data": "document_kg.raw.matrix_curated_pks@pandas"},
                 name="fabricate_matrix_curated_pks",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.document_kg.matrix_reviews_pks"},
                 outputs={"data": "document_kg.raw.matrix_reviews_pks@pandas"},
                 name="fabricate_matrix_reviews_pks",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.document_kg.mapping_kgregistry_infores"},
                 outputs={"mappings": "document_kg.raw.mapping_kgregistry_infores"},
                 name="fabricate_mapping_kgregistry_infores",
             ),
-            node(
+            Node(
                 func=fabricate_datasets,
                 inputs={"fabrication_params": "params:fabricator.document_kg.mapping_reusabledata_infores"},
                 outputs={"mappings": "document_kg.raw.mapping_reusabledata_infores"},
                 name="fabricate_mapping_reusabledata_infores",
             ),
-            node(
+            Node(
                 func=fabricate_run_comparison_matrices,
                 inputs=[
                     "params:fabricator.run_comparison.matrix_size",

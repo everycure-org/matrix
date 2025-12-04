@@ -160,7 +160,7 @@ def _run(config: RunConfig, kedro_session: KedroSessionWithFromCatalog) -> None:
     runner = load_obj(config.runner or "SequentialRunner", "kedro.runner")
 
     with kedro_session.create(
-        env=config.env, conf_source=config.conf_source, extra_params=config.params
+        env=config.env, conf_source=config.conf_source, runtime_params=config.params
     ) as session:
         # introduced to filter out tags that should not be run
         node_names = _filter_nodes_missing_tag(

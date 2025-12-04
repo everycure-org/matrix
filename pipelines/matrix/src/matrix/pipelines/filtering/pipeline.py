@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, node
+from kedro.pipeline import Node, Pipeline
 
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
@@ -25,7 +25,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 memory_request=75,
             ),
         ),
-        node(
+        Node(
             func=nodes.filter_unified_kg_edges,
             inputs=[
                 "filtering.prm.prefiltered_nodes",
@@ -39,7 +39,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "argowf.fuse-group.filtering",
             ],
         ),
-        node(
+        Node(
             func=nodes.filter_nodes_without_edges,
             inputs=[
                 "filtering.prm.prefiltered_nodes",
