@@ -84,6 +84,17 @@ def apply_mondo_expansion(
     )
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "drug_translator_id": Column(str, nullable=False),
+            "drug_ec_id": Column(str, nullable=False),
+            "disease_id": Column(str, nullable=False),
+            "is_known_entity": Column(bool, nullable=False),
+        },
+        unique=["drug_ec_id", "disease_id"],
+    )
+)
 def create_known_entity_matrix(
     drug_list: ps.DataFrame,
     disease_list: ps.DataFrame,
