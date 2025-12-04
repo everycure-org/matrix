@@ -1,12 +1,12 @@
 # Hugging Face Hub datasets (write) - datasets to publish
-kg_edges_hf_published:
+data_publication.kg_edges_hf_published:
   type: matrix_gcp_datasets.huggingface.HFIterableDataset
   repo_id: matentzn/kg-edges-test
   split: train
   dataframe_type: pandas
   data_dir: data/edges
 
-kg_nodes_hf_published:
+data_publication.kg_nodes_hf_published:
   type: matrix_gcp_datasets.huggingface.HFIterableDataset
   repo_id: matentzn/kg-nodes-test
   split: train
