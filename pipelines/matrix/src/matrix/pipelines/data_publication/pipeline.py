@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from kedro.pipeline import Pipeline, node
 
-from .nodes import verify_published_dataset
-
 
 def create_pipeline() -> Pipeline:
     return Pipeline(
@@ -16,24 +14,10 @@ def create_pipeline() -> Pipeline:
             ),
 
             node(
-                func=verify_published_dataset,
-                inputs="kg_edges_hf_published_read",
-                outputs="publication_stats_edges",
-                name="verify_publication_edges",
-            ),
-
-            node(
                 func=lambda x: x,
                 inputs="integration.prm.unified_nodes@pandas",
                 outputs="kg_nodes_hf_published",
                 name="publish_kg_nodes_node",
-            ),
-
-            node(
-                func=verify_published_dataset,
-                inputs="kg_nodes_hf_published_read",
-                outputs="publication_stats_nodes",
-                name="verify_publication_nodes",
             ),
         ]
     )
