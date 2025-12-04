@@ -88,11 +88,11 @@ def apply_mondo_expansion(
     schema=DataFrameSchema(
         columns={
             "drug_translator_id": Column(str, nullable=False),
-            "drug_ec_id": Column(str, nullable=False),
-            "disease_id": Column(str, nullable=False),
+            "ec_drug_id": Column(str, nullable=False),
+            "target": Column(str, nullable=False),
             "is_known_entity": Column(bool, nullable=False),
         },
-        unique=["drug_ec_id", "disease_id"],
+        unique=["ec_drug_id", "target"],
     )
 )
 def create_known_entity_matrix(
@@ -101,16 +101,16 @@ def create_known_entity_matrix(
     expanded_ground_truth: ps.DataFrame,
 ) -> ps.DataFrame:
     """
-    Create the known entity matrix.
+    Create the known entity matrix in accordance with output schema expected by Orchard.
     """
     return (
-        drug_list.select(F.col("ec_id").alias("drug_ec_id"), F.col("id").alias("drug_translator_id"))
-        .join(disease_list.select(F.col("core_id").alias("disease_id")), how="cross")
+        drug_list.select(F.col("ec_id").alias("ec_drug_id"), F.col("id").alias("drug_translator_id"))
+        .join(disease_list.select(F.col("core_id").alias("target")), how="cross")
         .join(
-            expanded_ground_truth.withColumnRenamed("drug_id", "drug_translator_id").withColumn(
-                "is_known_entity", F.lit(True)
-            ),
-            on=["drug_translator_id", "disease_id"],
+            expanded_ground_truth.select(
+                F.col("drug_id").alias("drug_translator_id"), F.col("disease_id").alias("target")
+            ).withColumn("is_known_entity", F.lit(True)),
+            on=["drug_translator_id", "target"],
             how="left",
         )
         .fillna(False, subset=["is_known_entity"])

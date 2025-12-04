@@ -62,4 +62,5 @@ def test_ontology_test():
     # When we get equivalent Mondo IDs
     equivalent_mondo_ids = ontology.get_equivalent_mondo_ids(mondo_id)
     # Then we get the expected list
-    assert equivalent_mondo_ids == ["ancestor", "descendant"]
+    assert len(equivalent_mondo_ids) == 2
+    assert set(equivalent_mondo_ids) == {"ancestor", "descendant"}
