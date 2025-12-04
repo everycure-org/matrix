@@ -1,35 +1,46 @@
 from matrix.pipelines.known_entity_removal.mondo_ontology import OntologyMONDO
 
+# Constructing dummy overrides of OntologyMONDO to test the get_equivalent_mondo_ids method.
 
+
+# "None" ontology override
 class OwlOntologyNone:
+    """A dummy class to represent a owlready2 ontology with no search results."""
+
     def search_one(self, id: str) -> None:
         return None
 
 
 class OntologyMONDONone(OntologyMONDO):
+    """A class overriding the owl ontology used in the OntologyMONDO class."""
+
     def __init__(self):
         self.ont = OwlOntologyNone()
 
 
+# "Fixed ID" ontology override
 class ThingClass:
-    def __init__(self, id: str):
+    """A dummy class to represent a owlready2 thing class."""
+
+    def __init__(self, id: str, include_is_a: bool = True):
         self.id = [id]
-
-
-class MONDOClass:
-    def __init__(self):
-        self.is_a = [ThingClass(id="descendant")]
+        if include_is_a:
+            self.is_a = [ThingClass(id="descendant", include_is_a=False)]
 
     def subclasses(self):
         return [ThingClass(id="ancestor")]
 
 
 class OwlOntologyTest:
-    def search_one(self, id: str) -> MONDOClass:
-        return MONDOClass()
+    """A dummy class to represent a owlready2 ontology with search results."""
+
+    def search_one(self, id: str) -> ThingClass:
+        return ThingClass(id=id)
 
 
 class OntologyMONDOTest(OntologyMONDO):
+    """A class overriding the owl ontology used in the OntologyMONDO class."""
+
     def __init__(self):
         self.ont = OwlOntologyTest()
 

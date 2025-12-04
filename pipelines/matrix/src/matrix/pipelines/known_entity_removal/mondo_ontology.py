@@ -31,6 +31,6 @@ class OntologyTest(OntologyMONDO):
     def __init__(self, **kwargs):
         pass
 
-    def get_related_ids(self, mondo_id: str) -> dict[str, list[str]]:
+    def get_equivalent_mondo_ids(self, mondo_id: str) -> dict[str, list[str]]:
         """Return dummy IDs for testing."""
-        return {"ancestors": [mondo_id + "_ancestor"], "descendants": [mondo_id + "_descendant"]}
+        return [mondo_id + "_ancestor", mondo_id + "_descendant"]

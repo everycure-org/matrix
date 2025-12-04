@@ -3,9 +3,8 @@ from functools import reduce
 import pyspark.sql as ps
 from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
+from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.functions import col, udf
-from pyspark.sql.types import ArrayType, StringType
 
 from .mondo_ontology import OntologyMONDO
 
@@ -19,7 +18,6 @@ from .mondo_ontology import OntologyMONDO
         unique=["drug_id", "disease_id"],
     )
 )
-@inject_object()
 def concatenate_datasets(
     datasets_to_include: dict[str, dict[str, bool]], **all_datasets: dict[str, ps.DataFrame]
 ) -> ps.DataFrame:
@@ -53,6 +51,15 @@ def concatenate_datasets(
     return reduce(lambda df1, df2: df1.union(df2), dataframes_to_concatenate).distinct()
 
 
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "drug_id": Column(str, nullable=False),
+            "disease_id": Column(str, nullable=False),
+        },
+        unique=["drug_id", "disease_id"],
+    )
+)
 @inject_object()
 def apply_mondo_expansion(
     mondo_ontology: OntologyMONDO,
@@ -61,19 +68,19 @@ def apply_mondo_expansion(
     """
     Apply Mondo ontology expansion to the concatenated ground truth.
     """
-    # UDF returning all equivalent MONDO IDs including input ID itself
-    equivalent_mondo_ids_udf = udf(
-        lambda id: mondo_ontology.get_equivalent_mondo_ids(id) + [id], ArrayType(StringType())
-    )
+    # We collect unique disease and apply get_equivalent_mondo_ids in a single pass
+    # to avoid distributing non-serializable class OntologyMONDO to workers.
+    spark = SparkSession.builder.getOrCreate()
+    unique_diseases = [x.disease_id for x in concatenated_ground_truth.select("disease_id").distinct().collect()]
+    equivalent_diseases = spark.createDataFrame(
+        [(id, mondo_ontology.get_equivalent_mondo_ids(id) + [id]) for id in unique_diseases],
+        schema=["disease_id", "equivalent_disease_id"],
+    ).withColumn("equivalent_disease_id", F.explode("equivalent_disease_id"))
 
-    equivalent_diseases = (
-        concatenated_ground_truth.select("disease_id")
+    return (
+        concatenated_ground_truth.join(equivalent_diseases, on="disease_id", how="left")
+        .select("drug_id", F.col("equivalent_disease_id").alias("disease_id"))
         .distinct()
-        .withColumn("equivalent_disease_id", F.explode(equivalent_mondo_ids_udf(col("disease_id"))))
-    )
-
-    return concatenated_ground_truth.join(equivalent_diseases, on="disease_id", how="left").select(
-        "drug_id", F.col("equivalent_disease_id").alias("disease_id")
     )
 
 
