@@ -38,7 +38,27 @@ No breaking changes in this release.
 
 ### Experiments 🧪
 
-No experiment reports in this release.
+- **UAB 1 New Model Inital Embeddings**: This experiment was to begin training classifiers based on embeddings from ESM2 and Molecular Transformer. [link to report](https://github.com/everycure-org/lab-notebooks/blob/58d4334234edbc4951f192e4d8d85d0f21961723/uab-new-models-for-improved-performance/experiment-november-2025/UAB_New_Model_Initial_Embeddings_Experiment_Report.ipynb)
+
+- **Patent Scraping Part 2**: Expertiment to determine the ballpark cost/time estimates for running ontology-aligned triple extraction from drug patents at scale using LLM APIs, to guide engineering choices. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/85468dbd75219a637665c6f0eb512435979a9aad/uab-LLM-patent-scraping/experiment-october-2025/UAB_Patent_Scraping_Scaling_Experiment_Report.ipynb)
+
+- **CBR-X Explainer**: Evaluation of a case-based reasoning explainer (CBR-X) for drug–disease link prediction that is designed to be both predictive and mechanistically interpretable. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/1631f27658c9629304433b388743b3ccbcdb87a2/maria/07_triage_yield_over_time/src/plotting.py)
+
+- **Measuring Triage Yield Over Time **: Experiment to assess whether triage yield changes over time and whether model rank explains yield, while accounting for reviewer and item heterogeneity. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/5f7d37deb573c8f36fdd1ff8ef4b6f2ededcafcc/lee/structural-bias/Structural_Bias_T3_Report.ipynb)
+
+- **UAB3: PubMed Abstract Validation Tool Experiment**: Two-Round LLM Pipeline for Validating PubMed Abstract Support of Knowledge Graph Edges. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/afef2bab707a2b82236d16981ddfe0794e706949/uab-pubmed-embeddings/experiment-oct-2025/initial_PubMed_abstracts_validation_report.ipynb)
+
+- **UAB4: PubMed Extension Pipeline**: Pipeline for Automating Literature Support of KG Edges. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/afef2bab707a2b82236d16981ddfe0794e706949/uab-pubmed-embeddings/experiment-oct-2025/initial_PubMed_abstract_extension_report.ipynb)
+
+- **PrimeKG + Matrix Experiment**: Experiment with MATRIX pipeline and PrimeKG, using PrimeKG with disease nodes merged. This experiment explored different settings of Matrix pipeline together with PrimeGT, as well as examination of overfitting/structural bias. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/feat/prime-kg-exp/cross-kg/primekg/primekg_summary_report.ipynb)
+
+- **PrimeKG + Matrix Experiment (Filtering)**: TExperiment with MATRIX pipeline and PrimeKG, using PrimeKG with disease nodes merged.This experiment explored different slices of PrimeKG, using both top-down and down-top approach to filtering. PrimeGT used. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/feat/prime-kg-exp/cross-kg/primekg/primekg_summary_report.ipynb)
+
+- **[XG Synth] PrimeKG + Matrix Experiment (Disease Split)**: Experiment with MATRIX pipeline and PrimeKG, using PrimeKG with disease nodes merged.This experiment explored how is MATRIX pipeline performing in a disease-split setting using PrimeKG knowledge graph and PrimeGT. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/feat/prime-kg-exp/cross-kg/primekg/primekg_summary_report.ipynb)
+
+- **[XG Ensemble] PrimeKG + Matrix Experiment (Disease Split)**: Experiment with MATRIX pipeline and PrimeKG, using PrimeKG with disease nodes merged.This experiment explored how is MATRIX pipeline performing in a disease-split setting using PrimeKG knowledge graph and PrimeGT. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/feat/prime-kg-exp/cross-kg/primekg/primekg_summary_report.ipynb)
+
+- **Patent Scraping Part 3**: Additional Patent Scraping: Test newer Claude models (incl. Opus 4.5) and a lightweight CURIE lookup step. [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/2b2c23239f6e369976126563793398f6a074f2d1/uab-LLM-patent-scraping/experiment-november-2025/UAB_Patent_Semantic_Triple_Experiment_Report.ipynb)
 
 ### Bugfixes 🐛
 
