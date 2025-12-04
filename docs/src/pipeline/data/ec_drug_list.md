@@ -162,7 +162,7 @@ These annotations enable more sophisticated filtering, grouping, and analysis of
 
 #### Drug class distribution
 
-The drug class column is designed to group drugs that share a mechanism of action/drug target, to enable navigation and linkinh between similar drugs. At present there are ~680 unique drug classes, with ~50% drug classes containing a single drug (i.e., n=1 classes). For n=1 drug classes, these are largely named after the drug itself (e.g., `drug_name` = "Pizotifen", `drug_class` = "Pizotifen").
+The drug class column is designed to group drugs that share a mechanism of action/drug target, to enable navigation and linking between similar drugs. At present there are ~680 unique drug classes, with ~50% drug classes containing a single drug (i.e., n=1 classes). For n=1 drug classes, these are largely named after the drug itself (e.g., `drug_name` = "Pizotifen", `drug_class` = "Pizotifen").
 
 Drug class is defined orthogonally to the `therapeutic_area` column, as drugs with a similar mechanism can be applied in different clinical settings (e.g., `Retinoid` drugs in `Targeted cancer therapy`, `Dermatology`, and `MSK` therapeutic areas)
 
