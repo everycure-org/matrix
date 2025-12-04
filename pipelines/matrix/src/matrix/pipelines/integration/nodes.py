@@ -353,7 +353,7 @@ def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
         - category: The category from the source (biolink:Drug or biolink:Disease)
     """
 
-    df = _union_datasets(*[node.select("id", "core_id", "name") for node in nodes])
+    df = _union_datasets(*[node.select("id", "core_id", "name", "category") for node in nodes])
 
     df_filtered = df.select(
         "id", "core_id", "name", "category"
