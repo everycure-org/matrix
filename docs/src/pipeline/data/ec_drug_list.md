@@ -15,7 +15,7 @@ Key characteristics of the EC Drug List:
 
 ## Location on GCS
 
-The EC Drug List is stored in the public GCS bucket and can be accessed at the following path ([here on GCS](<https://console.cloud.google.com/storage/browser/data.dev.everycure.org/data/01_RAW/drug_list?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&inv=1&invt=Ab3Ejg&project=mtrx-hub-dev-3of>)):
+The EC Drug List is stored in the public GCS bucket and can be accessed at the following path ([here on GCS](https://console.cloud.google.com/storage/browser/data.dev.everycure.org/data/01_RAW/drug_list?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&inv=1&invt=Ab3Ejg&project=mtrx-hub-dev-3of)):
 
 ```
 gs://data.dev.everycure.org/data/01_RAW/drug_list/{version}/ec-drug-list.tsv
