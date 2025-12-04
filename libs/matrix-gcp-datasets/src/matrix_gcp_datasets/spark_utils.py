@@ -110,10 +110,8 @@ class SparkManager:
 
                 # Override any relative temp paths to use the mounted volume
                 checkpoint_dir = f"{spark_local_dirs}/checkpoints"
-                checkpoint_dir = f"{spark_local_dirs}/checkpoints"
                 temp_configs = {
                     "spark.sql.warehouse.dir": f"{spark_local_dirs}/spark-warehouse",
-                    "spark.sql.streaming.checkpointLocation": checkpoint_dir,
                     "spark.sql.streaming.checkpointLocation": checkpoint_dir,
                     "java.io.tmpdir": spark_local_dirs,
                     "spark.driver.host.tmpdir": spark_local_dirs,
