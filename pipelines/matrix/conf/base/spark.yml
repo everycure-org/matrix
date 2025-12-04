@@ -7,7 +7,7 @@ spark.driver.maxResultSize: 18g
 # only using this due to failures in the past. Default is 3
 spark.task.maxFailures: 5
 # Configure Spark to use mounted volume for temporary storage
-spark.local.dir: /data/spark-temp
+spark.local.dir: ./data/spark-temp
 # Additional configurations to ensure all Spark temp operations use the mounted volume
 spark.sql.warehouse.dir: /data/spark-warehouse
 spark.sql.streaming.checkpointLocation: /data/checkpoints

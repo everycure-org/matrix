@@ -53,7 +53,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "drugs": "integration.int.drug_list.nodes.norm@pandas",
                             "diseases": "integration.int.disease_list.nodes.norm@pandas",
                             "graph": "matrix_generation.feat.nodes@kg",
-                            "clinical_trials": "integration.int.ec_clinical_trails.edges.norm@pandas",
+                            "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@pandas",
                             "off_label": "integration.int.off_label.edges.norm@pandas",
                             **(
                                 {"orchard": "integration.int.orchard.edges.norm@pandas"}

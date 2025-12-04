@@ -22,12 +22,10 @@ class KGMLGroundTruthTransformer(Transformer):
     @staticmethod
     def _rename_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
-            edges_df.withColumnRenamed("source", "subject")
-            .withColumnRenamed("target", "object")
-            .withColumn("disease", f.col("object"))
-            .withColumn("drug", f.col("subject"))
-            .withColumn("predicate", f.lit("clinical_trails"))
-            .withColumn("drug|disease", f.concat(f.col("subject"), f.lit("|"), f.col("object")))
+            edges_df.withColumnRenamed("drug_id", "subject")
+            .withColumnRenamed("drug_ec_id", "subject_ec_id")
+            .withColumnRenamed("disease_id", "object")
+            .withColumn("predicate", f.lit("kgml_xdtd"))
         )
 
     def _extract_pos_edges(self, edges_df: ps.DataFrame) -> ps.DataFrame:
