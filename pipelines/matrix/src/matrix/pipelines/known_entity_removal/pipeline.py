@@ -5,8 +5,6 @@ from matrix.kedro4argo_node import ArgoNode
 
 from . import nodes
 
-# TODO: Add resource config and fuse nodes
-
 
 def create_pipeline(**kwargs) -> Pipeline:
     available_datasets = settings.DYNAMIC_PIPELINES_MAPPING().get("known_entity_removal").get("available_datasets")
