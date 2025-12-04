@@ -24,7 +24,6 @@ class HFIterableDatasetConfig(BaseModel):
     token: Optional[str] = None
     dataframe_type: Literal["spark", "polars", "pandas"] = Field(default="spark")
     data_dir: Optional[str] = None
-    
 
     def build_push_kwargs(self, token: str) -> dict[str, Any]:
         kwargs: dict[str, Any] = {
@@ -202,14 +201,12 @@ class HFIterableDataset(AbstractDataset):
         resp.raise_for_status()
         return resp.json()["sha"]
 
-
     def _list_hub_files(self, dataset_id, revision="main"):
         """List files in the dataset repository on HF Hub."""
         url = f"https://huggingface.co/api/datasets/{dataset_id}/tree/{revision}"
         resp = requests.get(url)
         resp.raise_for_status()
         return resp.json()
-
 
     def _wait_for_sha(self, dataset_id, expected_sha, timeout=300, interval=5):
         """Wait for a specified amount of timeuntil the Hub reports the expected SHA."""
@@ -222,13 +219,11 @@ class HFIterableDataset(AbstractDataset):
 
             if time.time() - start > timeout:
                 raise TimeoutError(
-                    f"Timed out waiting for SHA to update. "
-                    f"Current SHA: {current_sha}, Expected: {expected_sha}"
+                    f"Timed out waiting for SHA to update. Current SHA: {current_sha}, Expected: {expected_sha}"
                 )
 
             log.info(f"Waiting for SHA update... (current={current_sha}, expected={expected_sha})")
             time.sleep(interval)
-
 
     def _verify_stream_load(self, dataset_id, revision="main"):
         """Try streaming one row from the dataset to confirm it is readable."""
@@ -239,7 +234,6 @@ class HFIterableDataset(AbstractDataset):
             return True
         except Exception as e:
             raise RuntimeError(f"Streaming load failed: {e}")
-
 
     def _verify_hf_upload(self, dataset_id, pushed_sha):
         """Verify if the upload to Hugging Face Hub was successful."""
@@ -258,4 +252,3 @@ class HFIterableDataset(AbstractDataset):
         self._verify_stream_load(dataset_id)
 
         log.info(f"\n🎉 All checks passed. Upload of {dataset_id} to Hugging Face Hub is verified.")
-
