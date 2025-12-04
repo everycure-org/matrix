@@ -67,8 +67,16 @@ integration.prm.unified_nodes:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/nodes
 
+integration.prm.unified_nodes@pandas:
+  <<: [*_pandas_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified/nodes
+
 integration.prm.unified_edges:
   <<: [*_spark_parquet, *_layer_prm]
+  filepath: ${globals:paths.integration}/prm/unified/edges
+
+integration.prm.unified_edges@pandas:
+  <<: [*_pandas_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges
 
 integration.int.unified_ground_truth_edges:

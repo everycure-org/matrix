@@ -1,11 +1,3 @@
-integration.prm.unified_nodes_pandas:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.integration}/prm/unified/nodes
-
-integration.prm.unified_edges_pandas:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.integration}/prm/unified/edges
-
 # Hugging Face Hub datasets (write) - datasets to publish
 kg_edges_hf_published:
   type: matrix_gcp_datasets.huggingface.HFIterableDataset

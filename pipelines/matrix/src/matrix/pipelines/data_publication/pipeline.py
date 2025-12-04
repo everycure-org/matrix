@@ -10,7 +10,7 @@ def create_pipeline() -> Pipeline:
         [
             node(
                 func=publish_dataset_to_hf,
-                inputs="integration.prm.unified_edges_pandas",
+                inputs="integration.prm.unified_edges@pandas",
                 outputs="kg_edges_hf_published",
                 name="publish_kg_edges_node",
             ),
@@ -24,7 +24,7 @@ def create_pipeline() -> Pipeline:
 
             node(
                 func=publish_dataset_to_hf,
-                inputs="integration.prm.unified_nodes_pandas",
+                inputs="integration.prm.unified_nodes@pandas",
                 outputs="kg_nodes_hf_published",
                 name="publish_kg_nodes_node",
             ),
