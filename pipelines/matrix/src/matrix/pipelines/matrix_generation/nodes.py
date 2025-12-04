@@ -69,6 +69,8 @@ def generate_pairs(
 ) -> ps.DataFrame:
     """Function to generate matrix dataset.
 
+    We drop duplicates among ground truth sources as we might have duplicate pairs when using EC_id.
+
     Args:
         known_pairs: Labelled ground truth drug-disease pairs dataset.
         drugs: Dataframe containing IDs for the list of drugs.
@@ -88,9 +90,45 @@ def generate_pairs(
         else:
             return ["source", "target"]
 
+    def add_test_pairs_flags(matrix: ps.DataFrame, known_pairs: ps.DataFrame) -> ps.DataFrame:
+        matrix_known_pairs_join_columns = get_join_columns(matrix.columns, known_pairs.columns)
+
+        test_pairs = (
+            known_pairs.filter(F.col("split") == "TEST")
+            .select(*(matrix_known_pairs_join_columns + ["y"]))
+            .drop_duplicates()
+        )
+
+        matrix = (
+            matrix.alias("matrix")
+            .join(test_pairs.alias("test_pairs"), on=matrix_known_pairs_join_columns, how="left")
+            .select(
+                F.col("matrix.*"),
+                (F.coalesce(F.col("test_pairs.y") == 1, F.lit(False))).alias("is_known_positive"),
+                (F.coalesce(F.col("test_pairs.y") != 1, F.lit(False))).alias("is_known_negative"),
+            )
+        )
+        return matrix
+
     def add_clinical_trials_flags(matrix: ps.DataFrame, clinical_trials: ps.DataFrame) -> ps.DataFrame:
         matrix_clinical_trials_join_columns = get_join_columns(matrix.columns, clinical_trials.columns)
-        clinical_trials = clinical_trials.withColumnsRenamed({"subject": "source", "object": "target"})
+        clinical_trials = (
+            clinical_trials.withColumnsRenamed(
+                {"subject": "source", "object": "target", "subject_ec_id": "source_ec_id"}
+            )
+            .select(
+                *(
+                    matrix_clinical_trials_join_columns
+                    + [
+                        "significantly_better",
+                        "non_significantly_better",
+                        "significantly_worse",
+                        "non_significantly_worse",
+                    ]
+                )
+            )
+            .drop_duplicates()
+        )
         matrix = (
             matrix.alias("matrix")
             .join(clinical_trials.alias("clinical_trials"), on=matrix_clinical_trials_join_columns, how="left")
@@ -112,8 +150,12 @@ def generate_pairs(
 
     def add_off_label_flags(matrix: ps.DataFrame, off_label: ps.DataFrame) -> ps.DataFrame:
         matrix_off_label_join_columns = get_join_columns(matrix.columns, off_label.columns)
-        off_label = off_label.withColumnsRenamed(
-            colsMap={"subject": "source", "subject_ec_id": "source_ec_id", "object": "target"}
+        off_label = (
+            off_label.withColumnsRenamed(
+                colsMap={"subject": "source", "drug_ec_id": "source_ec_id", "object": "target"}
+            )
+            .select(*matrix_off_label_join_columns)
+            .drop_duplicates()
         )
         matrix = (
             matrix.alias("matrix")
@@ -127,7 +169,16 @@ def generate_pairs(
 
     def add_orchard_flags(matrix: ps.DataFrame, orchard: ps.DataFrame) -> ps.DataFrame:
         matrix_orchard_join_columns = get_join_columns(matrix.columns, orchard.columns)
-        orchard = orchard.withColumnsRenamed({"subject": "source", "object": "target"})
+        orchard = (
+            orchard.withColumnsRenamed({"subject": "source", "object": "target"})
+            .select(
+                *(
+                    matrix_orchard_join_columns
+                    + ["high_evidence_matrix", "mid_evidence_matrix", "archive_biomedical_review"]
+                )
+            )
+            .drop_duplicates()
+        )
         matrix = (
             matrix.alias("matrix")
             .join(orchard.alias("orchard"), on=matrix_orchard_join_columns, how="left")
@@ -148,7 +199,7 @@ def generate_pairs(
         )
         return matrix
 
-    # 1. Filter out drugs and diseases without embeddings
+    # Filter out drugs and diseases without embeddings
     drugs_in_graph = drugs.alias("drugs").join(node_embeddings.select("id"), on="id", how="inner")
     if "ec_id" in drugs.columns:
         drugs_in_graph = drugs_in_graph.select(
@@ -163,34 +214,23 @@ def generate_pairs(
         .select(F.col("diseases.id").alias("target"))
     )
 
-    # 2. Generate all drug / disease combinations that are not in the training set
+    # Generate all drug / disease combinations that are not in the training set
     matrix = drugs_in_graph.crossJoin(diseases_in_graph)
 
+    # Filter out training pairs
     matrix_known_pairs_join_columns = get_join_columns(matrix.columns, known_pairs.columns)
     train_pairs = known_pairs.filter(F.col("split") == "TRAIN")
     matrix = matrix.join(train_pairs, on=matrix_known_pairs_join_columns, how="leftanti")
 
-    # 3. Add known pairs flags
-    test_pairs = known_pairs.filter(F.col("split") == "TEST")
-    matrix = (
-        matrix.alias("matrix")
-        .join(test_pairs.alias("test_pairs"), on=matrix_known_pairs_join_columns, how="left")
-        .select(
-            F.col("matrix.*"),
-            (F.coalesce(F.col("test_pairs.y") == 1, F.lit(False))).alias("is_known_positive"),
-            (F.coalesce(F.col("test_pairs.y") != 1, F.lit(False))).alias("is_known_negative"),
-        )
-    )
+    # Add ground truth flags
+    matrix = add_test_pairs_flags(matrix, known_pairs)
 
-    # 4. Add clinical trials flags
     if clinical_trials is not None:
         matrix = add_clinical_trials_flags(matrix, clinical_trials)
 
-    # 5. Add off label flags
     if off_label is not None:
         matrix = add_off_label_flags(matrix, off_label)
 
-    # 6. Add orchard flags
     if orchard is not None:
         matrix = add_orchard_flags(matrix, orchard)
 

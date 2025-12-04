@@ -336,7 +336,6 @@ def test_generate_pairs_without_ec_id(
 
 
 def test_make_predictions_and_sort(
-    spark,
     sample_node_embeddings,
     sample_matrix_data,
     transformers,
