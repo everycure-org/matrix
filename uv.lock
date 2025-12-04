@@ -2807,6 +2807,7 @@ dev = [
 
 [[package]]
 name = "matrix-docs"
+version = "0.0.0"
 source = { editable = "docs" }
 dependencies = [
     { name = "jupyter" },
