@@ -125,8 +125,6 @@ class SparkManager:
                     logger.info(f"Setting {key} to {value}")
             else:
                 checkpoint_dir = "data/tmp/spark_checkpoints"
-            else:
-                checkpoint_dir = "data/tmp/spark_checkpoints"
 
             # Configure GPU resources if available
             num_gpus = detect_gpus()
