@@ -79,10 +79,6 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
 
     graph = GraphFrame(gf_nodes, gf_edges)
 
-    spark = nodes.sparkSession
-    checkpoint_dir = "/data/checkpoints/graphframes"
-    spark.sparkContext.setCheckpointDir(checkpoint_dir)
-
     components = graph.connectedComponents()
 
     node_assignments = components.select(F.col("id"), F.col("component").alias("component_id"))
