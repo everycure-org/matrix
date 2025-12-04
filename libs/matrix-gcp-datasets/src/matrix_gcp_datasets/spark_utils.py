@@ -109,9 +109,10 @@ class SparkManager:
                 logger.info(f"SPARK_LOCAL_DIRS detected: {spark_local_dirs}. Configuring additional temp paths.")
 
                 # Override any relative temp paths to use the mounted volume
+                checkpoint_dir = f"{spark_local_dirs}/checkpoints"
                 temp_configs = {
                     "spark.sql.warehouse.dir": f"{spark_local_dirs}/spark-warehouse",
-                    "spark.sql.streaming.checkpointLocation": f"{spark_local_dirs}/checkpoints",
+                    "spark.sql.streaming.checkpointLocation": checkpoint_dir,
                     "java.io.tmpdir": spark_local_dirs,
                     "spark.driver.host.tmpdir": spark_local_dirs,
                     "spark.executor.host.tmpdir": spark_local_dirs,
@@ -120,6 +121,8 @@ class SparkManager:
                 for key, value in temp_configs.items():
                     parameters[key] = value
                     logger.info(f"Setting {key} to {value}")
+            else:
+                checkpoint_dir = "data/tmp/spark_checkpoints"
 
             # Configure GPU resources if available
             num_gpus = detect_gpus()
@@ -158,6 +161,7 @@ class SparkManager:
                 .config(conf=spark_conf)
                 .getOrCreate()
             )
+            cls._spark_session.sparkContext.setCheckpointDir(checkpoint_dir)
         else:
             logger.debug("SparkSession already initialized")
 
