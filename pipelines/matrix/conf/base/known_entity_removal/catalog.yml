@@ -6,14 +6,14 @@ _spark_parquet: &_spark_parquet
   save_args:
     mode: overwrite
 
-known_entity_removal.concatenated_ground_truth:
+known_entity_removal.int.concatenated_ground_truth:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/concatenated_ground_truth
 
-known_entity_removal.expanded_ground_truth:
+known_entity_removal.int.expanded_ground_truth:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/expanded_ground_truth
 
-known_entity_removal.known_entity_matrix:
+known_entity_removal.model_output.known_entity_matrix:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/known_entity_matrix
