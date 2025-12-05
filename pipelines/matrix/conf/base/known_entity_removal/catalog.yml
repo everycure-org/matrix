@@ -18,7 +18,7 @@ known_entity_removal.model_output.known_entity_matrix:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/known_entity_matrix
 
-known_entity_removal.raw.orchard_reviews:
+known_entity_removal.raw.orchard_pairs:
   type: matrix_gcp_datasets.gcp.PandasBigQueryDataset
   project: ec-orchard-prod
   dataset: orchard_us

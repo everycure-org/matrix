@@ -119,10 +119,57 @@ def create_known_entity_matrix(
     )
 
 
-def preprocess_orchard_reviews(orchard_reviews: ps.DataFrame) -> ps.DataFrame:
+def _remove_null_names(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     """
-    Preprocess the orchard review dataset.
+    Remove Orchard pairs with null names.
     """
-    # breakpoint()
+    return orchard_pairs[orchard_pairs["drug_name"].notna() & orchard_pairs["disease_name"].notna()]
 
-    return None
+
+def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
+    """
+    Add status and archival labels for Orchard pairs.
+    """
+    # Add labels for whether a pair reached a given status
+    orchard_pairs["reached_sac"] = orchard_pairs["status_transitions"].str.contains("SAC_ENDORSED")
+    orchard_pairs["reached_deep_dive"] = orchard_pairs["status_transitions"].str.contains("DEEP_DIVE")
+    orchard_pairs["reached_med_review"] = orchard_pairs["status_transitions"].str.contains("MEDICAL_REVIEW")
+    orchard_pairs["reached_triage"] = orchard_pairs["status_transitions"].str.contains("TRIAGE")
+
+    # Add labels for known entity pairs
+    orchard_pairs["archived_known_on_label"] = (
+        orchard_pairs["latest_depriortization_reason"] == "DRUG_ON_LABEL_FOR_DISEASE"
+    )
+    orchard_pairs["archived_known_off_label"] = (
+        orchard_pairs["latest_depriortization_reason"] == "DRUG_WIDELY_USED_OFF_LABEL"
+    )
+    orchard_pairs["archived_known_entity"] = (
+        orchard_pairs["archived_known_on_label"] | orchard_pairs["archived_known_off_label"]
+    )
+
+    # Add labels for positive pairs : triaged and not archived as known entity
+    orchard_pairs["triaged_not_known_entity"] = (orchard_pairs["reached_triage"]) & (
+        ~orchard_pairs["archived_known_entity"]
+    )
+
+    return orchard_pairs
+
+
+def preprocess_orchard_pairs(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
+    """
+    Preprocess the Orchard pair dataset.
+    """
+    # Record columns before processing
+    old_columns = orchard_pairs.columns
+
+    # Process orchard pairs
+    orchard_pairs = _remove_null_names(orchard_pairs)
+    orchard_pairs = _add_labels(orchard_pairs)
+    orchard_pairs = orchard_pairs.rename(
+        columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id", "latest_created_at": "timestamp"}
+    )
+
+    # Select newly created or renamed columns and drug/disease name columns
+    new_columns = orchard_pairs.columns
+    columns_to_keep = ["drug_name", "disease_name"] + [col for col in new_columns if col not in old_columns]
+    return orchard_pairs[columns_to_keep]

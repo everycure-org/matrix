@@ -40,12 +40,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="known_entity_removal.model_output.known_entity_matrix",
             ),
             ArgoNode(
-                func=nodes.preprocess_orchard_reviews,
+                func=nodes.preprocess_orchard_pairs,
                 inputs={
-                    "orchard_reviews": "known_entity_removal.raw.orchard_reviews",
+                    "orchard_pairs": "known_entity_removal.raw.orchard_pairs",
                 },
-                name="preprocess_orchard_reviews",
-                outputs="known_entity_removal.model_output.preprocessed_orchard_reviews",
+                name="preprocess_orchard_pairs",
+                outputs="known_entity_removal.model_output.preprocessed_orchard_pairs",
             ),
         ]
     )
