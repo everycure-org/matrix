@@ -121,7 +121,7 @@ Each level is provided with both the code and a human-readable label for easier 
 The EC Drug List includes manually curated annotation columns that provide additional context for each drug:
 
 - **drug_class**: Classification of the drug type (e.g., `Antiinflammatory`, `Immune checkpoint inhibitor`). This field is populated for all drugs.
-- **therapeutic_area**: Primary therapeutic areas where the drug is used (e.g., "Cardiology", "Neurology"). This field is populated for all drugs in the list. Where a drug is commonly used in multiple therapeutic areas, these are separated with `|` (e.g., `Targeted cancer therapy | Dermatology`)
+- **therapeutic_area**: Primary therapeutic areas where the drug is used (e.g., "Cardiology", "Neurology"). This field is populated for all drugs in the list. Where a drug is commonly used in multiple therapeutic areas, these are separated with `;` (e.g., `Targeted cancer therapy; Dermatology`)
 
   <details>
   <summary>Click to view all 26 therapeutic area options (not including combinations of therapeutic areas)</summary>
@@ -131,7 +131,7 @@ The EC Drug List includes manually curated annotation columns that provide addit
   - Cardiovascular
   - Cell therapy
   - Chemotherapy adjunct
-  - CNS
+  - Central nervous system
   - Dermatology
   - Endocrine
   - Gastrointestinal
@@ -141,10 +141,10 @@ The EC Drug List includes manually curated annotation columns that provide addit
   - Immune
   - Metabolic
   - Misc
-  - MSK
+  - Musculoskeletal
   - Obstetrics
   - Ophthalmic
-  - PNS
+  - Peripheral nervous system
   - Renal
   - Respiratory
   - Sex hormone
