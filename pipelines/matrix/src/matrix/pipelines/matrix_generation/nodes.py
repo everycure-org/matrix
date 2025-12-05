@@ -114,7 +114,7 @@ def generate_pairs(
         matrix_clinical_trials_join_columns = get_join_columns(matrix.columns, clinical_trials.columns)
         clinical_trials = (
             clinical_trials.withColumnsRenamed(
-                {"subject": "source", "object": "target", "subject_ec_id": "source_ec_id"}
+                {"subject": "source", "subject_ec_id": "source_ec_id", "object": "target"}
             )
             .select(
                 *(
