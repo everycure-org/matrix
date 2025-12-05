@@ -26,7 +26,10 @@ class OntologyMONDO:
 
 
 class OntologyTest(OntologyMONDO):
-    """A class to override the OntologyMONDO class in the test environment."""
+    """A class to override the OntologyMONDO class in the test environment.
+
+    We're overriding the ontology class to avoid having to generate a consistent OWL file as part of or data fabrication process.
+    """
 
     def __init__(self, **kwargs):
         pass
