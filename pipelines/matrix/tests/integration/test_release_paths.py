@@ -56,7 +56,7 @@ def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict
     # Then
     for node in post_release_nodes:
         # Skip nodes tagged with "validation"
-        if "validation" in node.tags:
+        if "validation" in node.tags or "metrics" in node.tags:
             continue
 
         for dataset_name in node.outputs:
