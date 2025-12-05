@@ -11,6 +11,7 @@ from matrix.pipelines.filtering.pipeline import create_pipeline as create_filter
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
+from matrix.pipelines.known_entity_removal.pipeline import create_pipeline as create_known_entity_removal_pipeline
 from matrix.pipelines.matrix_generation.pipeline import (
     create_pipeline as create_matrix_pipeline,
 )
@@ -55,6 +56,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
         "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
         "run_comparison": create_run_comparison_pipeline(),
+        "known_entity_removal": create_known_entity_removal_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
@@ -118,9 +120,11 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["data_release"]
         + pipelines["document_kg"]
         + pipelines["ingest_to_N4J"]
+        + pipelines["known_entity_removal"]
     )
     pipelines["test_sample"] = (
         pipelines["feature_and_modelling_run"]
+        + pipelines["known_entity_removal"]
     )
     # fmt: on
 
