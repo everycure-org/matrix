@@ -1,5 +1,7 @@
+import datetime
 from functools import reduce
 
+import pandas as pd
 import pyspark.sql as ps
 from matrix_inject.inject import inject_object
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
@@ -155,7 +157,35 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     return orchard_pairs
 
 
-def preprocess_orchard_pairs(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
+def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Rename the latest_created_at column to timestamp and convert to datetime object.
+    """
+    orchard_pairs["timestamp"] = orchard_pairs["latest_created_at"].map(lambda x: x.to_pydatetime())
+    return orchard_pairs
+
+
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "drug_id": Column(str, nullable=False),
+            "disease_id": Column(str, nullable=False),
+            "timestamp": Column(datetime.datetime, nullable=False),
+            "reached_sac": Column(bool, nullable=False),
+            "reached_deep_dive": Column(bool, nullable=False),
+            "reached_med_review": Column(bool, nullable=False),
+            "reached_triage": Column(bool, nullable=False),
+            "archived_known_on_label": Column(bool, nullable=False),
+            "archived_known_off_label": Column(bool, nullable=False),
+            "archived_known_entity": Column(bool, nullable=False),
+            "triaged_not_known_entity": Column(bool, nullable=False),
+        },
+        unique=["drug_id", "disease_id"],
+    )
+)
+def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess the Orchard pair dataset.
     """
@@ -165,9 +195,8 @@ def preprocess_orchard_pairs(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     # Process orchard pairs
     orchard_pairs = _remove_null_names(orchard_pairs)
     orchard_pairs = _add_labels(orchard_pairs)
-    orchard_pairs = orchard_pairs.rename(
-        columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id", "latest_created_at": "timestamp"}
-    )
+    orchard_pairs = _convert_timestamp_to_datetime(orchard_pairs)
+    orchard_pairs = orchard_pairs.rename(columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id"})
 
     # Select newly created or renamed columns and drug/disease name columns
     new_columns = orchard_pairs.columns
