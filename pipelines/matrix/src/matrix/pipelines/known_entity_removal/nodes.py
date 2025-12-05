@@ -117,3 +117,12 @@ def create_known_entity_matrix(
         )
         .fillna(False, subset=["is_known_entity"])
     )
+
+
+def preprocess_orchard_reviews(orchard_reviews: ps.DataFrame) -> ps.DataFrame:
+    """
+    Preprocess the orchard review dataset.
+    """
+    # breakpoint()
+
+    return None
