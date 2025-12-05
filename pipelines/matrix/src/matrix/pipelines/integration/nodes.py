@@ -345,7 +345,14 @@ def normalize_core_nodes(
 
 
 def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
-    """Creates a mapping from normalized_id to core_id for core sources."""
+    """Creates a mapping from normalized_id to core_id for core sources.
+
+    Returns DataFrame with columns:
+        - normalized_id: The normalized CURIE
+        - core_id: The original drug_list/disease_list ID
+        - core_name: The entity name
+        - category: The category from the source (biolink:Drug or biolink:Disease)
+    """
 
     df = _union_datasets(*[node.select("id", "core_id", "name", "category") for node in nodes])
 
