@@ -1,0 +1,19 @@
+_spark_parquet: &_spark_parquet
+  type: matrix_gcp_datasets.gcp.LazySparkDataset
+  file_format: parquet
+  load_args:
+    header: True
+  save_args:
+    mode: overwrite
+
+known_entity_removal.int.concatenated_ground_truth:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.known_entity_removal}/concatenated_ground_truth
+
+known_entity_removal.int.expanded_ground_truth:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.known_entity_removal}/expanded_ground_truth
+
+known_entity_removal.model_output.known_entity_matrix:
+  <<: [*_spark_parquet]
+  filepath: ${globals:paths.known_entity_removal}/known_entity_matrix

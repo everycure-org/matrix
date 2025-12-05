@@ -1,0 +1,3 @@
+known_entity_removal:
+  mondo_ontology:
+    _object: matrix.pipelines.known_entity_removal.mondo_ontology.OntologyTest
