@@ -28,7 +28,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             func=nodes.filter_unified_kg_edges,
             inputs=[
-                "filtering.prm.prefiltered_nodes@spark",
+                "filtering.prm.prefiltered_nodes",
                 "integration.prm.unified_edges@spark",
                 "params:filtering.edge_filters",
             ],
