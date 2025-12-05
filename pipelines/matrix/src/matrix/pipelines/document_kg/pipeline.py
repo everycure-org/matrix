@@ -91,7 +91,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     func=nodes.integrate_all_metadata,
                     inputs={
                         "all_pks_metadata": "document_kg.int.all_pks_metadata",
-                        "unified_edges": "integration.prm.unified_edges",
+                        "unified_edges": "integration.prm.unified_edges@spark",
                     },
                     outputs="document_kg.prm.pks_yaml",
                     name="filter_to_relevant_pks",

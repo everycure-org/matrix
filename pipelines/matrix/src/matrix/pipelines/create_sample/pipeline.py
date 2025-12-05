@@ -21,8 +21,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "ground_truth_edges": "integration.int.ground_truth.edges.norm@spark",
                 },
                 outputs={
-                    "nodes": "integration.prm.unified_nodes",
-                    "edges": "integration.prm.unified_edges",
+                    "nodes": "integration.prm.unified_nodes@spark",
+                    "edges": "integration.prm.unified_edges@spark",
                 },
                 name="sample",
             )
