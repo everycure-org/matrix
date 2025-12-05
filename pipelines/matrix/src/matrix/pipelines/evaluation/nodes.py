@@ -23,11 +23,13 @@ def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
     """
     is_test = known_pairs["split"].eq("TEST")
     train_pairs = known_pairs[~is_test]
-    train_pairs_set = set(zip(train_pairs["source"], train_pairs["target"]))
-    data_pairs_set = set(zip(data["source"], data["target"]))
-    overlapping_pairs = data_pairs_set.intersection(train_pairs_set)
+    if "source_ec_id" in data.columns and "source_ec_id" in train_pairs.columns:
+        join_columns = ["source_ec_id", "target"]
+    else:
+        join_columns = ["source", "target"]
+    overlapping_pairs = data[join_columns].merge(train_pairs[join_columns], on=join_columns, how="inner")
 
-    if overlapping_pairs:
+    if len(overlapping_pairs) > 0:
         raise ValueError(f"Found {len(overlapping_pairs)} pairs in test set that also appear in training set.")
 
 
@@ -46,21 +48,6 @@ def check_ordered(
     """
     if not data[score_col_name].is_monotonic_decreasing:
         raise ValueError(f"The '{score_col_name}' column is not monotonically descending.")
-
-
-def perform_matrix_checks(matrix: pd.DataFrame, known_pairs: pd.DataFrame, score_col_name: str) -> None:
-    """Perform various checks on the evaluation dataset.
-
-    Args:
-        matrix: DataFrame containing a sorted matrix pairs dataset with probability scores, ranks and quantile ranks.
-        known_pairs: DataFrame with known drug-disease pairs.
-        score_col_name: Name of the column containing the treat scores.
-
-    Raises:
-        ValueError: If any of the checks fail.
-    """
-    check_no_train(matrix, known_pairs)
-    check_ordered(matrix, score_col_name)
 
 
 @check_output(

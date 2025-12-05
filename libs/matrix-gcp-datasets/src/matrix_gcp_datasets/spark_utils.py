@@ -161,6 +161,7 @@ class SparkManager:
                 .config(conf=spark_conf)
                 .getOrCreate()
             )
+
             cls._spark_session.sparkContext.setCheckpointDir(checkpoint_dir)
         else:
             logger.debug("SparkSession already initialized")

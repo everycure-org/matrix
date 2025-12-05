@@ -10,6 +10,6 @@ modelling.xg_ensemble:
           n_jobs: 16
           device: cuda
       features: # Features use regex, source_0, source_1, .., target_0, target_1
-        - source_+
-        - target_+
+        - source_\d+
+        - target_\d+
       target_col_name: y
