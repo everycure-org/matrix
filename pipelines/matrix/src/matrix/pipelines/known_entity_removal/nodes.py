@@ -102,6 +102,8 @@ def create_known_entity_matrix(
 ) -> ps.DataFrame:
     """
     Create the known entity matrix in accordance with output schema expected by Orchard.
+
+    FUTURE: Consider tracking upstream source for known entities.
     """
     return (
         drug_list.select(F.col("ec_id").alias("ec_drug_id"), F.col("id").alias("drug_translator_id"))
