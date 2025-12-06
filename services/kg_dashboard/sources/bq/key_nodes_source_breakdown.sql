@@ -174,7 +174,5 @@ SELECT
   COUNT(DISTINCT subject) as unique_subjects,
   COUNT(DISTINCT object) as unique_objects
 FROM key_node_edges
-WHERE upstream_data_source IS NOT NULL
-  AND primary_knowledge_source IS NOT NULL
 GROUP BY key_node_id, parent_category, upstream_data_source, primary_knowledge_source
 ORDER BY key_node_id, parent_category, edge_count DESC
