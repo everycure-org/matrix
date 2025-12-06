@@ -94,6 +94,7 @@ paths:
   evaluation:         data/releases/${versions.release}/runs/${run_name}/datasets/evaluation
   inference:          data/releases/${versions.release}/runs/${run_name}/datasets/inference
   run_comparison:     data/run_comparison/runs/${run_name}
+  known_entity_removal: data/releases/${versions.release}/runs/${run_name}/datasets/known_entity_removal
 
   tmp:                data/tmp
 

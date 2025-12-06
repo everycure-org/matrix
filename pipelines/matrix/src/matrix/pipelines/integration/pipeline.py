@@ -4,7 +4,7 @@ from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
 from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
-from . import nodes
+from . import connectivity_metrics, nodes
 
 
 def _create_integration_pipeline(
@@ -229,7 +229,36 @@ def create_pipeline(**kwargs) -> Pipeline:
                     },
                     outputs="integration.prm.metric_abox_tbox",
                     name="metric_abox_tbox",
-                    tags=["metrics", "validation"],
+                    tags=["metrics", "ontological"],
+                ),
+                ArgoNode(
+                    func=connectivity_metrics.compute_connected_components,
+                    inputs={
+                        "nodes": "integration.prm.unified_nodes",
+                        "edges": "integration.prm.unified_edges",
+                        "algorithm": "params:integration.connectivity.algorithm",
+                    },
+                    outputs={
+                        "node_assignments": "integration.prm.connected_components_node_assignments",
+                        "component_stats": "integration.prm.connected_components_stats",
+                    },
+                    name="compute_connected_components",
+                    tags=["metrics", "connectivity"],
+                    argo_config=ArgoResourceConfig(memory_request=96, memory_limit=96),
+                ),
+                node(
+                    func=connectivity_metrics.compute_core_connectivity_metrics,
+                    inputs={
+                        "nodes": "integration.prm.unified_nodes",
+                        "core_id_mapping": "integration.int.core_node_mapping",
+                        "connected_components": "integration.prm.connected_components_node_assignments",
+                    },
+                    outputs={
+                        "summary_metrics": "integration.prm.metric_core_connectivity_summary",
+                        "subgraph_details": "integration.prm.metric_core_connectivity_subgraph_details",
+                    },
+                    name="compute_core_connectivity_metrics",
+                    tags=["metrics", "connectivity"],
                 ),
             ]
         )
