@@ -7080,7 +7080,7 @@ class PredefinedTimeSplit(BaseCrossValidator):
             train_indices, test_indices = [], []
 
             for index, row in X.iterrows():
-                if row["drug|disease"] in self.testpool:
+                if f"{row['drug']}|{row['disease']}" in self.testpool:
                     test_indices.append(index)
                 else:
                     train_indices.append(index)
