@@ -72,6 +72,8 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
 
     logger.info("Computing connected components using GraphFrames...")
 
+    _ = ps.SparkSession.builder.getOrCreate()
+
     gf_nodes = nodes.select(F.col("id"))
 
     # Prepare edges for GraphFrame (needs 'src' and 'dst' columns)
@@ -146,7 +148,7 @@ def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame)
 
     # Convert results back to Spark DataFrames for pipeline compatibility
     # Use RDD with explicit partitioning to avoid large task closures
-    spark = nodes.sparkSession
+    spark = ps.SparkSession.builder.getOrCreate()
     node_assignment_data = [
         {"id": node_id, "component_id": int(comp_id)} for node_id, comp_id in zip(nodes_list, component_per_node)
     ]
@@ -218,7 +220,7 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
 
     # Convert results back to Spark DataFrames for pipeline compatibility
     # Use RDD with explicit partitioning to avoid large task closures
-    spark = nodes.sparkSession
+    spark = ps.SparkSession.builder.getOrCreate()
     node_assignment_data = [
         {"id": index_to_id[node_idx], "component_id": component_id}
         for component_id, node_indices_set in enumerate(components)
