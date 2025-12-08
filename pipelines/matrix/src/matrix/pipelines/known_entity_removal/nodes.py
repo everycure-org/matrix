@@ -133,17 +133,19 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     Add status and archival labels for Orchard pairs.
     """
     # Add labels for whether a pair reached a given status
-    orchard_pairs["reached_sac"] = orchard_pairs["status_transitions"].str.contains("SAC_ENDORSED")
-    orchard_pairs["reached_deep_dive"] = orchard_pairs["status_transitions"].str.contains("DEEP_DIVE")
-    orchard_pairs["reached_med_review"] = orchard_pairs["status_transitions"].str.contains("MEDICAL_REVIEW")
-    orchard_pairs["reached_triage"] = orchard_pairs["status_transitions"].str.contains("TRIAGE")
+    orchard_pairs["reached_sac"] = orchard_pairs["status_transitions_up_to_report_date"].str.contains("SAC_ENDORSED")
+    orchard_pairs["reached_deep_dive"] = orchard_pairs["status_transitions_up_to_report_date"].str.contains("DEEP_DIVE")
+    orchard_pairs["reached_med_review"] = orchard_pairs["status_transitions_up_to_report_date"].str.contains(
+        "MEDICAL_REVIEW"
+    )
+    orchard_pairs["reached_triage"] = orchard_pairs["status_transitions_up_to_report_date"].str.contains("TRIAGE")
 
     # Add labels for known entity pairs
     orchard_pairs["archived_known_on_label"] = (
-        orchard_pairs["latest_depriortization_reason"] == "DRUG_ON_LABEL_FOR_DISEASE"
+        orchard_pairs["depriortization_reason_at_report_date"] == "DRUG_ON_LABEL_FOR_DISEASE"
     )
     orchard_pairs["archived_known_off_label"] = (
-        orchard_pairs["latest_depriortization_reason"] == "DRUG_WIDELY_USED_OFF_LABEL"
+        orchard_pairs["depriortization_reason_at_report_date"] == "DRUG_WIDELY_USED_OFF_LABEL"
     )
     orchard_pairs["archived_known_entity"] = (
         orchard_pairs["archived_known_on_label"] | orchard_pairs["archived_known_off_label"]
@@ -157,14 +159,15 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     return orchard_pairs
 
 
-def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
-    """
-    Rename the latest_created_at column to timestamp and convert to datetime object.
-    """
-    # orchard_pairs["latest_created_at"] values expected to be pd.Timestamp.
-    # We convert to pd.Timestamp format to dal with string format from the fabricator.
-    orchard_pairs["timestamp"] = orchard_pairs["latest_created_at"].map(lambda x: pd.Timestamp(x).to_pydatetime())
-    return orchard_pairs
+# TODO: Remove
+# def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
+#     """
+#     Rename the latest_created_at column to timestamp and convert to datetime object.
+#     """
+#     # orchard_pairs["latest_created_at"] values expected to be pd.Timestamp.
+#     # We convert to pd.Timestamp format to also deal with string format from the fabricator.
+#     orchard_pairs["timestamp"] = orchard_pairs["last_created_at_at_report_date"].map(lambda x: pd.Timestamp(x).to_pydatetime())
+#     return orchard_pairs
 
 
 @check_output(
@@ -197,11 +200,13 @@ def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     # Process orchard pairs
     orchard_pairs = _remove_null_names(orchard_pairs)
     orchard_pairs = _add_labels(orchard_pairs)
-    orchard_pairs = _convert_timestamp_to_datetime(orchard_pairs)
+    # orchard_pairs = _convert_timestamp_to_datetime(orchard_pairs) # TODO: remove
     orchard_pairs = orchard_pairs.rename(columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id"})
 
     # Select newly created or renamed columns and drug/disease name columns
     new_columns = orchard_pairs.columns
-    columns_to_keep = ["drug_name", "disease_name"] + [col for col in new_columns if col not in old_columns]
+    columns_to_keep = ["drug_name", "disease_name", "report_date"] + [
+        col for col in new_columns if col not in old_columns
+    ]
 
     return orchard_pairs[columns_to_keep]

@@ -22,4 +22,4 @@ known_entity_removal.raw.orchard_pairs_latest_status:
   type: matrix_gcp_datasets.gcp.PandasBigQueryDataset
   project: ec-orchard-prod
   dataset: orchard_us
-  table: pairs_latest_status
+  table: pairs_status_transitions_by_month # pairs_latest_status
