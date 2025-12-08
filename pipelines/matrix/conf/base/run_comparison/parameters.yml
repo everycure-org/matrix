@@ -28,7 +28,7 @@ run_comparison:
 
       - name: v0.13.0_ec_id_evaluation
         fold_paths_list:
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.13.0/runs/evaluation-ec-id-90ed414b/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.13.0/runs/evaluation-ec-id-90ed414b/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
         file_format: "parquet"
         score_col_name: "treat score"
 
