@@ -2813,55 +2813,55 @@ fabricator.document_kg.mapping_kgregistry_infores:
         provider: sentence
 
 
-fabricator.known_entity_removal.orchard_pairs_latest_status.orchard_pairs_latest_status:
-  num_rows: 50
-  columns:
-    drug_kg_node_id:
-      type: copy_column
-      source_column: drug_list.id
-      sample:
-        num_rows: "@edges.num_rows"
-        seed: 40399
-    disease_kg_node_id:
-      type: copy_column
-      source_column: disease_list.id
-      sample:
-        num_rows: "@edges.num_rows"
-        seed: 30399
-    drug_name:
-      type: copy_column
-      source_column: drug_list.name
-      sample:
-        num_rows: "@edges.num_rows"
-        seed: 30399
-    disease_name:
-      type: copy_column
-      source_column: disease_list.name
-      sample:
-        num_rows: "@edges.num_rows"
-        seed: 30399
-    latest_created_at:
-      type: generate_dates
-      start_dt: 2020-01-01
-      end_dt: 2022-12-31
-      freq: D
-      date_format: "%Y-%m-%d %H:%M:%S"
-    latest_depriortization_reason:
-      type: generate_values
-      sample_values:
-        - "DRUG_ON_LABEL_FOR_DISEASE"
-        - "DRUG_WIDELY_USED_OFF_LABEL"
-        - "NONE"
-    status_transitions:
-      type: generate_random_arrays
-      delimiter: "|"
-      sample_values:
-        - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED"
-        - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE"
-        - "UNKNOWN > TRIAGE > MEDICAL_REVIEW"
-        - "UNKNOWN > TRIAGE"
-        - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED> ARCHIVED"
-        - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > ARCHIVED"
-        - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > ARCHIVED"
-        - "UNKNOWN > TRIAGE > ARCHIVED"
-        - "UNKNOWN > ARCHIVED"
+fabricator.known_entity_removal:
+  orchard_pairs_latest_status:
+    num_rows: 50
+    columns:
+      drug_kg_node_id:
+        type: copy_column
+        source_column: drug_list.id
+        sample:
+          num_rows: "@orchard_pairs_latest_status.num_rows"
+          seed: 40399
+      disease_kg_node_id:
+        type: copy_column
+        source_column: disease_list.id
+        sample:
+          num_rows: "@orchard_pairs_latest_status.num_rows"
+          seed: 30399
+      drug_name:
+        type: copy_column
+        source_column: drug_list.name
+        sample:
+          num_rows: "@orchard_pairs_latest_status.num_rows"
+          seed: 40399
+      disease_name:
+        type: copy_column
+        source_column: disease_list.name
+        sample:
+          num_rows: "@orchard_pairs_latest_status.num_rows"
+          seed: 30399
+      latest_created_at:
+        type: generate_dates
+        start_dt: 2020-01-01
+        end_dt: 2022-12-31
+        freq: D
+        date_format: "%Y-%m-%d %H:%M:%S"
+      latest_depriortization_reason:
+        type: generate_values
+        sample_values:
+          - "DRUG_ON_LABEL_FOR_DISEASE"
+          - "DRUG_WIDELY_USED_OFF_LABEL"
+          - "NONE"
+      status_transitions:
+        type: generate_values
+        sample_values:
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW"
+          - "UNKNOWN > TRIAGE"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED> ARCHIVED"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > ARCHIVED"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > ARCHIVED"
+          - "UNKNOWN > TRIAGE > ARCHIVED"
+          - "UNKNOWN > ARCHIVED"

@@ -43,6 +43,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=nodes.preprocess_orchard_pairs,
                 inputs={
                     "orchard_pairs": "known_entity_removal.raw.orchard_pairs_latest_status",
+                    # "drug_list": "integration.int.drug_list.nodes.norm@spark",
+                    # "disease_list": "integration.int.disease_list.nodes.norm@spark",
                 },
                 name="preprocess_orchard_pairs",
                 outputs="known_entity_removal.model_output.preprocessed_orchard_pairs",

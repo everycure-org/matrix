@@ -161,7 +161,9 @@ def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     """
     Rename the latest_created_at column to timestamp and convert to datetime object.
     """
-    orchard_pairs["timestamp"] = orchard_pairs["latest_created_at"].map(lambda x: x.to_pydatetime())
+    # orchard_pairs["latest_created_at"] values expected to be pd.Timestamp.
+    # We convert to pd.Timestamp format to dal with string format from the fabricator.
+    orchard_pairs["timestamp"] = orchard_pairs["latest_created_at"].map(lambda x: pd.Timestamp(x).to_pydatetime())
     return orchard_pairs
 
 
@@ -201,4 +203,5 @@ def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     # Select newly created or renamed columns and drug/disease name columns
     new_columns = orchard_pairs.columns
     columns_to_keep = ["drug_name", "disease_name"] + [col for col in new_columns if col not in old_columns]
+
     return orchard_pairs[columns_to_keep]
