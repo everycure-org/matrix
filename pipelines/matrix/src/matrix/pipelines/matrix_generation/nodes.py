@@ -85,10 +85,10 @@ def generate_pairs(
     """
 
     def get_join_columns(left_columns: list[str], right_columns: list[str]) -> list[str]:
-        if "source_ec_id" in left_columns and "source_ec_id" in right_columns:
-            return ["source_ec_id", "target"]
-        else:
-            return ["source", "target"]
+        # if "source_ec_id" in left_columns and "source_ec_id" in right_columns:
+        #     return ["source_ec_id", "target"]
+        # else:
+        return ["source", "target"]
 
     def add_test_pairs_flags(matrix: ps.DataFrame, known_pairs: ps.DataFrame) -> ps.DataFrame:
         matrix_known_pairs_join_columns = get_join_columns(matrix.columns, known_pairs.columns)
@@ -174,7 +174,13 @@ def generate_pairs(
             .select(
                 *(
                     matrix_orchard_join_columns
-                    + ["high_evidence_matrix", "mid_evidence_matrix", "archive_biomedical_review"]
+                    + [
+                        "high_evidence_matrix",
+                        "mid_evidence_matrix",
+                        "high_evidence_crowdsourced",
+                        "mid_evidence_crowdsourced",
+                        "archive_biomedical_review",
+                    ]
                 )
             )
             .drop_duplicates()

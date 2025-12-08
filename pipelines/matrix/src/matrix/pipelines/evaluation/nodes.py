@@ -23,10 +23,10 @@ def check_no_train(data: pd.DataFrame, known_pairs: pd.DataFrame) -> None:
     """
     is_test = known_pairs["split"].eq("TEST")
     train_pairs = known_pairs[~is_test]
-    if "source_ec_id" in data.columns and "source_ec_id" in train_pairs.columns:
-        join_columns = ["source_ec_id", "target"]
-    else:
-        join_columns = ["source", "target"]
+    # if "source_ec_id" in data.columns and "source_ec_id" in train_pairs.columns:
+    #     join_columns = ["source_ec_id", "target"]
+    # else:
+    join_columns = ["source", "target"]
     overlapping_pairs = data[join_columns].merge(train_pairs[join_columns], on=join_columns, how="inner")
 
     if len(overlapping_pairs) > 0:
