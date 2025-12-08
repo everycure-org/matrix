@@ -41,6 +41,7 @@ paths:
   matrix_transformations:  ${run_dir}/datasets/matrix_transformations
   inference:          ${run_dir}/datasets/inference 
   run_comparison:  ${runtime_gcs_bucket}/kedro/data/run_comparison/runs/${run_name}
+  known_entity_removal: ${run_dir}/datasets/known_entity_removal
   
   # Tmp. directory using k8s volume attached to the pod.
   tmp:           /data/tmp
