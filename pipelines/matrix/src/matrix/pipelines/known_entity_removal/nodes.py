@@ -1,4 +1,3 @@
-import datetime
 from functools import reduce
 
 import pandas as pd
@@ -177,7 +176,7 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
             "disease_name": Column(str, nullable=False),
             "drug_id": Column(str, nullable=False),
             "disease_id": Column(str, nullable=False),
-            "timestamp": Column(datetime.datetime, nullable=False),
+            "report_date": Column(str, nullable=False),
             "reached_sac": Column(bool, nullable=False),
             "reached_deep_dive": Column(bool, nullable=False),
             "reached_med_review": Column(bool, nullable=False),
@@ -192,7 +191,7 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
 )
 def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     """
-    Preprocess the Orchard pair dataset.
+    Preprocess the Orchard pairs by month dataset.
     """
     # Record columns before processing
     old_columns = orchard_pairs.columns

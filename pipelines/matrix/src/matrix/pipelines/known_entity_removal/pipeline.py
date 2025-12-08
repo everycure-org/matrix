@@ -42,7 +42,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ArgoNode(
                 func=nodes.preprocess_orchard_pairs,
                 inputs={
-                    "orchard_pairs": "known_entity_removal.raw.orchard_pairs_latest_status",
+                    "orchard_pairs": "known_entity_removal.raw.orchard_pairs_by_month",
                     # "drug_list": "integration.int.drug_list.nodes.norm@spark",
                     # "disease_list": "integration.int.disease_list.nodes.norm@spark",
                 },

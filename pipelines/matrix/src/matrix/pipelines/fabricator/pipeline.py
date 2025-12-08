@@ -425,8 +425,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "drug_list": "fabricator.int.drug_list",
                     "disease_list": "fabricator.int.disease_list",
                 },
-                outputs={"orchard_pairs_latest_status": "known_entity_removal.raw.orchard_pairs_latest_status"},
-                name="fabricate_orchard_pairs_latest_status",
+                outputs={"orchard_pairs_by_month": "known_entity_removal.raw.orchard_pairs_by_month"},
+                name="fabricate_orchard_pairs_by_month",
             ),
         ]
     )

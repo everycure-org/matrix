@@ -2814,32 +2814,32 @@ fabricator.document_kg.mapping_kgregistry_infores:
 
 
 fabricator.known_entity_removal:
-  orchard_pairs_latest_status:
+  orchard_pairs_by_month:
     num_rows: 50
     columns:
       drug_kg_node_id:
         type: copy_column
         source_column: drug_list.id
         sample:
-          num_rows: "@orchard_pairs_latest_status.num_rows"
+          num_rows: "@orchard_pairs_by_month.num_rows"
           seed: 40399
       disease_kg_node_id:
         type: copy_column
         source_column: disease_list.id
         sample:
-          num_rows: "@orchard_pairs_latest_status.num_rows"
+          num_rows: "@orchard_pairs_by_month.num_rows"
           seed: 30399
       drug_name:
         type: copy_column
         source_column: drug_list.name
         sample:
-          num_rows: "@orchard_pairs_latest_status.num_rows"
+          num_rows: "@orchard_pairs_by_month.num_rows"
           seed: 40399
       disease_name:
         type: copy_column
         source_column: disease_list.name
         sample:
-          num_rows: "@orchard_pairs_latest_status.num_rows"
+          num_rows: "@orchard_pairs_by_month.num_rows"
           seed: 30399
       report_date:
         type: generate_dates
@@ -2847,13 +2847,13 @@ fabricator.known_entity_removal:
         end_dt: 2022-12-01
         freq: M
         date_format: "%Y-%m-01"
-      latest_depriortization_reason:
+      depriortization_reason_at_report_date:
         type: generate_values
         sample_values:
           - "DRUG_ON_LABEL_FOR_DISEASE"
           - "DRUG_WIDELY_USED_OFF_LABEL"
           - "NONE"
-      status_transitions:
+      status_transitions_up_to_report_date:
         type: generate_values
         sample_values:
           - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED"
