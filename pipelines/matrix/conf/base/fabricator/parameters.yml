@@ -2841,12 +2841,12 @@ fabricator.known_entity_removal:
         sample:
           num_rows: "@orchard_pairs_latest_status.num_rows"
           seed: 30399
-      latest_created_at:
+      report_date:
         type: generate_dates
         start_dt: 2020-01-01
-        end_dt: 2022-12-31
-        freq: D
-        date_format: "%Y-%m-%d %H:%M:%S"
+        end_dt: 2022-12-01
+        freq: M
+        date_format: "%Y-%m-01"
       latest_depriortization_reason:
         type: generate_values
         sample_values:
