@@ -128,14 +128,15 @@ class HFIterableDataset(AbstractDataset):
                 )
                 pdf = ds.to_pandas()
                 return spark.createDataFrame(pdf)
-        if df_type == "polars":
+        elif df_type == "polars":
             try:
                 return ds.to_polars()
             except Exception as exc:  # pragma: no cover
                 raise RuntimeError("Polars not available for conversion. `uv add polars`.") from exc
-        if df_type == "pandas":
+        elif df_type == "pandas":
             return ds.to_pandas()
-        raise ValueError(f"Unsupported dataframe_type: {df_type}")
+        else:
+            raise ValueError(f"Unsupported dataframe_type: {df_type}")
 
     def _save(self, data: Any) -> None:
         # Local import to avoid importing heavy deps unless used
