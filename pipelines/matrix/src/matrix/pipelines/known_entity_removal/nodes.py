@@ -1,3 +1,4 @@
+import datetime
 from functools import reduce
 
 import pandas as pd
@@ -158,15 +159,14 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     return orchard_pairs
 
 
-# TODO: Remove
-# def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
-#     """
-#     Rename the latest_created_at column to timestamp and convert to datetime object.
-#     """
-#     # orchard_pairs["latest_created_at"] values expected to be pd.Timestamp.
-#     # We convert to pd.Timestamp format to also deal with string format from the fabricator.
-#     orchard_pairs["timestamp"] = orchard_pairs["last_created_at_at_report_date"].map(lambda x: pd.Timestamp(x).to_pydatetime())
-#     return orchard_pairs
+def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Rename the latest_created_at column to timestamp and convert to datetime object.
+    """
+    # orchard_pairs["last_created_at_at_report_date"] values expected to be pd.Timestamp.
+    # We convert to pd.Timestamp format to also deal with string format from the fabricator.
+    orchard_pairs["report_date"] = orchard_pairs["report_date"].map(lambda x: pd.Timestamp(x).to_pydatetime())
+    return orchard_pairs
 
 
 @check_output(
@@ -176,7 +176,7 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
             "disease_name": Column(str, nullable=False),
             "drug_id": Column(str, nullable=False),
             "disease_id": Column(str, nullable=False),
-            "report_date": Column(str, nullable=False),
+            "report_date": Column(datetime.datetime, nullable=False),
             "reached_sac": Column(bool, nullable=False),
             "reached_deep_dive": Column(bool, nullable=False),
             "reached_med_review": Column(bool, nullable=False),
@@ -186,7 +186,7 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
             "archived_known_entity": Column(bool, nullable=False),
             "triaged_not_known_entity": Column(bool, nullable=False),
         },
-        unique=["drug_id", "disease_id"],
+        unique=["drug_id", "disease_id", "report_date"],  # TODO: remove
     )
 )
 def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
@@ -199,7 +199,7 @@ def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     # Process orchard pairs
     orchard_pairs = _remove_null_names(orchard_pairs)
     orchard_pairs = _add_labels(orchard_pairs)
-    # orchard_pairs = _convert_timestamp_to_datetime(orchard_pairs) # TODO: remove
+    orchard_pairs = _convert_timestamp_to_datetime(orchard_pairs)
     orchard_pairs = orchard_pairs.rename(columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id"})
 
     # Select newly created or renamed columns and drug/disease name columns

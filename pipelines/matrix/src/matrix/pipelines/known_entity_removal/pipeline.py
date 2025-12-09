@@ -47,7 +47,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     # "disease_list": "integration.int.disease_list.nodes.norm@spark",
                 },
                 name="preprocess_orchard_pairs",
-                outputs="known_entity_removal.model_output.preprocessed_orchard_pairs",
+                outputs="known_entity_removal.int.preprocessed_orchard_pairs",
             ),
         ]
     )
