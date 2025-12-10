@@ -16,11 +16,12 @@ dependencies = [
     "matrix-mlflow-utils",
     "matrix-fabricator",
     "matrix-inject",
-    "matrix-io-utils",    
+    "matrix-io-utils",
     "matrix-inject",
     "matrix-pandera",
     "matrix-validator",
     "pre-commit>=4.2.0",
+    "owlready2>=0.49",
 ]
 
 [tool.uv.sources]
