@@ -268,7 +268,9 @@ def load_node_ids(nodes_file, violations, prefixes, found_unknown_prefixes):
             # Check structural row length
             structural_issue = check_row_structural(row, num_header_cols)
             if structural_issue:
-                record_violation(violations, "Inconsistent columns", f"Line {line_idx + 1} (1-based) {structural_issue}")
+                record_violation(
+                    violations, "Inconsistent columns", f"Line {line_idx + 1} (1-based) {structural_issue}"
+                )
                 continue
 
             # Check cell-level

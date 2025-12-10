@@ -20,7 +20,9 @@ class Validator(ABC):
         self._nodes = nodes
         self._edges = edges
 
-        tmp_prefixes = list(json.loads(il_resources.files(prefixmaps).joinpath("biolink-model-prefix-map.json").read_text()).keys())
+        tmp_prefixes = list(
+            json.loads(il_resources.files(prefixmaps).joinpath("biolink-model-prefix-map.json").read_text()).keys()
+        )
 
         # Handle the case when config is None or not provided
         if config is not None:
@@ -35,7 +37,9 @@ class Validator(ABC):
 
         self._prefixes = list(set(tmp_prefixes))
 
-        preferred_prefixes_per_class = json.loads(il_resources.files(prefixmaps).joinpath("preferred_prefixes_per_class.json").read_text())
+        preferred_prefixes_per_class = json.loads(
+            il_resources.files(prefixmaps).joinpath("preferred_prefixes_per_class.json").read_text()
+        )
         self._class_prefix_map = {
             item["class_name"]: [prefix["prefix"] for prefix in item["prefix_map"]]
             for item in preferred_prefixes_per_class["biolink_class_prefixes"]

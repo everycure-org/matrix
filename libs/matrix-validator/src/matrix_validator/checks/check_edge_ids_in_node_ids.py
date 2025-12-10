@@ -29,7 +29,9 @@ def validate(df, edge_ids: list, column: str):
     total_violations = missing_df.height
 
     # Group violations by prefix (extract prefix from before the colon)
-    with_prefix = violations_df.with_columns(pl.col("invalid_edge_ids_in_node_ids").str.split(":").list.first().alias("prefix"))
+    with_prefix = violations_df.with_columns(
+        pl.col("invalid_edge_ids_in_node_ids").str.split(":").list.first().alias("prefix")
+    )
 
     # Group by prefix and count
     prefix_counts = (
@@ -43,7 +45,10 @@ def validate(df, edge_ids: list, column: str):
     # Format output as a single JSON string
     result = {
         "error": {
-            "invalid_edge_ids_in_node_ids_summary": {"total_violations": total_violations, "prefix_violations": prefix_counts.to_dicts()}
+            "invalid_edge_ids_in_node_ids_summary": {
+                "total_violations": total_violations,
+                "prefix_violations": prefix_counts.to_dicts(),
+            }
         }
     }
 

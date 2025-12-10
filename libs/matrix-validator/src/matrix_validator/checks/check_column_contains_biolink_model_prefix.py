@@ -29,7 +29,10 @@ def validate(df, column, bm_prefixes: list):
     # Group by prefix and count
     prefix_counts = (
         with_prefix.group_by("prefix")
-        .agg(pl.count().alias("count"), pl.col(f"invalid_contains_biolink_model_prefix_{column}").head(3).alias("examples"))
+        .agg(
+            pl.count().alias("count"),
+            pl.col(f"invalid_contains_biolink_model_prefix_{column}").head(3).alias("examples"),
+        )
         .sort("count", descending=True)
     )
 

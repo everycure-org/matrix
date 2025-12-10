@@ -23,7 +23,9 @@ def validate(df, column, bm_knowledge_levels: list):
 
     # Get unique violations and limit to 10 examples
     unique_violations = violations_df.unique()
-    examples = unique_violations.get_column(f"invalid_contains_biolink_model_knowledge_level_{column}").head(10).to_list()
+    examples = (
+        unique_violations.get_column(f"invalid_contains_biolink_model_knowledge_level_{column}").head(10).to_list()
+    )
 
     # Create a summary report
     report = {

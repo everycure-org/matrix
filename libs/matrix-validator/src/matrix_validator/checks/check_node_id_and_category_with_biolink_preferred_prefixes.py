@@ -33,6 +33,8 @@ def validate(class_prefix_map, df):
         violations.add(violation_str)
 
     if violations:
-        violation_summary = {"error": {"check": "node_id_and_category_with_biolink_preferred_prefixes", "violations": violations}}
+        violation_summary = {
+            "error": {"check": "node_id_and_category_with_biolink_preferred_prefixes", "violations": violations}
+        }
         return json.dumps(violation_summary, default=serialize_sets)
     return None

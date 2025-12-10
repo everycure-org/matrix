@@ -74,9 +74,21 @@ class TestUtilFunctions(unittest.TestCase):
 
         # Assert the expected values are present
         expected_items = [
-            {"subject_category": "biolink:Gene", "predicate": "biolink:related_to", "object_category": "biolink:Disease"},
-            {"subject_category": "biolink:Gene", "predicate": "biolink:interacts_with", "object_category": "biolink:Protein"},
-            {"subject_category": "biolink:Chemical", "predicate": "biolink:treats", "object_category": "biolink:Disease"},
+            {
+                "subject_category": "biolink:Gene",
+                "predicate": "biolink:related_to",
+                "object_category": "biolink:Disease",
+            },
+            {
+                "subject_category": "biolink:Gene",
+                "predicate": "biolink:interacts_with",
+                "object_category": "biolink:Protein",
+            },
+            {
+                "subject_category": "biolink:Chemical",
+                "predicate": "biolink:treats",
+                "object_category": "biolink:Disease",
+            },
         ]
 
         for expected_item in expected_items:
@@ -133,9 +145,21 @@ class TestUtilFunctions(unittest.TestCase):
         # Mock the get_valid_edge_types function to return a controlled set of valid edges
         with mock.patch("matrix_validator.util.get_valid_edge_types") as mock_get_valid_edge_types:
             mock_get_valid_edge_types.return_value = [
-                {"subject_category": "biolink:Gene", "predicate": "biolink:related_to", "object_category": "biolink:Disease"},
-                {"subject_category": "biolink:Protein", "predicate": "biolink:interacts_with", "object_category": "biolink:Gene"},
-                {"subject_category": "biolink:ChemicalSubstance", "predicate": "biolink:treats", "object_category": "biolink:Disease"},
+                {
+                    "subject_category": "biolink:Gene",
+                    "predicate": "biolink:related_to",
+                    "object_category": "biolink:Disease",
+                },
+                {
+                    "subject_category": "biolink:Protein",
+                    "predicate": "biolink:interacts_with",
+                    "object_category": "biolink:Gene",
+                },
+                {
+                    "subject_category": "biolink:ChemicalSubstance",
+                    "predicate": "biolink:treats",
+                    "object_category": "biolink:Disease",
+                },
             ]
 
             # Call the function
@@ -145,7 +169,10 @@ class TestUtilFunctions(unittest.TestCase):
             self.assertEqual(len(result), 6)  # 6 distinct edge types
 
             # Check counts
-            counts_dict = {(row["subject_category"], row["predicate"], row["object_category"]): row["count"] for row in result.to_dicts()}
+            counts_dict = {
+                (row["subject_category"], row["predicate"], row["object_category"]): row["count"]
+                for row in result.to_dicts()
+            }
 
             # Valid edge types with their expected counts
             self.assertEqual(counts_dict[("biolink:Gene", "biolink:related_to", "biolink:Disease")], 1)
@@ -153,7 +180,10 @@ class TestUtilFunctions(unittest.TestCase):
             self.assertEqual(counts_dict[("biolink:ChemicalSubstance", "biolink:treats", "biolink:Disease")], 1)
 
             # Check validity
-            validity_dict = {(row["subject_category"], row["predicate"], row["object_category"]): row["valid"] for row in result.to_dicts()}
+            validity_dict = {
+                (row["subject_category"], row["predicate"], row["object_category"]): row["valid"]
+                for row in result.to_dicts()
+            }
 
             # These should be valid
             self.assertTrue(validity_dict[("biolink:Gene", "biolink:related_to", "biolink:Disease")])
@@ -166,7 +196,9 @@ class TestUtilFunctions(unittest.TestCase):
 
             # Check that we have a row for edges referencing unknown nodes
             unknown_edges = [
-                row for row in result.to_dicts() if row["subject_category"] == "unknown" or row["object_category"] == "unknown"
+                row
+                for row in result.to_dicts()
+                if row["subject_category"] == "unknown" or row["object_category"] == "unknown"
             ]
             self.assertEqual(len(unknown_edges), 1)
 
@@ -192,7 +224,11 @@ class TestUtilFunctions(unittest.TestCase):
         valid_nodes_df = pl.DataFrame({"id": ["node1", "node2"], "category": ["biolink:Gene", "biolink:Disease"]})
 
         valid_edges_df = pl.DataFrame(
-            {"subject": ["node1", "node2"], "predicate": ["biolink:related_to", "biolink:affects"], "object": ["node2", "node1"]}
+            {
+                "subject": ["node1", "node2"],
+                "predicate": ["biolink:related_to", "biolink:affects"],
+                "object": ["node2", "node1"],
+            }
         )
 
         # Test missing column in nodes dataframe

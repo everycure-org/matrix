@@ -82,9 +82,9 @@ def analyze_edge_types(nodes_df: pl.DataFrame, edges_df: pl.DataFrame) -> pl.Dat
         nodes_df = nodes_df.with_columns(pl.col("category").cast(pl.Utf8))
 
     # Join edges with nodes to get subject_category
-    edges_with_subject = edges_df.join(nodes_df.select(["id", "category"]), left_on="subject", right_on="id", how="left").rename(
-        {"category": "subject_category"}
-    )
+    edges_with_subject = edges_df.join(
+        nodes_df.select(["id", "category"]), left_on="subject", right_on="id", how="left"
+    ).rename({"category": "subject_category"})
 
     # Join with nodes again to get object_category
     edges_with_categories = edges_with_subject.join(
@@ -92,7 +92,9 @@ def analyze_edge_types(nodes_df: pl.DataFrame, edges_df: pl.DataFrame) -> pl.Dat
     ).rename({"category": "object_category"})
 
     # Group by subject_category, predicate, object_category and count
-    edge_type_counts = edges_with_categories.group_by(["subject_category", "predicate", "object_category"]).agg(count=pl.len())
+    edge_type_counts = edges_with_categories.group_by(["subject_category", "predicate", "object_category"]).agg(
+        count=pl.len()
+    )
 
     # Get valid edge types from biolink model
     valid_edge_types = get_valid_edge_types()
@@ -102,7 +104,11 @@ def analyze_edge_types(nodes_df: pl.DataFrame, edges_df: pl.DataFrame) -> pl.Dat
         valid=pl.struct(["subject_category", "predicate", "object_category"]).is_in(
             pl.Series(
                 [
-                    {"subject_category": et["subject_category"], "predicate": et["predicate"], "object_category": et["object_category"]}
+                    {
+                        "subject_category": et["subject_category"],
+                        "predicate": et["predicate"],
+                        "object_category": et["object_category"],
+                    }
                     for et in valid_edge_types
                 ]
             )

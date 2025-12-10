@@ -29,20 +29,20 @@ class OutputFormatChoice(str, Enum):
 
 @app.command()
 def main(
-        nodes: Annotated[Path, typer.Option("--nodes", "-n", help="Path to the nodes TSV file.")],
-        edges: Annotated[Path, typer.Option("--edges", "-e", help="Path to the edges TSV file.")],
-        verbose: int = 0,
-        quiet: bool = False,
-        config: Annotated[Path, typer.Option("--config", "-c", help="Path to the config file.")] = None,
-        validator: Annotated[
-            ValidatorImplementationChoice, typer.Option("--validator", "-n")
-        ] = ValidatorImplementationChoice.polars,
-        limit: Annotated[
-            int, typer.Option("--limit", "-l", help="Rows to validate.  When not set, all rows are validated.")
-        ] = None,
-        output_format: Annotated[
-            OutputFormatChoice, typer.Option("--output-format", "-o", help="Format of the validation report.")
-        ] = OutputFormatChoice.txt,
+    nodes: Annotated[Path, typer.Option("--nodes", "-n", help="Path to the nodes TSV file.")],
+    edges: Annotated[Path, typer.Option("--edges", "-e", help="Path to the edges TSV file.")],
+    verbose: int = 0,
+    quiet: bool = False,
+    config: Annotated[Path, typer.Option("--config", "-c", help="Path to the config file.")] = None,
+    validator: Annotated[
+        ValidatorImplementationChoice, typer.Option("--validator", "-n")
+    ] = ValidatorImplementationChoice.polars,
+    limit: Annotated[
+        int, typer.Option("--limit", "-l", help="Rows to validate.  When not set, all rows are validated.")
+    ] = None,
+    output_format: Annotated[
+        OutputFormatChoice, typer.Option("--output-format", "-o", help="Format of the validation report.")
+    ] = OutputFormatChoice.txt,
 ):
     """Run the Matrix Validator CLI."""
     match verbose:

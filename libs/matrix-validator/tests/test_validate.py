@@ -22,7 +22,9 @@ class TestValidate(unittest.TestCase):
 
     def test_biolink_prefix_class_mapping(self):
         """Test extraction of biolink preferred prefix per category mapping."""
-        preferred_prefixes_per_class = json.loads(il_resources.files(prefixmaps).joinpath("preferred_prefixes_per_class.json").read_text())
+        preferred_prefixes_per_class = json.loads(
+            il_resources.files(prefixmaps).joinpath("preferred_prefixes_per_class.json").read_text()
+        )
         class_prefix_map = {
             item["class_name"]: [prefix["prefix"] for prefix in item["prefix_map"]]
             for item in preferred_prefixes_per_class["biolink_class_prefixes"]

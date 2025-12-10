@@ -54,7 +54,9 @@ class ValidatorPanderaImpl(Validator):
                     validation_reports.append(f"❌ **Nodes Validation Failed**:\n{format_schema_error(error_message)}")
             except Exception as e:
                 error_message = str(e)
-                validation_reports.append(f"❌ **Nodes Validation Failed**:\n No valid data frame could be loaded.\n{error_message}")
+                validation_reports.append(
+                    f"❌ **Nodes Validation Failed**:\n No valid data frame could be loaded.\n{error_message}"
+                )
 
         if self._edges:
             try:
@@ -68,7 +70,9 @@ class ValidatorPanderaImpl(Validator):
                     validation_reports.append(f"❌ **Edges Validation Failed**:\n{format_schema_error(error_message)}")
             except Exception as e:
                 error_message = str(e)
-                validation_reports.append(f"❌ **Edges Validation Failed**:\n No valid data frame could be loaded.\n{error_message}")
+                validation_reports.append(
+                    f"❌ **Edges Validation Failed**:\n No valid data frame could be loaded.\n{error_message}"
+                )
 
         # Write validation report
         self.write_output(validation_reports)
