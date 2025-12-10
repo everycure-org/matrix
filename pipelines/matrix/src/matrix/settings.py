@@ -132,6 +132,14 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     # "disease_specific_hit_at_k_off_label",
                 ],
             },
+            "known_entity_removal": {
+                "available_datasets": [
+                    "kgml_xdtd_ground_truth",
+                    "ec_ground_truth",
+                    # "drugbank_ground_truth", TODO: figure out how to add private datasets
+                    "off_label",
+                ]
+            },
         },
     )
 )

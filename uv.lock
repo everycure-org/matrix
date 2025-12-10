@@ -2716,6 +2716,7 @@ dependencies = [
     { name = "matrix-pandera" },
     { name = "matrix-pipeline" },
     { name = "matrix-validator" },
+    { name = "owlready2" },
     { name = "pre-commit" },
 ]
 
@@ -2737,6 +2738,7 @@ requires-dist = [
     { name = "matrix-pandera", editable = "libs/matrix-pandera" },
     { name = "matrix-pipeline", editable = "pipelines/matrix" },
     { name = "matrix-validator", editable = "libs/matrix-validator" },
+    { name = "owlready2", specifier = ">=0.49" },
     { name = "pre-commit", specifier = ">=4.2.0" },
 ]
 
@@ -3140,6 +3142,7 @@ dependencies = [
     { name = "numpy" },
     { name = "openai" },
     { name = "openpyxl" },
+    { name = "owlready2" },
     { name = "pandas" },
     { name = "pandera" },
     { name = "polars-lts-cpu" },
@@ -3259,6 +3262,7 @@ requires-dist = [
     { name = "numpy", specifier = "==1.24.4" },
     { name = "openai" },
     { name = "openpyxl" },
+    { name = "owlready2", specifier = ">=0.49" },
     { name = "pandas", specifier = ">=2.1.1" },
     { name = "pandera", specifier = "==0.24.0" },
     { name = "polars-lts-cpu", specifier = ">=1.30.0" },
@@ -4149,6 +4153,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/36/86/b585f53236dec60ab
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/ab/fc8290c6a4c722e5514d80f62b2dc4c4df1a68a41d1364e625c35990fcf3/overrides-7.7.0-py3-none-any.whl", hash = "sha256:c7ed9d062f78b8e4c1a7b70bd8796b35ead4d9f510227ef9c5dc7626c60d7e49", size = 17832, upload-time = "2024-01-27T21:01:31.393Z" },
 ]
+
+[[package]]
+name = "owlready2"
+version = "0.49"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/06/de9eab54845aeb1a60d1b9bfe115e55540e00bab50d1ec52a4c503f33097/owlready2-0.49.tar.gz", hash = "sha256:f076f0a89f64cf27088b69f2ff65c7d5c27da15c0ac6c5ac57ec726e89baf928", size = 27305575, upload-time = "2025-11-24T16:50:48.735Z" }
 
 [[package]]
 name = "packaging"
