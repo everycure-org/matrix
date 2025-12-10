@@ -6,10 +6,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
-import typer
 import click
-
-from matrix_validator import __version__, validator_polars, validator_purepython, validator_schema
+import typer
+from matrix_validator import validator_polars, validator_purepython, validator_schema
 
 logger = logging.getLogger("matrix-validator")
 

@@ -7,7 +7,6 @@ from importlib import resources as il_resources
 
 import polars as pl
 from biolink_model import prefixmaps
-
 from matrix_validator.validator_polars import ValidatorPolarsDataFrameImpl, ValidatorPolarsFileImpl
 from matrix_validator.validator_schema import ValidatorPanderaImpl
 

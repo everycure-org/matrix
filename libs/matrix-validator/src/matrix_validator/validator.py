@@ -2,11 +2,11 @@
 
 import json
 import sys
+import tomllib
 from abc import ABC, abstractmethod
 from importlib import resources as il_resources
 from typing import Any
 
-import tomllib
 from biolink_model import prefixmaps
 
 

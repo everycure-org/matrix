@@ -1,12 +1,11 @@
 """Test utility functions."""
 
 import json
+import tomllib
 import unittest
 from unittest import mock
 
 import polars as pl
-import tomllib
-
 from matrix_validator.util import analyze_edge_types, get_valid_edge_types
 
 
