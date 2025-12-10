@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "matrix-validator"
+version = "0.1.0" 
+description = "Matrix Schema and Data Validation library."
+requires-python = ">=3.11"
+dependencies = [
+    "polars-lts-cpu>=1.23.0",
+    "pandera==0.24.0",
+    "pyspark>=3.5.0",
+    "pandas",
+    "pyarrow",
+    "grpcio",
+    "google-api-core",
+    "importlib-metadata>=8.2.0",
+    "tqdm==4.67.1",
+    "biolink-model==4.2.6rc4",
+    "patito==0.8.3"
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-mock",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
