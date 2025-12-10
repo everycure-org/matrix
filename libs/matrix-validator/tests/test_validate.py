@@ -44,9 +44,9 @@ class TestValidate(unittest.TestCase):
 
     def test_validate_dataframe_rtxkg2(self):
         """Test validation method from DataFrame implementation."""
-        test_nodes = os.path.join("tests/data/testdata_rtxkg2-kg_nodes.tsv")
+        test_nodes = os.path.join("tests/resources/testdata_rtxkg2-kg_nodes.tsv")
         nodes_df = pl.scan_csv(test_nodes, separator="\t", has_header=True, ignore_errors=True).collect()
-        test_edges = os.path.join("tests/data/testdata_rtxkg2-kg_edges.tsv")
+        test_edges = os.path.join("tests/resources/testdata_rtxkg2-kg_edges.tsv")
         edges_df = pl.scan_csv(test_edges, separator="\t", has_header=True, ignore_errors=True).collect()
         validator = ValidatorPolarsDataFrameImpl(nodes=nodes_df, edges=edges_df)
         ret = validator.validate()
@@ -56,9 +56,9 @@ class TestValidate(unittest.TestCase):
     def test_validate_dataframe_robokop(self):
         """Test validation method from DataFrame implementation."""
         # robokop
-        test_nodes = os.path.join("tests/data/testdata_robokop-kg_nodes.tsv")
+        test_nodes = os.path.join("tests/resources/testdata_robokop-kg_nodes.tsv")
         nodes_df = pl.scan_csv(test_nodes, separator="\t", has_header=True, ignore_errors=True).collect()
-        test_edges = os.path.join("tests/data/testdata_robokop-kg_edges.tsv")
+        test_edges = os.path.join("tests/resources/testdata_robokop-kg_edges.tsv")
         edges_df = pl.scan_csv(test_edges, separator="\t", has_header=True, ignore_errors=True).collect()
         validator = ValidatorPolarsDataFrameImpl(nodes=nodes_df, edges=edges_df)
         ret = validator.validate()
@@ -70,8 +70,8 @@ class TestValidate(unittest.TestCase):
         # matrix_data_dir = ""
         # test_nodes = os.path.join(matrix_data_dir, "data/01_RAW/KGs/rtx_kg2/v2.10.0_validated.1/rtx-kg2_2.10.0_v2-2_nodes_100.tsv")
         # test_edges = os.path.join(matrix_data_dir, "data/01_RAW/KGs/rtx_kg2/v2.10.0_validated.1/rtx-kg2_2.10.0_v2-2_edges_100.tsv")
-        test_nodes = os.path.join("tests/data/testdata_rtxkg2-kg_nodes.tsv")
-        test_edges = os.path.join("tests/data/testdata_rtxkg2-kg_edges.tsv")
+        test_nodes = os.path.join("tests/resources/testdata_rtxkg2-kg_nodes.tsv")
+        test_edges = os.path.join("tests/resources/testdata_rtxkg2-kg_edges.tsv")
         validator = ValidatorPolarsFileImpl(nodes_file_path=test_nodes, edges_file_path=test_edges)
 
         self.assertTrue(validator.validate() == 1)
@@ -81,8 +81,8 @@ class TestValidate(unittest.TestCase):
         # matrix_data_dir = ""
         # test_nodes = os.path.join(matrix_data_dir, "data/test/raw/KGs/robokop-kg/30fd1bfc18cd5ccb/robokop-30fd1bfc18cd5ccb_nodes.tsv")
         # test_edges = os.path.join(matrix_data_dir, "data/test/raw/KGs/robokop-kg/30fd1bfc18cd5ccb/robokop-30fd1bfc18cd5ccb_edges.tsv")
-        test_nodes = os.path.join("tests/data/testdata_robokop-kg_nodes.tsv")
-        test_edges = os.path.join("tests/data/testdata_robokop-kg_edges.tsv")
+        test_nodes = os.path.join("tests/resources/testdata_robokop-kg_nodes.tsv")
+        test_edges = os.path.join("tests/resources/testdata_robokop-kg_edges.tsv")
         validator = ValidatorPolarsFileImpl(nodes_file_path=test_nodes, edges_file_path=test_edges)
 
         self.assertTrue(validator.validate() == 1)
