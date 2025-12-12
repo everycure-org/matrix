@@ -161,11 +161,12 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
 
 def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     """
-    Rename the latest_created_at column to timestamp and convert to datetime object.
+    Convert timestamp column values to datetime objects.
     """
     # orchard_pairs["last_created_at_at_report_date"] values expected to be pd.Timestamp.
     # We convert to pd.Timestamp format to also deal with string format from the fabricator.
-    orchard_pairs["report_date"] = orchard_pairs["report_date"].map(lambda x: pd.Timestamp(x).to_pydatetime())
+    timestamp_columns = ["report_date", "last_created_at_at_report_date"]
+    orchard_pairs[timestamp_columns] = orchard_pairs[timestamp_columns].map(lambda x: pd.Timestamp(x).to_pydatetime())
     return orchard_pairs
 
 
@@ -177,6 +178,7 @@ def _convert_timestamp_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
             "drug_id": Column(str, nullable=False),
             "disease_id": Column(str, nullable=False),
             "report_date": Column(datetime.datetime, nullable=False),
+            "last_created_at_at_report_date": Column(datetime.datetime, nullable=False),
             "reached_sac": Column(bool, nullable=False),
             "reached_deep_dive": Column(bool, nullable=False),
             "reached_med_review": Column(bool, nullable=False),

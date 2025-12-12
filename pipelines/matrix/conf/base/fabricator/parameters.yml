@@ -2847,6 +2847,12 @@ fabricator.known_entity_removal:
         end_dt: 2022-12-01
         freq: M
         date_format: "%Y-%m-01"
+      last_created_at_at_report_date:
+        type: generate_dates
+        start_dt: 2020-01-01
+        end_dt: 2022-12-31
+        freq: D
+        date_format: "%Y-%m-%d %H:%M:%S"
       depriortization_reason_at_report_date:
         type: generate_values
         sample_values:
