@@ -1,4 +1,8 @@
 known_entity_removal:
+  # Specify a time-cutoff for the Orchard data used for evaluation and training. 
+  # Format: "YYYY-MM". Enter "latest" to use the latest available pairs.  
+  orchard_report_date: "latest"
+
   datasets_to_include:
     kgml_xdtd_ground_truth:
       positives: true
@@ -16,3 +20,4 @@ known_entity_removal:
   mondo_ontology:
     _object: matrix.pipelines.known_entity_removal.mondo_ontology.OntologyMONDO
     owl_url: https://purl.obolibrary.org/obo/mondo.owl
+

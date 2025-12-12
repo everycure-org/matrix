@@ -39,5 +39,23 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_known_entity_matrix",
                 outputs="known_entity_removal.model_output.known_entity_matrix",
             ),
+            ArgoNode(
+                func=nodes.preprocess_orchard_pairs,
+                inputs={
+                    "orchard_pairs": "known_entity_removal.raw.orchard_pairs_by_month",
+                },
+                name="preprocess_orchard_pairs",
+                outputs="known_entity_removal.int.preprocessed_orchard_pairs",
+            ),
+            ArgoNode(
+                func=nodes.restrict_report_date_and_join_predictions,
+                inputs={
+                    "orchard_pairs": "known_entity_removal.int.preprocessed_orchard_pairs",
+                    "known_entity_matrix": "known_entity_removal.model_output.known_entity_matrix",
+                    "orchard_report_date": "params:known_entity_removal.orchard_report_date",
+                },
+                name="restrict_report_date_and_join_predictions",
+                outputs="known_entity_removal.model_output.restricted_orchard_pairs",
+            ),
         ]
     )
