@@ -2842,11 +2842,12 @@ fabricator.known_entity_removal:
           num_rows: "@orchard_pairs_by_month.num_rows"
           seed: 30399
       report_date:
-        type: generate_dates
-        start_dt: 2020-01-01
-        end_dt: 2022-12-01
-        freq: M
-        date_format: "%Y-%m-01"
+        type: generate_values
+        sample_values:
+          - "2021-03-01"
+          - "2021-04-01"
+          - "2021-05-01"
+          - "2021-06-01"
       last_created_at_at_report_date:
         type: generate_dates
         start_dt: 2020-01-01
