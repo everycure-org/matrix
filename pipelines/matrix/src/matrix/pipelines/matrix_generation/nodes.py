@@ -162,7 +162,7 @@ def generate_pairs(
             .join(off_label.alias("off_label"), on=matrix_off_label_join_columns, how="left")
             .select(
                 F.col("matrix.*"),
-                F.lit(True).alias("off_label"),
+                F.coalesce(F.F.isnotnull("off_label.off_label"), F.lit(False)).alias("off_label"),
             )
         )
         return matrix
@@ -206,13 +206,16 @@ def generate_pairs(
         return matrix
 
     # Filter out drugs and diseases without embeddings
-    drugs_in_graph = drugs.alias("drugs").join(node_embeddings.select("id"), on="id", how="inner")
-    if "ec_id" in drugs.columns:
-        drugs_in_graph = drugs_in_graph.select(
-            F.col("drugs.id").alias("source"), F.col("drugs.ec_id").alias("source_ec_id")
-        )
-    else:
-        drugs_in_graph = drugs_in_graph.select(F.col("drugs.id").alias("source"))
+    drugs_in_graph = (
+        drugs.alias("drugs")
+        .join(node_embeddings.select("id"), on="id", how="inner")
+        .select(F.col("drugs.id").alias("source"))
+    )
+    # if "ec_id" in drugs.columns:
+    #    drugs_in_graph = drugs_in_graph.select(
+    #        F.col("drugs.id").alias("source"), F.col("drugs.ec_id").alias("source_ec_id")
+    #    )
+    # else:
 
     diseases_in_graph = (
         diseases.alias("diseases")
