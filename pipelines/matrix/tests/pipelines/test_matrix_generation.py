@@ -303,12 +303,12 @@ def test_make_predictions_and_sort(
     model_wrapper_1 = package_model_with_transformers(
         transformers,
         base_wrapper_1,
-        ["source_+", "target_+"],
+        ["source_\d+", "target_\d+"],
     )
     model_wrapper_2 = package_model_with_transformers(
         transformers,
         base_wrapper_2,
-        ["source_+", "target_+"],
+        ["source_\d+", "target_\d+"],
     )
 
     ensemble_model = ModelWrapper([model_wrapper_1, model_wrapper_2], np.mean)
