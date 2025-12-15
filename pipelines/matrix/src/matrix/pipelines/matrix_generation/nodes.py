@@ -154,15 +154,16 @@ def generate_pairs(
             off_label.withColumnsRenamed(
                 colsMap={"subject": "source", "drug_ec_id": "source_ec_id", "object": "target"}
             )
-            .select(*matrix_off_label_join_columns)
+            .select(*matrix_off_label_join_columns, "predicate")
             .drop_duplicates()
         )
+
         matrix = (
             matrix.alias("matrix")
             .join(off_label.alias("off_label"), on=matrix_off_label_join_columns, how="left")
             .select(
                 F.col("matrix.*"),
-                F.coalesce(F.F.isnotnull("off_label.off_label"), F.lit(False)).alias("off_label"),
+                F.coalesce(F.isnotnull("off_label.predicate"), F.lit(False)).alias("off_label"),
             )
         )
         return matrix
