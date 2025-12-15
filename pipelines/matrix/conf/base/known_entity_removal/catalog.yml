@@ -31,3 +31,7 @@ known_entity_removal.int.preprocessed_orchard_pairs:
 known_entity_removal.model_output.restricted_orchard_pairs:
   type: pandas.CSVDataset
   filepath: ${globals:paths.known_entity_removal}/restricted_orchard_pairs.csv
+
+known_entity_removal.evaluation.orchard_data_report_date:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.known_entity_removal}/orchard_data_report_date.csv
