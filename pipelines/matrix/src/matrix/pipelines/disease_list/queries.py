@@ -200,32 +200,6 @@ ORDER BY ?sorted_malacardslinkouts
 # =============================================================================
 
 
-def _query_filter_matrix_manually_included(store: Store) -> Set[str]:
-    """Get diseases manually included in the matrix."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_included> .
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
-def _query_filter_matrix_manually_excluded(store: Store) -> Set[str]:
-    """Get diseases manually excluded from the matrix."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_excluded> .
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
 def _query_filter_clingen(store: Store) -> Set[str]:
     """Get diseases curated by ClinGen."""
     query = (
@@ -745,14 +719,6 @@ def query_raw_disease_list_data_from_mondo(
 
     # 3. Add filter flags
     logger.info("Adding filter flags...")
-
-    df["f_matrix_manually_included"] = (
-        df["category_class"].isin(_query_filter_matrix_manually_included(store)).apply(lambda x: True if x else False)
-    )
-
-    df["f_matrix_manually_excluded"] = (
-        df["category_class"].isin(_query_filter_matrix_manually_excluded(store)).apply(lambda x: True if x else False)
-    )
 
     df["f_clingen"] = df["category_class"].isin(_query_filter_clingen(store)).apply(lambda x: True if x else False)
 

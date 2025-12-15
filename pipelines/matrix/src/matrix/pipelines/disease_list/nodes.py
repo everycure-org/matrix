@@ -277,8 +277,6 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             "subsets": pa.Column(dtype=str, nullable=True),
             "crossreferences": pa.Column(dtype=str, nullable=True),
             "malacards_linkouts": pa.Column(dtype=str, nullable=True),
-            "f_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
-            "f_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
             "f_clingen": pa.Column(dtype=bool, nullable=False),
             "f_susceptibility": pa.Column(dtype=bool, nullable=False),
             "f_mondo_subtype": pa.Column(dtype=bool, nullable=False),
@@ -463,56 +461,6 @@ def _extract_subtype_data(
     logger.info(f"Identified {len(subtype_counts)} disease subtypes")
 
     return subtype_counts, df_subtypes
-
-
-# TODO the following function might not be needed anymore. It basically sets the "official_matrix_filter" which is not used in production
-def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataFrame:
-    """Apply MATRIX filter rules to determine which diseases are included in the platform.
-
-    Args:
-        df_disease_list_unfiltered: Disease list with filter feature columns
-
-    Returns:
-        DataFrame with 'official_matrix_filter' column added
-    """
-    df_disease_list_unfiltered = df_disease_list_unfiltered.reset_index(drop=True)
-
-    filter_column = "official_matrix_filter"
-
-    df_disease_list_unfiltered[filter_column] = False
-
-    conflicts = df_disease_list_unfiltered[
-        (df_disease_list_unfiltered["f_matrix_manually_included"])
-        & (df_disease_list_unfiltered["f_matrix_manually_excluded"])
-    ]
-
-    if not conflicts.empty:
-        conflict_str = conflicts.to_string(index=False)
-        raise ValueError(
-            f"Conflicts found: The following entries are marked as both manually included and manually excluded:\n{conflict_str}"
-        )
-
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_matrix_manually_included"]
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_leaf"]
-
-    df_disease_list_unfiltered[filter_column] |= (df_disease_list_unfiltered["f_leaf_direct_parent"]) & (
-        (df_disease_list_unfiltered["f_omim"])
-        | (df_disease_list_unfiltered["f_omimps_descendant"])
-        | (df_disease_list_unfiltered["f_icd_category"])
-        | (df_disease_list_unfiltered["f_orphanet_disorder"])
-        | (df_disease_list_unfiltered["f_orphanet_subtype"])
-    )
-
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_icd_category"]
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_orphanet_disorder"]
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_clingen"]
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_omim"]
-
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"], filter_column] = False
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_paraphilic"], filter_column] = False
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"], filter_column] = False
-
-    return df_disease_list_unfiltered
 
 
 def _extract_groupings(
@@ -749,8 +697,6 @@ def _merge_disease_data_sources(
             "subsets": pa.Column(dtype=str, nullable=True),
             "crossreferences": pa.Column(dtype=str, nullable=True),
             "malacards_linkouts": pa.Column(dtype=str, nullable=True),
-            "f_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
-            "f_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
             "f_clingen": pa.Column(dtype=bool, nullable=False),
             "f_susceptibility": pa.Column(dtype=bool, nullable=False),
             "f_mondo_subtype": pa.Column(dtype=bool, nullable=False),
@@ -835,8 +781,6 @@ def _merge_disease_data_sources(
             "subsets": pa.Column(dtype=str, nullable=True),
             "crossreferences": pa.Column(dtype=str, nullable=True),
             "malacards_linkouts": pa.Column(dtype=str, nullable=True),
-            "is_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
-            "is_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
             "is_clingen": pa.Column(dtype=bool, nullable=False),
             "is_susceptibility": pa.Column(dtype=bool, nullable=False),
             "is_mondo_subtype": pa.Column(dtype=bool, nullable=False),
@@ -866,7 +810,6 @@ def _merge_disease_data_sources(
             "is_icd_category": pa.Column(dtype=bool, nullable=False),
             "is_icd_chapter_code": pa.Column(dtype=bool, nullable=False),
             "is_icd_chapter_header": pa.Column(dtype=bool, nullable=False),
-            "official_matrix_filter": pa.Column(dtype=bool, nullable=False),
             "harrisons_view": pa.Column(dtype=str, nullable=False),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=False),
@@ -933,9 +876,8 @@ def create_disease_list(
     grouping_heuristic_column = parameters["grouping_heuristic_column"]
 
     subtype_group_counts = _prepare_subtype_counts(subtype_counts)
-    filtered_df = _matrix_disease_filter(disease_list_raw)
     # See: https://github.com/everycure-org/matrix-disease-list/issues/75
-    filtered_df = filtered_df.rename(columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x)
+    filtered_df = disease_list_raw.rename(columns=lambda x: re.sub(r"^f_", "is_", x) if x.startswith("f_") else x)
 
     all_groupings = curated_groupings
     groupings_df = _extract_and_pivot_groupings(
