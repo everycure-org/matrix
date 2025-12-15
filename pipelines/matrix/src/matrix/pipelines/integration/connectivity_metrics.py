@@ -72,8 +72,6 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
 
     logger.info("Computing connected components using GraphFrames...")
 
-    _ = ps.SparkSession.builder.getOrCreate()
-
     gf_nodes = nodes.select(F.col("id"))
 
     # Prepare edges for GraphFrame (needs 'src' and 'dst' columns)
