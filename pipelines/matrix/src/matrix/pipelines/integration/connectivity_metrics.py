@@ -454,7 +454,7 @@ def compute_core_connectivity_metrics(
         logger.info(f"  Number of subgraphs: {num_subgraphs:,}")
         logger.info(f"  Core entities in LCC: {c_lcc:,}")
         logger.info(f"  LCC Fraction: {lcc_fraction:.4f}")
-        logger.info(f"  Weighted Connectivity Score: {weighted_score:.4f}")
+        logger.info(f"  Weighted Connectivity score: {weighted_score:.4f}")
 
         summary_data.append(
             {
