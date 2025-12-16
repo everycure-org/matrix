@@ -174,7 +174,7 @@ def test_create_known_entity_matrix(spark: ps.SparkSession, sample_drug_list, sa
 
 
 def test_preprocess_orchard_pairs(sample_orchard_pairs):
-    # Given a mock Orchard pairs dataframe and a fixed report date
+    # Given a mock Orchard pairs by month dataframe and a fixed report date
     orchard_pairs = sample_orchard_pairs["orchard_pairs"]
     orchard_report_date = sample_orchard_pairs["orchard_report_date"]
 
