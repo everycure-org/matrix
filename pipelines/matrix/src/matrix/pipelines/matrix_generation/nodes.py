@@ -214,9 +214,8 @@ def generate_pairs(
     )
     # if "ec_id" in drugs.columns:
     #    drugs_in_graph = drugs_in_graph.select(
-    #        F.col("drugs.id").alias("source"), F.col("drugs.ec_id").alias("source_ec_id")
+    #        F.col("source"), F.col("drugs.ec_id").alias("source_ec_id")
     #    )
-    # else:
 
     diseases_in_graph = (
         diseases.alias("diseases")
