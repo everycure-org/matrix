@@ -8,6 +8,7 @@ from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
+from .evaluation import give_projected_proportion, give_removal_rate, give_retrieval_rate  # noqa: F401
 from .mondo_ontology import OntologyMONDO
 
 logger = logging.getLogger(__name__)
