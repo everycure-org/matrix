@@ -51,17 +51,9 @@ known_entity_removal:
       evaluation_fn: give_retrieval_rate
 
     on_label_removal_rate:
-      label_col_name: "archived_KE_on_label"
+      label_col_name: "archived_known_on_label"
       evaluation_fn: give_removal_rate
 
     off_label_removal_rate:
-      label_col_name: "archived_KE_off_label"
-      evaluation_fn: give_removal_rate
-
-    archived_biomedical_removal_rate:
-      label_col_name: "archived_biomedical"
-      evaluation_fn: give_removal_rate
-
-    archived_no_evidence_removal_rate:
-      label_col_name: "archived_no_evidence"
+      label_col_name: "archived_known_off_label"
       evaluation_fn: give_removal_rate

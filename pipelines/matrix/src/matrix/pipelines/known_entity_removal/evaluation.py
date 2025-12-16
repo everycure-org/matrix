@@ -13,9 +13,11 @@ def give_proportion_with_bootstrap(series: pd.Series, label: bool) -> tuple[floa
     Returns:
         Tuple containing the proportion and a bootstrap uncertainty estimate.
     """
+    if len(series) == 0:
+        return None, None
     has_label_series = series == label
-    num_elements = len(boolean_series)
-    num_elements_with_label = boolean_series.sum().item()
+    num_elements = len(has_label_series)
+    num_elements_with_label = has_label_series.sum().item()
     proportion_with_label = num_elements_with_label / num_elements
     # Standard deviation of the proportion upon sampling N elements with replacement
     # https://en.wikipedia.org/wiki/Binomial_distribution
@@ -40,9 +42,7 @@ def give_retrieval_rate(
     return give_proportion_with_bootstrap(subset_pairs[filter_col_name], False)
 
 
-def give_removal_rate(
-    preds_with_labels: pd.DataFrame, bool_col_name: str, filter_col_name: str = "is_known_entity"
-) -> float:
+def give_removal_rate(pairs: pd.DataFrame, bool_col_name: str, filter_col_name: str = "is_known_entity") -> float:
     """Give the proportion of a subset of pairs that a boolean filter removes.
 
     Args:
@@ -70,7 +70,5 @@ def give_projected_proportion(
     Returns:
         Tuple containing the projected proportion and a bootstrap uncertainty estimate.
     """
-    allowed_pairs = preds_with_labels[~preds_with_labels[filter_col_name]]
-    if len(allowed_pairs) == 0:
-        return None, None
-    return give_proportion_with_bootstrap(allowed_pairs[bool_col_name], True)
+    non_filtered_pairs = pairs[~pairs[filter_col_name]]
+    return give_proportion_with_bootstrap(non_filtered_pairs[bool_col_name], True)
