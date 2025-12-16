@@ -141,6 +141,44 @@ def _remove_null_names(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     return orchard_pairs[orchard_pairs["drug_name"].notna() & orchard_pairs["disease_name"].notna()]
 
 
+def _convert_timestamps_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert timestamp columns to datetime.
+    """
+    # orchard_pairs["last_created_at_at_report_date"] values expected to be pd.Timestamp.
+    # We convert to pd.Timestamp format to also deal with string format from the fabricator.
+    timestamp_columns = ["report_date", "last_created_at_at_report_date"]
+    orchard_pairs[timestamp_columns] = orchard_pairs[timestamp_columns].map(lambda x: pd.Timestamp(x).to_pydatetime())
+    return orchard_pairs
+
+
+def _restrict_to_report_date(orchard_pairs: pd.DataFrame, orchard_report_date: str) -> dict[str, pd.DataFrame]:
+    """Restrict "Orchard pairs by month" to specified report date. Ensures reproducibility.
+
+    Args:
+        orchard_pairs: "Orchard pairs by month" dataframe.
+        orchard_report_date: Report date to restrict the Orchard data to.
+            Format: "YYYY-MM", or "latest" (to use the latest available pairs).
+
+    Returns:
+        Tuple:
+            - Restricted pairs dataframe with latest status for the report date.
+            - Report date as a dictionary.
+    """
+    if orchard_report_date == "latest":
+        orchard_report_date = orchard_pairs["report_date"].max()
+    else:
+        orchard_report_date = pd.Timestamp(orchard_report_date).to_pydatetime()
+    restricted_orchard_pairs = orchard_pairs[orchard_pairs["report_date"] == orchard_report_date]
+    restricted_orchard_pairs["last_created_at"] = restricted_orchard_pairs["last_created_at_at_report_date"].map(
+        lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
+    )
+    restricted_orchard_pairs = restricted_orchard_pairs.drop(columns=["report_date", "last_created_at_at_report_date"])
+
+    report_date_info = pd.DataFrame({"orchard_data_report_date": [orchard_report_date]})
+    return restricted_orchard_pairs, report_date_info
+
+
 def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     """
     Add status and archival labels for Orchard pairs.
@@ -172,34 +210,6 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
     return orchard_pairs
 
 
-def _restrict_to_report_date(orchard_pairs: pd.DataFrame, orchard_report_date: str) -> dict[str, pd.DataFrame]:
-    """Restrict "Orchard pairs by month" to specified report date. Ensures reproducibility.
-
-    Args:
-        orchard_pairs: "Orchard pairs by month" dataframe.
-        orchard_report_date: Report date to restrict the Orchard data to.
-            Format: "YYYY-MM", or "latest" (to use the latest available pairs).
-
-    Returns:
-        Tuple:
-            - Restricted pairs dataframe with latest status for the report date.
-            - Report date as a dictionary.
-    """
-    orchard_pairs["report_date"] = orchard_pairs["report_date"].map(lambda x: pd.Timestamp(x).to_pydatetime())
-    if orchard_report_date == "latest":
-        orchard_report_date = orchard_pairs["report_date"].max()
-    else:
-        orchard_report_date = pd.Timestamp(orchard_report_date).to_pydatetime()
-    restricted_orchard_pairs = orchard_pairs[orchard_pairs["report_date"] == orchard_report_date]
-    restricted_orchard_pairs = restricted_orchard_pairs.drop(columns="report_date")
-    restricted_orchard_pairs = restricted_orchard_pairs.rename(
-        columns={"last_created_at_at_report_date": "last_created_at"}
-    )
-
-    report_date_info = pd.DataFrame({"orchard_data_report_date": [orchard_report_date]})
-    return restricted_orchard_pairs, report_date_info
-
-
 @check_output(
     schema=DataFrameSchema(
         columns={
@@ -223,6 +233,7 @@ def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame, orchard_report_date: s
 
     # Process orchard pairs
     orchard_pairs = _remove_null_names(orchard_pairs)
+    orchard_pairs = _convert_timestamps_to_datetime(orchard_pairs)
     orchard_pairs, report_date_info = _restrict_to_report_date(orchard_pairs, orchard_report_date)
     orchard_pairs = _add_labels(orchard_pairs)
     orchard_pairs = orchard_pairs.rename(columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id"})
