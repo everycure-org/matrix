@@ -164,7 +164,7 @@ fabricator.rtx_kg2:
           - 195959
           - 5059595
   drug_list:
-    num_rows: 100
+    num_rows: 20
     columns:
       id:
         type: generate_unique_id
@@ -223,11 +223,11 @@ fabricator.rtx_kg2:
       deleted:
         type: generate_values
         sample_values:
-          True: 0.9
-          False: 0.1
+          True: 0.1
+          False: 0.9
 
   disease_list:
-    num_rows: 100
+    num_rows: 20
     columns:
       id:
         type: copy_column
@@ -296,8 +296,8 @@ fabricator.rtx_kg2:
       deleted:
         type: generate_values
         sample_values:
-          True: 0.9
-          False: 0.1
+          True: 0.1
+          False: 0.9
 
 fabricator.clinical_trials:
   pos_cols:
@@ -2815,7 +2815,7 @@ fabricator.document_kg.mapping_kgregistry_infores:
 
 fabricator.known_entity_removal:
   orchard_pairs_by_month:
-    num_rows: 50
+    num_rows: 20
     columns:
       drug_kg_node_id:
         type: copy_column

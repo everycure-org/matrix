@@ -297,6 +297,3 @@ def add_predictions_column(
     logger.warning(f"Number Orchard pairs without known entity predictions: {num_nulls}")
 
     return orchard_pairs_with_preds
-
-
-# Next: change proportion of deleted drugs
