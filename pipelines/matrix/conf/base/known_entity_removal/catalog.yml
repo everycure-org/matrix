@@ -39,3 +39,15 @@ known_entity_removal.int.processed_orchard_pairs@spark:
 known_entity_removal.evaluation.orchard_data_report_date:
   type: pandas.CSVDataset
   filepath: ${globals:paths.known_entity_removal}/orchard_data_report_date.csv
+
+known_entity_removal.int.orchard_pairs_with_predictions@pandas:
+  type: pandas.ParquetDataset
+  filepath: &orchard_pairs_with_predictions ${globals:paths.known_entity_removal}/orchard_pairs_with_predictions.parquet
+
+known_entity_removal.int.orchard_pairs_with_predictions@spark:
+  <<: [*_spark_parquet]
+  filepath: *orchard_pairs_with_predictions
+
+known_entity_removal.evaluation.metrics:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.known_entity_removal}/metrics.yml

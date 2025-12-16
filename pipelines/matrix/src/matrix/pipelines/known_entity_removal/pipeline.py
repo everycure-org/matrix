@@ -58,7 +58,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "known_entity_matrix": "known_entity_removal.model_output.known_entity_matrix",
                 },
                 name="add_predictions_column",
-                outputs="known_entity_removal.model_output.orchard_pairs_with_predictions",
+                outputs="known_entity_removal.int.orchard_pairs_with_predictions@spark",
+            ),
+            ArgoNode(
+                func=nodes.calculate_metrics,
+                inputs={
+                    "orchard_pairs_with_preds": "known_entity_removal.int.orchard_pairs_with_predictions@pandas",
+                    "metrics_to_report": "params:known_entity_removal.metrics_to_report",
+                },
+                name="calculate_metrics",
+                outputs="known_entity_removal.evaluation.metrics",
             ),
         ]
     )

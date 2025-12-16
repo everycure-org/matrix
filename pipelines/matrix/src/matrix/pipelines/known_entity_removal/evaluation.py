@@ -41,7 +41,7 @@ def give_retrieval_rate(
 
 
 def give_removal_rate(
-    preds_with_labels: pd.DataFrame, bool_col_name: str, filter_col_name: str = "KE_removal_filter"
+    preds_with_labels: pd.DataFrame, bool_col_name: str, filter_col_name: str = "is_known_entity"
 ) -> float:
     """Give the proportion of a subset of pairs that a boolean filter removes.
 
@@ -58,7 +58,7 @@ def give_removal_rate(
 
 
 def give_projected_proportion(
-    pairs: pd.DataFrame, bool_col_name: str, filter_col_name: str = "KE_removal_filter"
+    pairs: pd.DataFrame, bool_col_name: str, filter_col_name: str = "is_known_entity"
 ) -> float:
     """Give the projected proportion of pairs with True for a given target column if the filter is applied.
 

@@ -271,16 +271,20 @@ def add_predictions_column(
     return orchard_pairs_with_preds
 
 
-METRICS_DICT = {
-    "Positive pairs retrieval rate": (lambda x: give_retrieval_rate(x, "triaged_not_known_entity")),
-    "Known entity removal rate": (lambda x: give_removal_rate(x, "archived_known_entity")),
-    "Projected triage yield": (lambda x: give_projected_proportion(x, "reached_triage")),
-    "Med review retrieval rate": (lambda x: give_retrieval_rate(x, "reached_med_review")),
-    "Projected med review yield": (lambda x: give_projected_proportion(x, "reached_med_review")),
-    "Deep dive retrieval rate": (lambda x: give_retrieval_rate(x, "reached_deep_dive")),
-    "SAC retrieval rate": (lambda x: give_retrieval_rate(x, "reached_sac")),
-    "On-label removal rate": (lambda x: give_removal_rate(x, "archived_KE_on_label")),
-    "Off-label removal rate": (lambda x: give_removal_rate(x, "archived_KE_off_label")),
-    "Archived biomedical removal rate": (lambda x: give_removal_rate(x, "archived_biomedical")),
-    "Archived no evidence removal rate": (lambda x: give_removal_rate(x, "archived_no_evidence")),
-}
+def calculate_metrics(
+    orchard_pairs_with_preds: ps.DataFrame, metrics_to_report: dict[str, dict[str, str]]
+) -> dict[str, float]:
+    """Calculate the metrics for the known entity removal pipeline.
+
+    Args:
+        orchard_pairs_with_preds: Dataframe with known entity predictions and labels.
+        metrics_to_report: Dictionary of metrics to report.
+    """
+    metrics = {}
+    for metric_name, metric_info in metrics_to_report.items():
+        evaluation_fn = eval(metric_info["evaluation_fn"])
+        label_col_name = metric_info["label_col_name"]
+        mean, std = evaluation_fn(orchard_pairs_with_preds, label_col_name, filter_col_name="is_known_entity")
+        metrics[metric_name + "_mean"] = mean
+        metrics[metric_name + "_std"] = std
+    return metrics

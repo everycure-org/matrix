@@ -22,57 +22,46 @@ known_entity_removal:
     owl_url: https://purl.obolibrary.org/obo/mondo.owl
 
   metrics_to_report:
-    pos_retrieval_rate:
-      name: "Triaged not known entity pairs retrieval rate"
+    positive_retrieval_rate:
       label_col_name: "triaged_not_known_entity"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_retrieval_rate
+      evaluation_fn: give_retrieval_rate
 
     known_entity_removal_rate:
-      name: "Known entity removal rate"
       label_col_name: "archived_known_entity"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_removal_rate
+      evaluation_fn: give_removal_rate
 
     projected_triage_yield:
-      name: "Projected triage yield"
       label_col_name: "reached_triage"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_projected_proportion
+      evaluation_fn: give_projected_proportion
 
     med_review_retrieval_rate:
-      name: "Med review retrieval rate"
       label_col_name: "reached_med_review"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_retrieval_rate
+      evaluation_fn: give_retrieval_rate
 
     projected_med_review_yield:
-      name: "Projected med review yield"
       label_col_name: "reached_med_review"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_projected_proportion
+      evaluation_fn: give_projected_proportion
 
     deep_dive_retrieval_rate:
-      name: "Deep dive retrieval rate"
       label_col_name: "reached_deep_dive"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_retrieval_rate
+      evaluation_fn: give_retrieval_rate
 
     sac_retrieval_rate:
-      name: "SAC retrieval rate"
       label_col_name: "reached_sac"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_retrieval_rate
+      evaluation_fn: give_retrieval_rate
 
     on_label_removal_rate:
-      name: "On-label removal rate"
       label_col_name: "archived_KE_on_label"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_removal_rate
+      evaluation_fn: give_removal_rate
 
     off_label_removal_rate:
-      name: "Off-label removal rate"
       label_col_name: "archived_KE_off_label"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_removal_rate
+      evaluation_fn: give_removal_rate
 
     archived_biomedical_removal_rate:
-      name: "Archived biomedical removal rate"
       label_col_name: "archived_biomedical"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_removal_rate
+      evaluation_fn: give_removal_rate
 
     archived_no_evidence_removal_rate:
-      name: "Archived no evidence removal rate"
       label_col_name: "archived_no_evidence"
-      evaluation_fn: matrix.pipelines.known_entity_removal.evaluation.give_removal_rate
+      evaluation_fn: give_removal_rate
