@@ -254,8 +254,8 @@ def add_predictions_column(
     """Add a column with the known entity predictions.
 
     Args:
-        orchard_pairs: _description_ TODO
-        known_entity_matrix: _description_ TODO
+        orchard_pairs: Preprocessed Orchard pairs dataframe.
+        known_entity_matrix: Dataframe with known entity predictions across all drugs and diseases.
     """
     orchard_pairs_with_preds = orchard_pairs.join(
         known_entity_matrix.select(
@@ -266,6 +266,6 @@ def add_predictions_column(
     )
 
     num_nulls = orchard_pairs_with_preds.filter(F.col("is_known_entity").isNull()).count()
-    logger.warning(f"Number Orchard pairs without known entity predictions: {num_nulls}")
+    logger.warning(f"Number of Orchard pairs without known entity predictions: {num_nulls}")
 
     return orchard_pairs_with_preds
