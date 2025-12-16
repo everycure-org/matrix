@@ -243,6 +243,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
+                    "fabrication_params": "params:fabricator.ec_indications_list.graph",
+                    "drug_nodes": "ingestion.raw.drug_list",
+                    "disease_nodes": "ingestion.raw.disease_list",
+                },
+                outputs={
+                    "edges": "ingestion.raw.ec_indications_list.edges@pandas",
+                },
+                name="fabricate_ec_indications_list_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
                     "fabrication_params": "params:fabricator.off_label.graph",
                     "drug_nodes": "ingestion.raw.drug_list",
                     "disease_nodes": "ingestion.raw.disease_list",

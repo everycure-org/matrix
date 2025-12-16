@@ -88,6 +88,23 @@ def sample_off_label(spark):
                 "subject_ec_id": ["ec_drug_1"],
                 "object": ["disease_2"],
                 "off_label": [1],
+                "predicate": ["off_label"],
+            }
+        )
+    )
+
+
+@pytest.fixture
+def sample_ec_indications_list(spark):
+    """Fixture that provides sample ec indications list data for testing."""
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "subject": ["drug_2"],
+                "source_ec_id": ["ec_drug_2"],
+                "object": ["disease_1"],
+                "on_label": [True],
+                "off_label": [False],
             }
         )
     )
@@ -176,6 +193,7 @@ def test_generate_pairs(
     sample_clinical_trials,
     sample_off_label,
     sample_orchard,
+    sample_ec_indications_list,
 ):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
@@ -187,6 +205,7 @@ def test_generate_pairs(
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
         off_label=sample_off_label,
+        ec_indications_list=sample_ec_indications_list,
         orchard=sample_orchard,
     ).toPandas()
 
@@ -213,19 +232,11 @@ def test_generate_pairs(
             "trial_non_sig_better",
             "trial_sig_worse",
             "trial_non_sig_worse",
+            "ec_indications_list_on_label",
+            "ec_indications_list_off_label",
         ]
     )
-    assert all(
-        check_col(col)
-        for col in [
-            "is_known_positive",
-            "is_known_negative",
-            "trial_sig_better",
-            "trial_non_sig_better",
-            "trial_sig_worse",
-            "trial_non_sig_worse",
-        ]
-    )
+
     # Flag columns set correctly
     assert all(
         [
@@ -234,6 +245,7 @@ def test_generate_pairs(
                 "is_known_negative",
                 "trial_sig_better",
                 "high_evidence_matrix",
+                "ec_indications_list_on_label",
             )
         ]
     )
@@ -248,6 +260,7 @@ def test_generate_pairs(
                 "mid_evidence_matrix",
                 "mid_evidence_crowdsourced",
                 "archive_biomedical_review",
+                "ec_indications_list_off_label",
             )
         ]
     )

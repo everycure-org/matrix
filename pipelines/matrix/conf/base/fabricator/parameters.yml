@@ -184,6 +184,12 @@ fabricator.rtx_kg2:
         sample:
           num_rows: "@drug_list.num_rows"
           seed: 6850
+      drugbank_id:
+        type: generate_unique_id
+        prefixes:
+          - "DB"
+        delimiter: ""
+        id_length: 5
       atc_main:
         type: faker
         provider: word
@@ -414,6 +420,60 @@ fabricator.off_label:
           type: generate_values
           sample_values:
             - off-label use
+
+
+fabricator.ec_indications_list:
+  graph:
+    edges:
+      num_rows: 100
+      columns:
+        ec_id:
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        translator_id:
+          type: copy_column
+          source_column: drug_nodes.translator_id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        drugbank_id:
+          type: copy_column
+          source_column: drug_nodes.drugbank_id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        drug_name:
+          type: copy_column
+          source_column: drug_nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        target:
+          type: copy_column
+          source_column: disease_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 12312
+        disease_name:
+          type: copy_column
+          source_column: disease_nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 12312
+        on_label:
+          type: generate_values
+          sample_values:
+            True: 0.7
+            False: 0.3
+        off_label:
+          type: generate_values
+          sample_values:
+            True: 0.25
+            False: 0.75
+
 
 fabricator.orchard:
   edges:
