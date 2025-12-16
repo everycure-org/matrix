@@ -28,15 +28,11 @@ known_entity_removal.raw.orchard_pairs_by_month:
   dataset: orchard_us
   table: pairs_status_transitions_by_month 
 
-known_entity_removal.int.preprocessed_orchard_pairs:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.known_entity_removal}/preprocessed_orchard_pairs.csv
-
-known_entity_removal.model_output.restricted_orchard_pairs@pandas:
+known_entity_removal.int.processed_orchard_pairs@pandas:
   type: pandas.ParquetDataset
-  filepath: &processed_orchard_pairs ${globals:paths.known_entity_removal}/restricted_orchard_pairs.parquet  
+  filepath: &processed_orchard_pairs ${globals:paths.known_entity_removal}/preprocessed_orchard_pairs.parquet  
 
-known_entity_removal.model_output.restricted_orchard_pairs@spark:
+known_entity_removal.int.processed_orchard_pairs@spark:
   <<: [*_spark_parquet]
   filepath: *processed_orchard_pairs
 
