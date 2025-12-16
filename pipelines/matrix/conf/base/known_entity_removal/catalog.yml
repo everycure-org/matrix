@@ -6,6 +6,10 @@ _spark_parquet: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_csv: &_spark_csv
+  <<: [*_spark_parquet]
+  file_format: csv
+
 known_entity_removal.int.concatenated_ground_truth:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/concatenated_ground_truth
@@ -22,15 +26,19 @@ known_entity_removal.raw.orchard_pairs_by_month:
   type: matrix_gcp_datasets.gcp.PandasBigQueryDataset
   project: ec-orchard-prod
   dataset: orchard_us
-  table: pairs_status_transitions_by_month # pairs_latest_status
+  table: pairs_status_transitions_by_month 
 
 known_entity_removal.int.preprocessed_orchard_pairs:
   type: pandas.CSVDataset
   filepath: ${globals:paths.known_entity_removal}/preprocessed_orchard_pairs.csv
 
-known_entity_removal.model_output.restricted_orchard_pairs:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.known_entity_removal}/restricted_orchard_pairs.csv
+known_entity_removal.model_output.restricted_orchard_pairs@pandas:
+  type: pandas.ParquetDataset
+  filepath: &processed_orchard_pairs ${globals:paths.known_entity_removal}/restricted_orchard_pairs.parquet  
+
+known_entity_removal.model_output.restricted_orchard_pairs@spark:
+  <<: [*_spark_parquet]
+  filepath: *processed_orchard_pairs
 
 known_entity_removal.evaluation.orchard_data_report_date:
   type: pandas.CSVDataset

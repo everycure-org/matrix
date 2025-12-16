@@ -55,9 +55,21 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="restrict_to_report_date",
                 outputs={
-                    "restricted_orchard_pairs": "known_entity_removal.model_output.restricted_orchard_pairs",
+                    "restricted_orchard_pairs": "known_entity_removal.model_output.restricted_orchard_pairs@pandas",
                     "report_date_info": "known_entity_removal.evaluation.orchard_data_report_date",
                 },
+            ),
+            ArgoNode(
+                func=nodes.add_predictions_column,
+                inputs={
+                    "orchard_pairs": "known_entity_removal.model_output.restricted_orchard_pairs@spark",
+                    "known_entity_matrix": "known_entity_removal.model_output.known_entity_matrix",
+                    "orchard_raw": "known_entity_removal.raw.orchard_pairs_by_month",
+                    "drugs_list": "integration.int.drug_list.nodes.norm@pandas",
+                    "drugs_list_raw": "ingestion.raw.drug_list",
+                },
+                name="add_predictions_column",
+                outputs="known_entity_removal.model_output.orchard_pairs_with_predictions",
             ),
         ]
     )

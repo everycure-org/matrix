@@ -1,4 +1,5 @@
 import datetime
+import logging
 from functools import reduce
 
 import pandas as pd
@@ -9,6 +10,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 from .mondo_ontology import OntologyMONDO
+
+logger = logging.getLogger(__name__)
 
 LABEL_COLS = {
     "reached_sac": Column(bool, nullable=False),
@@ -230,10 +233,10 @@ def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     ),
     df_name="restricted_orchard_pairs",
 )
-def restrict_to_report_date(
-    orchard_pairs: pd.DataFrame, orchard_report_date: str
-) -> dict[str, pd.DataFrame]:  # tuple[pd.DataFrame, dict[str, str]]: # tuple[pd.DataFrame, dict]:
+def restrict_to_report_date(orchard_pairs: pd.DataFrame, orchard_report_date: str) -> dict[str, pd.DataFrame]:
     """Restrict Orchard pairs to specified report date. Ensures reproducibility.
+
+    # TODO: merge with preprocess_orchard_pairs
 
     Args:
         orchard_pairs: Preprocessed Orchard pairs dataframe.
@@ -259,47 +262,41 @@ def restrict_to_report_date(
     return {"restricted_orchard_pairs": restricted_orchard_pairs, "report_date_info": report_date_info}
 
 
-# NEXT: fabricator to create limited report dates
+@check_output(
+    schema=DataFrameSchema(
+        columns={
+            "drug_name": Column(str, nullable=False),
+            "disease_name": Column(str, nullable=False),
+            "drug_id": Column(str, nullable=False),
+            "disease_id": Column(str, nullable=False),
+            "last_created_at": Column(str, nullable=False),
+            **LABEL_COLS,
+            "is_known_entity": Column(bool, nullable=True),
+        },
+        unique=["drug_id", "disease_id"],
+    )
+)
+def add_predictions_column(
+    orchard_pairs: ps.DataFrame, known_entity_matrix: ps.DataFrame, orchard_raw, drugs_list, drugs_list_raw
+) -> ps.DataFrame:
+    """Add a column with the known entity predictions.
 
-# @check_output(
-#     schema=DataFrameSchema(
-#         columns={
-#             "drug_name": Column(str, nullable=False),
-#             "disease_name": Column(str, nullable=False),
-#             "drug_id": Column(str, nullable=False),
-#             "disease_id": Column(str, nullable=False),
-#             "report_date": Column(datetime.datetime, nullable=False),
-#             "last_created_at_at_report_date": Column(datetime.datetime, nullable=False),
-#             "reached_sac": Column(bool, nullable=False),
-#             "reached_deep_dive": Column(bool, nullable=False),
-#             "reached_med_review": Column(bool, nullable=False),
-#             "reached_triage": Column(bool, nullable=False),
-#             "archived_known_on_label": Column(bool, nullable=False),
-#             "archived_known_off_label": Column(bool, nullable=False),
-#             "archived_known_entity": Column(bool, nullable=False),
-#             "triaged_not_known_entity": Column(bool, nullable=False),
-#             "is_known_entity": Column(bool, nullable=False),
-#         },
-#         unique=["drug_id", "disease_id", "report_date"],
-#     )
-# )
-# def restrict_report_date_and_join_predictions(
-#     orchard_pairs: pd.DataFrame, known_entity_matrix: pd.DataFrame, orchard_report_date: str
-# ) -> pd.DataFrame:
-#     """Restrict Orchard pairs to within a cut-off date and attach a column with the known entity predictions.
+    Args:
+        orchard_pairs: _description_ TODO
+        known_entity_matrix: _description_ TODO
+    """
+    orchard_pairs_with_preds = orchard_pairs.join(
+        known_entity_matrix.select(
+            F.col("ec_drug_id").alias("drug_id"), F.col("target").alias("disease_id"), F.col("is_known_entity")
+        ),
+        on=["drug_id", "disease_id"],
+        how="left",
+    )
 
-#     Args:
-#         orchard_pairs: _description_ TODO
-#         known_entity_matrix: _description_ TODO
-#         orchard_report_date: _description_ TODO
-#     """
-#     # Restrict pairs to within cut-off date
-#     if orchard_report_date == "latest":
-#         orchard_report_date = orchard_pairs["report_date"].max()  # TODO: check
-#     else:
-#         orchard_report_date = pd.Timestamp(orchard_report_date).to_pydatetime()
-#     restricted_orchard_pairs = orchard_pairs[orchard_pairs["report_date"] == orchard_report_date]
+    num_nulls = orchard_pairs_with_preds.filter(F.col("is_known_entity").isNull()).count()
+    logger.warning(f"Number Orchard pairs without known entity predictions: {num_nulls}")
 
-#     # Label pairs with predictions and return
-#     # TODO fix known_entity_matrix is a sparek dataframe, transcode
-#     return pd.merge(restricted_orchard_pairs, known_entity_matrix, how="left", on=["drug_id", "disease_id"])
+    return orchard_pairs_with_preds
+
+
+# Next: change proportion of deleted drugs

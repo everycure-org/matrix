@@ -422,8 +422,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.known_entity_removal",
-                    "drug_list": "fabricator.int.drug_list",
-                    "disease_list": "fabricator.int.disease_list",
+                    "drug_list": "ingestion.raw.drug_list",
+                    "disease_list": "ingestion.raw.disease_list",
                 },
                 outputs={"orchard_pairs_by_month": "known_entity_removal.raw.orchard_pairs_by_month"},
                 name="fabricate_orchard_pairs_by_month",
