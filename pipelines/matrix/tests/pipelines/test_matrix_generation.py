@@ -232,8 +232,8 @@ def test_generate_pairs(
             "trial_non_sig_better",
             "trial_sig_worse",
             "trial_non_sig_worse",
-            "ec_indications_list_on_label",
             "ec_indications_list_off_label",
+            "ec_indications_list_on_or_off_label",
         ]
     )
 
@@ -245,7 +245,7 @@ def test_generate_pairs(
                 "is_known_negative",
                 "trial_sig_better",
                 "high_evidence_matrix",
-                "ec_indications_list_on_label",
+                "ec_indications_list_on_or_off_label",
             )
         ]
     )
