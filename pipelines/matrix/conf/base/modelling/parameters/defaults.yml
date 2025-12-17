@@ -85,8 +85,8 @@ _model_options:
         max_depth: 10
         device: cuda
     features: # Features use regex, source_0, source_1, .., target_0, target_1
-      - source_+
-      - target_+
+      - source_\d+
+      - target_\d+
     target_col_name: y
 
   # Define metrics to be used for check of performance 
