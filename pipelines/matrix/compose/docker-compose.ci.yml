@@ -34,13 +34,6 @@ services:
   matrix-pipeline:
     image: ${IMG}
     container_name: matrix
-    #build: 
-    #  context: "../"
-    #  platforms: 
-    #    - linux/amd64    # NOTE: We're omitting --runner ThreadRunner due to a CI
-    # only bug. We suspect that this is due to the hooks setup
-    # that should be resolved in the following issue:
-    # https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
     entrypoint:
       - "/bin/sh"
       - -ecx
