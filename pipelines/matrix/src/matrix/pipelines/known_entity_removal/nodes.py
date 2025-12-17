@@ -135,13 +135,6 @@ def create_known_entity_matrix(
     )
 
 
-def _remove_null_names(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
-    """
-    Remove Orchard pairs with null names.
-    """
-    return orchard_pairs[orchard_pairs["drug_name"].notna() & orchard_pairs["disease_name"].notna()]
-
-
 def _convert_timestamps_to_datetime(orchard_pairs: pd.DataFrame) -> pd.DataFrame:
     """
     Convert timestamp columns to datetime.
@@ -214,8 +207,6 @@ def _add_labels(orchard_pairs: ps.DataFrame) -> ps.DataFrame:
 @check_output(
     schema=DataFrameSchema(
         columns={
-            # "drug_name": Column(str, nullable=False),
-            # "disease_name": Column(str, nullable=False),
             "drug_id": Column(str, nullable=False),
             "disease_id": Column(str, nullable=False),
             "last_created_at": Column(str, nullable=False),
@@ -239,19 +230,15 @@ def preprocess_orchard_pairs(orchard_pairs: pd.DataFrame, orchard_report_date: s
     orchard_pairs = _add_labels(orchard_pairs)
     orchard_pairs = orchard_pairs.rename(columns={"drug_kg_node_id": "drug_id", "disease_kg_node_id": "disease_id"})
 
-    # Select newly created or renamed columns and drug/disease name columns # TODO update if needed
+    # Select newly created or renamed columns
     new_columns = orchard_pairs.columns
-    columns_to_keep = [
-        col for col in new_columns if col not in old_columns
-    ]  # ["drug_name", "disease_name"] + [col for col in new_columns if col not in old_columns]
+    columns_to_keep = [col for col in new_columns if col not in old_columns]
     return {"processed_orchard_pairs": orchard_pairs[columns_to_keep], "report_date_info": report_date_info}
 
 
 @check_output(
     schema=DataFrameSchema(
         columns={
-            # "drug_name": Column(str, nullable=False),
-            # "disease_name": Column(str, nullable=False),
             "drug_id": Column(str, nullable=False),
             "disease_id": Column(str, nullable=False),
             "last_created_at": Column(str, nullable=False),
