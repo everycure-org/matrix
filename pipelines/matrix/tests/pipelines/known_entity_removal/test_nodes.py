@@ -58,8 +58,6 @@ def sample_orchard_pairs(spark: ps.SparkSession) -> dict[str, pd.DataFrame]:
     """Create a sample orchard pairs dataframe."""
     orchard_pairs = pd.DataFrame(
         {
-            "drug_name": ["DrugA", "DrugB", "DrugA"],
-            "disease_name": ["DiseaseA", "DiseaseB", "DiseaseA"],
             "report_date": ["2021-03-01", "2021-03-01", "2021-04-01"],
             "last_created_at_at_report_date": [
                 "2020-06-20",
