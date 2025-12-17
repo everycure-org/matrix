@@ -88,6 +88,7 @@ def sample_off_label(spark):
                 "subject_ec_id": ["ec_drug_1"],
                 "object": ["disease_2"],
                 "off_label": [1],
+                "predicate": ["off_label"],
             }
         )
     )
@@ -196,7 +197,7 @@ def test_generate_pairs(
     assert len(result) == 3  # 2 drugs * 2 diseases - 1 training pair
     # Doesn't contain training pairs
     assert not result.apply(
-        lambda row: (row["source"], row["source_ec_id"], row["target"]) in [("drug_1", "ec_drug_1", "disease_1")],
+        lambda row: (row["source"], row["target"]) in [("drug_1", "disease_1")],
         axis=1,
     ).any()
 
