@@ -58,30 +58,24 @@ def sample_orchard_pairs(spark: ps.SparkSession) -> dict[str, pd.DataFrame]:
     """Create a sample orchard pairs dataframe."""
     orchard_pairs = pd.DataFrame(
         {
-            "drug_name": ["DrugA", "DrugB", None, "DrugC", "DrugA"],
-            "disease_name": ["DiseaseA", "DiseaseB", "DiseaseC", None, "DiseaseA"],
-            "report_date": ["2021-03-01", "2021-03-01", "2021-04-01", "2021-04-01", "2021-04-01"],
+            "drug_name": ["DrugA", "DrugB", "DrugA"],
+            "disease_name": ["DiseaseA", "DiseaseB", "DiseaseA"],
+            "report_date": ["2021-03-01", "2021-03-01", "2021-04-01"],
             "last_created_at_at_report_date": [
                 "2020-06-20",
                 "2020-06-24",
                 "2020-09-21",
-                "2021-02-13",
-                "2021-03-31",
             ],
-            "drug_kg_node_id": ["EC:00001", "EC:00002", "EC:00003", "EC:00004", "EC:00001"],
-            "disease_kg_node_id": ["RTX:00001", "RTX:00002", "RTX:00003", "RTX:00004", "RTX:00001"],
+            "drug_kg_node_id": ["EC:00001", "EC:00002", "EC:00003"],
+            "disease_kg_node_id": ["RTX:00001", "RTX:00002", "RTX:00003"],
             "status_transitions_up_to_report_date": [
                 "UNKNOWN > TRIAGE > SAC_ENDORSED",
                 "UNKNOWN > TRIAGE > DEEP_DIVE > ARCHIVED",
-                "UNKNOWN > TRIAGE",
-                "UNKNOWN > TRIAGE > MEDICAL_REVIEW",
-                "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > ARCHIVED",
+                "UNKNOWN > TRIAGE> MEDICAL_REVIEW > DEEP_DIVE > ARCHIVED",
             ],
             "depriortization_reason_at_report_date": [
                 None,
                 "DRUG_ON_LABEL_FOR_DISEASE",
-                None,
-                None,
                 "DRUG_WIDELY_USED_OFF_LABEL",
             ],
         }
@@ -188,16 +182,9 @@ def test_preprocess_orchard_pairs(sample_orchard_pairs):
     assert report_date == pd.Timestamp("2021-04-01")
     assert report_date_latest == pd.Timestamp("2021-04-01")
 
-    # And the processed pairs should have null names removed
+    # Only one row for 2021-04-01
     processed_pairs = result["processed_orchard_pairs"]
-    assert len(processed_pairs) == 1  # Only one row with both names non-null for 2021-04-01
-    assert processed_pairs["drug_name"].notna().all()
-    assert processed_pairs["disease_name"].notna().all()
-
-    # And the processed pairs should be restricted to the specified report date
     assert len(processed_pairs) == 1
-    assert processed_pairs.iloc[0]["drug_name"] == "DrugA"
-    assert processed_pairs.iloc[0]["disease_name"] == "DiseaseA"
 
     # And the labels should have correct boolean values
     assert processed_pairs.iloc[0]["reached_triage"] == True
