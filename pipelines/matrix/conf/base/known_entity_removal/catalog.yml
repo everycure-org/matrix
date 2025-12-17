@@ -25,8 +25,8 @@ known_entity_removal.model_output.known_entity_matrix:
 known_entity_removal.raw.orchard_pairs_by_month:
   type: matrix_gcp_datasets.gcp.PandasBigQueryDataset
   project: ec-orchard-prod
-  dataset: orchard_us
-  table: pairs_status_transitions_by_month 
+  dataset: dbt
+  table: pair_status_transitions_per_month
 
 known_entity_removal.int.processed_orchard_pairs@pandas:
   type: pandas.ParquetDataset
