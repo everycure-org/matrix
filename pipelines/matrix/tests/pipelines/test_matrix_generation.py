@@ -264,6 +264,43 @@ def test_generate_pairs(
             )
         ]
     )
+    assert all(
+        [
+            sum(result[col_name]) == 0
+            for col_name in (
+                "is_known_positive",
+                "trial_non_sig_better",
+                "trial_sig_worse",
+                "trial_non_sig_worse",
+                "mid_evidence_matrix",
+                "mid_evidence_crowdsourced",
+                "archive_biomedical_review",
+            )
+        ]
+    )
+
+
+def test_generate_pairs_without_ec_id(
+    sample_drugs: ps.DataFrame,
+    sample_diseases: ps.DataFrame,
+    sample_node_embeddings: ps.DataFrame,
+    sample_known_pairs: ps.DataFrame,
+    sample_clinical_trials: ps.DataFrame,
+    sample_off_label: ps.DataFrame,
+    sample_orchard: ps.DataFrame,
+):
+    """Test the generate_pairs function with ."""
+    # Given drug list, disease list and ground truth pairs
+    # When generating the matrix dataset
+    result = generate_pairs(
+        drugs=sample_drugs.drop("ec_id"),
+        diseases=sample_diseases,
+        node_embeddings=sample_node_embeddings,
+        known_pairs=sample_known_pairs.drop("source_ec_id"),
+        clinical_trials=sample_clinical_trials.drop("source_ec_id"),
+        off_label=sample_off_label.drop("source_ec_id"),
+        orchard=sample_orchard,
+    ).toPandas()
 
 
 def test_generate_pairs_without_ec_id(
