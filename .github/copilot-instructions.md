@@ -123,6 +123,7 @@ Always add to generated code:
 - `pyproject.toml` (root): Workspace configuration
 - `pipelines/matrix/src/matrix/pipelines/`: Pipeline implementations
 - `infra/root.hcl`: Terragrunt global configuration
+- `docs/src/infrastructure/LiteLLM-New-Provider-Guide.md`: Runbook for onboarding new LLM providers (secrets + ArgoCD model_list updates)
 - `pipelines/matrix/compose/docker-compose.yml`: Local development services
 - `libs/*/src/`: Shared library implementations
 

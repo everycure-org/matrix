@@ -276,6 +276,15 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
+    tolerations:
+    - key: "workload"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    - key: "node-memory-size"
+      operator: "Equal"
+      value: "large"
+      effect: "NoSchedule"
     podSpecPatch: |
       volumes:
           - name: scratch
@@ -294,10 +303,6 @@ spec:
           value: "large"
           effect: "NoSchedule"
         - key: "workload"
-          operator: "Equal"
-          value: "true"
-          effect: "NoSchedule"
-        - key: "spot"
           operator: "Equal"
           value: "true"
           effect: "NoSchedule"

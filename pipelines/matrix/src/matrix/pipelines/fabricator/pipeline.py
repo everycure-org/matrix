@@ -1,5 +1,3 @@
-import itertools
-import random
 from decimal import Decimal
 
 import networkx as nx
@@ -9,46 +7,6 @@ from kedro.pipeline import Pipeline, node, pipeline
 from matrix_fabricator.fabrication import fabricate_datasets
 
 from matrix.utils.validation import validate
-
-
-def _create_pairs(
-    drug_list: pd.DataFrame,
-    disease_list: pd.DataFrame,
-    num: int,
-    seed: int = 42,
-) -> pd.DataFrame:
-    """Creates 2 sets of random drug-disease pairs. Ensures no duplicate pairs.
-
-    Args:
-        drug_list: Dataframe containing the list of drugs.
-        disease_list: Dataframe containing the list of diseases.
-        num: Size of each set of random pairs.
-        seed: Random seed.
-
-    Returns:
-        Two dataframes, each containing 'num' unique drug-disease pairs.
-    """
-    random.seed(seed)
-
-    # Convert lists to sets of unique ids
-    drug_ids = list(drug_list["translator_id"].unique())
-    disease_ids = list(disease_list["id"].unique())
-
-    # Check that we have enough pairs
-    if not len(drug_ids) * len(disease_ids) >= 2 * num:
-        raise ValueError("Drug and disease lists are too small to generate the required number of pairs")
-
-    # Subsample the lists to reduce memory usage
-    for entity_list in [drug_ids, disease_ids]:
-        if len(entity_list) > 2 * num:
-            entity_list = random.sample(entity_list, 2 * num)
-
-    # Create pairs and sample without replacement to ensure no duplicates
-    pairs = list(itertools.product(drug_ids, disease_ids))
-    df_sample = pd.DataFrame(random.sample(pairs, 2 * num), columns=["source", "target"])
-
-    # Split into positives and negatives
-    return df_sample[:num], df_sample[num:]
 
 
 def remove_overlap(disease_list: pd.DataFrame, drug_list: pd.DataFrame):
@@ -99,7 +57,7 @@ def generate_paths(edges: pd.DataFrame, positives: pd.DataFrame, negatives: pd.D
     rows = []
     ground_truth = pd.concat([positives, negatives])
     for idx, row in ground_truth.iterrows():
-        if path := find_path(graph, row["source"], row["target"]):
+        if path := find_path(graph, row["drug_id"], row["disease_id"]):
             rows.append({"graph": {"_id": str(idx)}, "links": path})
 
     return rows
@@ -274,22 +232,22 @@ def create_pipeline(**kwargs) -> Pipeline:
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.clinical_trials.graph",
-                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "drug_nodes": "ingestion.raw.drug_list",
+                    "disease_nodes": "ingestion.raw.disease_list",
                 },
                 outputs={
-                    "nodes": "ingestion.raw.ec_clinical_trails.nodes@pandas",
-                    "edges": "ingestion.raw.ec_clinical_trails.edges@pandas",
+                    "edges": "ingestion.raw.ec_clinical_trials.edges@pandas",
                 },
-                name="fabricate_clinical_trails_datasets",
+                name="fabricate_clinical_trials_datasets",
             ),
             node(
                 func=fabricate_datasets,
                 inputs={
                     "fabrication_params": "params:fabricator.off_label.graph",
-                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "drug_nodes": "ingestion.raw.drug_list",
+                    "disease_nodes": "ingestion.raw.disease_list",
                 },
                 outputs={
-                    "nodes": "ingestion.raw.off_label.nodes@pandas",
                     "edges": "ingestion.raw.off_label.edges@pandas",
                 },
                 name="fabricate_off_label_datasets",
@@ -343,41 +301,43 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="fabricate_embiology_datasets",
             ),
             node(
-                func=_create_pairs,
-                inputs=[
-                    "ingestion.raw.drug_list",
-                    "ingestion.raw.disease_list",
-                    "params:fabricator.ground_truth.num_rows_per_category",
-                ],
-                outputs=[
-                    "ingestion.raw.kgml_xdtd_ground_truth.positives",
-                    "ingestion.raw.kgml_xdtd_ground_truth.negatives",
-                ],
-                name="create_gt_pairs",
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.kgml_xdtd_ground_truth",
+                    "drug_nodes": "ingestion.raw.drug_list",
+                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                },
+                outputs={
+                    "positive_edges": "ingestion.raw.kgml_xdtd_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.kgml_xdtd_ground_truth.negatives",
+                },
+                name="fabricate_kgml_xdtd_gt_pairs",
             ),
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.ec_gt",
-                    "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "fabrication_params": "params:fabricator.ec_ground_truth",
+                    "disease_nodes": "ingestion.raw.disease_list",
+                    "drug_nodes": "ingestion.raw.drug_list",
                 },
                 outputs={
                     "positive_edges": "ingestion.raw.ec_ground_truth.positives",
                     "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
                 },
-                name="create_ec_gt_pairs",
+                name="fabricate_ec_ground_truth_pairs",
             ),
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.drugbank_gt",
+                    "fabrication_params": "params:fabricator.drugbank_ground_truth",
                     "rtx_nodes": "ingestion.raw.rtx_kg2.nodes@pandas",
+                    "drug_nodes": "ingestion.raw.drug_list",
                 },
                 outputs={
                     "positive_edges": "ingestion.raw.drugbank_ground_truth.positives",
                     "negative_edges": "ingestion.raw.drugbank_ground_truth.negatives",
                 },
-                name="create_drugbank_gt_pairs",
+                name="fabricate_drugbank_ground_truth_pairs",
             ),
             node(
                 func=fabricate_datasets,

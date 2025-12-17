@@ -30,12 +30,11 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.medical.MedicalTransformer
         version: ${globals:data_sources.ec_medical_team.version}
-    ec_clinical_trails:
+    ec_clinical_trials:
       name: ec_clinical_trials
       transformer:
-        _object: matrix.pipelines.integration.transformers.clinical_trails.ClinicalTrialsTransformer
+        _object: matrix.pipelines.integration.transformers.clinical_trials.ClinicalTrialsTransformer
         version: ${globals:data_sources.ec_clinical_trials.version}
-        select_cols: false
         drop_duplicates: true
     drug_list:
       name: drug_list
@@ -152,3 +151,22 @@ integration:
     # then node will be assigned biolink:ChemicalEntity as most specific category.
     # For RTX-KG2 reproduction from KGML-xDTD, choose false
     retrieve_most_specific_category: true
+
+  connectivity:
+    # Algorithm to use for connected components calculation
+    # Options: "graphframes", "grape", "rustworkx", "benchmark"
+    # - graphframes: Spark-native distributed graph processing (RECOMMENDED)
+    # - grape: Rust-based graph library (ensmallen)
+    # - rustworkx: High-performance Rust graph library with Python bindings
+    # - benchmark: Run all three algorithms and compare performance
+    #
+    # Benchmark results (9.2M nodes, 67M edges):
+    #   graphframes: ~4 min   - Fastest, fully distributed
+    #   rustworkx:   ~9 min   - In-memory, good for medium graphs
+    #   grape:       ~11 min  - In-memory, best for smaller graphs
+    #
+    # Recommendations:
+    # - Use "graphframes" for production (fastest and scales with Spark cluster)
+    # - Use "rustworkx" or "grape" only for smaller datasets or memory-based workflows
+    # - Use "benchmark" to test performance on your specific dataset
+    algorithm: "graphframes"

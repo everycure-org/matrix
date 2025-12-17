@@ -24,6 +24,7 @@ class DrugbankGroundTruthTransformer(Transformer):
     def _rename_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
         return (
             edges_df.withColumnRenamed("primary_drug_id_norm", "subject")
+            .withColumnRenamed("drug_ec_id", "subject_ec_id")
             .withColumnRenamed("condition_id_norm", "object")
             .withColumn("id", f.concat(f.col("subject"), f.lit("|"), f.col("object")))
         )

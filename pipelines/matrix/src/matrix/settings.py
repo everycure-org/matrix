@@ -52,7 +52,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
-                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "primekg", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
@@ -76,7 +76,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "is_private": True,
                 },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
-                {"name": "ec_clinical_trails", "integrate_in_kg": False},
+                {"name": "ec_clinical_trials", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
                 # TODO: enable orchard once permissions are clarified
                 {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
@@ -131,6 +131,14 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     # "disease_specific_hit_at_k",
                     # "disease_specific_hit_at_k_off_label",
                 ],
+            },
+            "known_entity_removal": {
+                "available_datasets": [
+                    "kgml_xdtd_ground_truth",
+                    "ec_ground_truth",
+                    # "drugbank_ground_truth", TODO: figure out how to add private datasets
+                    "off_label",
+                ]
             },
         },
     )

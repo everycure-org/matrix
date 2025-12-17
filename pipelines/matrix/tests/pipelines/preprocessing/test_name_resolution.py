@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock, patch
 
 from matrix.pipelines.preprocessing.nodes import (
-    add_source_and_target_to_clinical_trails,
+    add_source_and_target_to_clinical_trials,
     parse_one_name_batch,
     resolve_one_name_batch,
 )
 
 
-def test_add_source_and_target_to_clinical_trails():
+def test_add_source_and_target_to_clinical_trials():
     df = pd.DataFrame(
         {
             "clinical_trial_id": ["NCT00118846", "NCT00134030", "NCT00859781"],
@@ -35,7 +35,7 @@ def test_add_source_and_target_to_clinical_trails():
     with patch(
         "matrix.pipelines.preprocessing.nodes.resolve_names", side_effect=[mock_resolved_drugs, mock_resolved_diseases]
     ):
-        result_df = add_source_and_target_to_clinical_trails(df, "mock_url", 10)
+        result_df = add_source_and_target_to_clinical_trials(df, "mock_url", 10)
 
     expected_df = pd.concat(
         [

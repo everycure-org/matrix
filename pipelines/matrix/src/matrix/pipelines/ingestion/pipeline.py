@@ -2,8 +2,10 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 import matrix.pipelines.ingestion.nodes as nodes
 from matrix import settings
-from matrix.kedro4argo_node import ArgoNode
+from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.utils.validation import validate
+
+from . import nodes
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -45,15 +47,39 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Add ingestion pipeline for each source
     for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration"):
         if source.get("has_nodes", True):
-            nodes_lst.append(
-                node(
-                    func=lambda x: x,
-                    inputs=[f"ingestion.raw.{source['name']}.nodes@spark"],
-                    outputs=f"ingestion.int.{source['name']}.nodes",
-                    name=f"write_{source['name']}_nodes",
-                    tags=[f"{source['name']}"],
+            if "robokop" in source.get("name", ""):
+                nodes_lst.extend(
+                    [
+                        ArgoNode(
+                            name="robokop_preprocessing_nodes",
+                            func=nodes.preprocess_robokop_nodes,
+                            inputs=f"ingestion.raw.{source['name']}.nodes@lazypolars",
+                            outputs=f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
+                            tags=[f"{source['name']}"],
+                            argo_config=ArgoResourceConfig(
+                                memory_limit=256,
+                                memory_request=192,
+                            ),
+                        ),
+                        node(
+                            func=lambda x: x,
+                            inputs=f"ingestion.int.preprocessing.{source['name']}.nodes@spark",
+                            outputs=f"ingestion.int.{source['name']}.nodes",
+                            name=f"write_{source['name']}_nodes",
+                            tags=[f"{source['name']}"],
+                        ),
+                    ]
                 )
-            )
+            else:
+                nodes_lst.append(
+                    node(
+                        func=lambda x: x,
+                        inputs=f"ingestion.raw.{source['name']}.nodes@spark",
+                        outputs=f"ingestion.int.{source['name']}.nodes",
+                        name=f"write_{source['name']}_nodes",
+                        tags=[f"{source['name']}"],
+                    )
+                )
         if "ground_truth" in source.get("name", ""):
             nodes_lst.append(
                 node(
@@ -71,26 +97,64 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             )
         elif source.get("has_edges", True):
-            nodes_lst.append(
-                node(
-                    func=lambda x: x,
-                    inputs=[f"ingestion.raw.{source['name']}.edges@spark"],
-                    outputs=f"ingestion.int.{source['name']}.edges",
-                    name=f"write_{source['name']}_edges",
-                    tags=[f"{source['name']}"],
+            if "robokop" in source.get("name", ""):
+                nodes_lst.extend(
+                    [
+                        ArgoNode(
+                            name="robokop_preprocessing_edges",
+                            func=nodes.preprocess_robokop_edges,
+                            inputs=f"ingestion.raw.{source['name']}.edges@lazypolars",
+                            outputs=f"ingestion.int.preprocessing.{source['name']}.edges@polars",
+                            tags=[f"{source['name']}"],
+                            argo_config=ArgoResourceConfig(
+                                memory_limit=128,
+                                memory_request=64,
+                            ),
+                        ),
+                        node(
+                            func=lambda x: x,
+                            inputs=f"ingestion.int.preprocessing.{source['name']}.edges@spark",
+                            outputs=f"ingestion.int.{source['name']}.edges",
+                            name=f"write_{source['name']}_edges",
+                            tags=[f"{source['name']}"],
+                        ),
+                    ]
                 )
-            )
+            else:
+                nodes_lst.append(
+                    node(
+                        func=lambda x: x,
+                        inputs=[f"ingestion.raw.{source['name']}.edges@spark"],
+                        outputs=f"ingestion.int.{source['name']}.edges",
+                        name=f"write_{source['name']}_edges",
+                        tags=[f"{source['name']}"],
+                    )
+                )
         if source.get("validate", False):
+            inputs = {
+                "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
+                "edges": f"ingestion.raw.{source['name']}.edges@polars",
+            }
+            argo_config = None
+            if "robokop" in source.get("name", ""):
+                argo_config = ArgoResourceConfig(
+                    memory_limit=128,
+                    memory_request=64,
+                )
+                inputs = {
+                    "nodes": f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
+                    "edges": f"ingestion.int.preprocessing.{source['name']}.edges@polars",
+                }
+
             nodes_lst.append(
                 ArgoNode(
                     func=validate,
-                    inputs={
-                        "nodes": f"ingestion.raw.{source['name']}.nodes@polars",
-                        "edges": f"ingestion.raw.{source['name']}.edges@polars",
-                    },
+                    inputs=inputs,
                     outputs=f"ingestion.int.{source['name']}.violations",
                     name=f"validate_{source['name']}",
                     tags=[f"{source['name']}"],
+                    argo_config=argo_config,
                 )
             )
+
     return pipeline(nodes_lst)
