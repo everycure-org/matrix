@@ -2829,18 +2829,6 @@ fabricator.known_entity_removal:
         sample:
           num_rows: "@orchard_pairs_by_month.num_rows"
           seed: 30399
-      drug_name:
-        type: copy_column
-        source_column: drug_list.name
-        sample:
-          num_rows: "@orchard_pairs_by_month.num_rows"
-          seed: 40399
-      disease_name:
-        type: copy_column
-        source_column: disease_list.name
-        sample:
-          num_rows: "@orchard_pairs_by_month.num_rows"
-          seed: 30399
       report_date:
         type: generate_values
         sample_values:
