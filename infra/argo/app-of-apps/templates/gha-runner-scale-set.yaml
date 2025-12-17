@@ -13,7 +13,7 @@ spec:
   source:
     chart: gha-runner-scale-set
     repoURL: ghcr.io/actions/actions-runner-controller-charts
-    targetRevision: 0.12.1
+    targetRevision: 0.13.0
     helm:
       values: |
         controllerServiceAccount:
