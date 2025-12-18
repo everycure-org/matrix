@@ -204,7 +204,9 @@ def generate_pairs(
     def add_ec_indications_list_flags(matrix: ps.DataFrame, ec_indications_list: ps.DataFrame) -> ps.DataFrame:
         matrix_ec_indications_list_join_columns = ["source_ec_id", "target"]
 
-        ec_indications_list = ec_indications_list.withColumnsRenamed({"object": "target"})
+        ec_indications_list = ec_indications_list.withColumnsRenamed(
+            {"subject_ec_id": "source_ec_id", "object": "target"}
+        )
         matrix = (
             matrix.alias("matrix")
             .join(

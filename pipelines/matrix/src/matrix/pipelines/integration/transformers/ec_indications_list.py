@@ -18,5 +18,5 @@ class ECIndicationsListTransformer(Transformer):
     @staticmethod
     def _extract_edges(edges_df: ps.DataFrame) -> ps.DataFrame:
         return edges_df.withColumnsRenamed(
-            {"translator_id": "subject", "ec_id": "source_ec_id", "target": "object"}
+            {"translator_id": "subject", "ec_id": "subject_ec_id", "target": "object"}
         ).withColumn("predicate", F.lit("JaM"))

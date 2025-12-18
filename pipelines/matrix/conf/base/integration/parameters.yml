@@ -55,10 +55,10 @@ integration:
       transformer:
         _object: matrix.pipelines.integration.transformers.kgml_xdtd_ground_truth.KGMLGroundTruthTransformer
         version: ${globals:data_sources.kgml_xdtd_gt.version}
-    ec_ground_truth: 
-      name: ec_ground_truth
+    medic_ground_truth: 
+      name: medic_ground_truth
       transformer:
-        _object: matrix.pipelines.integration.transformers.ec_ground_truth.ECGroundTruthTransformer
+        _object: matrix.pipelines.integration.transformers.medic_ground_truth.MedicGroundTruthTransformer
         version: ${globals:data_sources.ec_gt.version}
     ec_indications_list:
       name: ec_indications_list

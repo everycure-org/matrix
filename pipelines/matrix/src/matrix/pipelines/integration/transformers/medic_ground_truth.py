@@ -9,7 +9,7 @@ from .transformer import Transformer
 logger = logging.getLogger(__name__)
 
 
-class ECGroundTruthTransformer(Transformer):
+class MedicGroundTruthTransformer(Transformer):
     """Transformer for ground truth data"""
 
     def transform(self, positive_edges_df: DataFrame, negative_edges_df: DataFrame, **kwargs) -> dict[str, DataFrame]:

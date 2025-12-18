@@ -328,15 +328,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.ec_ground_truth",
+                    "fabrication_params": "params:fabricator.medic_ground_truth",
                     "disease_nodes": "ingestion.raw.disease_list",
                     "drug_nodes": "ingestion.raw.drug_list",
                 },
                 outputs={
-                    "positive_edges": "ingestion.raw.ec_ground_truth.positives",
-                    "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
+                    "positive_edges": "ingestion.raw.medic_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.medic_ground_truth.negatives",
                 },
-                name="fabricate_ec_ground_truth_pairs",
+                name="fabricate_medic_ground_truth_pairs",
             ),
             node(
                 func=fabricate_datasets,
