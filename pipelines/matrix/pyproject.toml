@@ -48,7 +48,7 @@ dependencies = [
     "google-cloud-iam",
     "grape>=0.2.4",
     "graphdatascience",
-    "graphframes>=0.6",
+    "graphframes-py>=0.10.0",
     "ipython>=8.10",
     "ipywidgets",
     "jsonpath-ng",
