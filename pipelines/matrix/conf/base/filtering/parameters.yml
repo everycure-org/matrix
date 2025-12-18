@@ -15,19 +15,24 @@ filtering:
         remove_list:
           - biolink:Activity
           - biolink:Agent
+          - biolink:Behaviour
           - biolink:ClinicalIntervention
           - biolink:Cohort
           - biolink:Device
           - biolink:EnvironmentalFeature
           - biolink:EnvironmentalProcess
           - biolink:Event
+          - biolink:Food
           - biolink:GeographicLocation
+          - biolink:Human
           - biolink:IndividualOrganism
           - biolink:InformationContentEntity
           - biolink:InformationResource
           - biolink:LifeStage
           - biolink:MaterialSample
           - biolink:NamedThing
+          - biolink:OrganismAttribute 
+          - biolink:OrganismTaxon
           - biolink:Phenomenon
           - biolink:PhysicalEntity
           - biolink:PopulationOfIndividualOrganisms
