@@ -1,5 +1,5 @@
 # Dockerfile for GitHub Actions Runner Set. Used for running github actions on self hosted kubernetes.
-FROM ghcr.io/actions/actions-runner:latest
+FROM ghcr.io/actions/actions-runner:2.330.0
 
 USER root
 
