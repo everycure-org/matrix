@@ -176,7 +176,16 @@ class RemoveRowsByColumnOverlap(Filter):
         self.upstream_data_source_column = upstream_data_source_column
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        filter_condition = ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
+        # NOTE: This function was partially generated using AI assistance.
+        # Allow for self.column to be either a string column or an array column.
+        # If the column is an array, we use arrays_overlap; if it's a string, we use isin.
+        col_type = dict(df.dtypes)[self.column]
+        if col_type.startswith("array"):
+            base_condition = ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
+        else:
+            base_condition = ~sf.col(self.column).isin(self.remove_list)
+
+        filter_condition = base_condition
         if self.excluded_sources:
             filter_condition = filter_condition | sf.arrays_overlap(
                 sf.col(self.upstream_data_source_column), sf.lit(self.excluded_sources)
