@@ -95,6 +95,22 @@ def sample_off_label(spark):
 
 
 @pytest.fixture
+def sample_ec_indications_list(spark):
+    """Fixture that provides sample ec indications list data for testing."""
+    return spark.createDataFrame(
+        pd.DataFrame(
+            {
+                "subject": ["drug_2"],
+                "source_ec_id": ["ec_drug_2"],
+                "object": ["disease_1"],
+                "on_label": [True],
+                "off_label": [False],
+            }
+        )
+    )
+
+
+@pytest.fixture
 def sample_orchard(spark):
     """Fixture that provides sample orchard data for testing."""
     return spark.createDataFrame(
@@ -177,6 +193,7 @@ def test_generate_pairs(
     sample_clinical_trials,
     sample_off_label,
     sample_orchard,
+    sample_ec_indications_list,
 ):
     """Test the generate_pairs function."""
     # Given drug list, disease list and ground truth pairs
@@ -188,6 +205,7 @@ def test_generate_pairs(
         known_pairs=sample_known_pairs,
         clinical_trials=sample_clinical_trials,
         off_label=sample_off_label,
+        ec_indications_list=sample_ec_indications_list,
         orchard=sample_orchard,
     ).toPandas()
 
@@ -214,19 +232,11 @@ def test_generate_pairs(
             "trial_non_sig_better",
             "trial_sig_worse",
             "trial_non_sig_worse",
+            "ec_indications_list_off_label",
+            "ec_indications_list_on_label",
         ]
     )
-    assert all(
-        check_col(col)
-        for col in [
-            "is_known_positive",
-            "is_known_negative",
-            "trial_sig_better",
-            "trial_non_sig_better",
-            "trial_sig_worse",
-            "trial_non_sig_worse",
-        ]
-    )
+
     # Flag columns set correctly
     assert all(
         [
@@ -235,6 +245,22 @@ def test_generate_pairs(
                 "is_known_negative",
                 "trial_sig_better",
                 "high_evidence_matrix",
+                "ec_indications_list_on_label",
+            )
+        ]
+    )
+    assert all(
+        [
+            sum(result[col_name]) == 0
+            for col_name in (
+                "is_known_positive",
+                "trial_non_sig_better",
+                "trial_sig_worse",
+                "trial_non_sig_worse",
+                "mid_evidence_matrix",
+                "mid_evidence_crowdsourced",
+                "archive_biomedical_review",
+                "ec_indications_list_off_label",
             )
         ]
     )
@@ -252,6 +278,29 @@ def test_generate_pairs(
             )
         ]
     )
+
+
+def test_generate_pairs_without_ec_id(
+    sample_drugs: ps.DataFrame,
+    sample_diseases: ps.DataFrame,
+    sample_node_embeddings: ps.DataFrame,
+    sample_known_pairs: ps.DataFrame,
+    sample_clinical_trials: ps.DataFrame,
+    sample_off_label: ps.DataFrame,
+    sample_orchard: ps.DataFrame,
+):
+    """Test the generate_pairs function with ."""
+    # Given drug list, disease list and ground truth pairs
+    # When generating the matrix dataset
+    result = generate_pairs(
+        drugs=sample_drugs.drop("ec_id"),
+        diseases=sample_diseases,
+        node_embeddings=sample_node_embeddings,
+        known_pairs=sample_known_pairs.drop("source_ec_id"),
+        clinical_trials=sample_clinical_trials.drop("source_ec_id"),
+        off_label=sample_off_label.drop("source_ec_id"),
+        orchard=sample_orchard,
+    ).toPandas()
 
 
 def test_generate_pairs_without_ec_id(
