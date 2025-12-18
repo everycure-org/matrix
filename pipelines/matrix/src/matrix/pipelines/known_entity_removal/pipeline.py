@@ -39,5 +39,35 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="create_known_entity_matrix",
                 outputs="known_entity_removal.model_output.known_entity_matrix",
             ),
+            ArgoNode(
+                func=nodes.preprocess_orchard_pairs,
+                inputs={
+                    "orchard_pairs": "known_entity_removal.raw.orchard_pairs_by_month",
+                    "orchard_report_date": "params:known_entity_removal.orchard_report_date",
+                },
+                name="preprocess_orchard_pairs",
+                outputs={
+                    "processed_orchard_pairs": "known_entity_removal.int.processed_orchard_pairs@pandas",
+                    "report_date_info": "known_entity_removal.evaluation.orchard_data_report_date",
+                },
+            ),
+            ArgoNode(
+                func=nodes.add_predictions_column,
+                inputs={
+                    "orchard_pairs": "known_entity_removal.int.processed_orchard_pairs@spark",
+                    "known_entity_matrix": "known_entity_removal.model_output.known_entity_matrix",
+                },
+                name="add_predictions_column",
+                outputs="known_entity_removal.int.orchard_pairs_with_predictions@spark",
+            ),
+            ArgoNode(
+                func=nodes.calculate_metrics,
+                inputs={
+                    "orchard_pairs_with_preds": "known_entity_removal.int.orchard_pairs_with_predictions@pandas",
+                    "metrics_to_report": "params:known_entity_removal.metrics_to_report",
+                },
+                name="calculate_metrics",
+                outputs="known_entity_removal.evaluation.metrics",
+            ),
         ]
     )
