@@ -9,6 +9,7 @@ import requests
 from datasets import load_dataset
 from kedro.io import AbstractDataset
 from pydantic import BaseModel, Field, ValidationError
+from pyspark.sql import SparkSession
 
 log = logging.getLogger(__name__)
 
@@ -108,31 +109,11 @@ class HFIterableDataset(AbstractDataset):
         ds = load_dataset(self.config.repo_id, split=self.config.split, token=token)
         df_type = self.config.dataframe_type
         if df_type == "spark":
-            try:
-                from pyspark.sql import SparkSession
-            except Exception as exc:  # pragma: no cover
-                raise RuntimeError("Spark is not installed but dataframe_type='spark'.") from exc
             spark = SparkSession.builder.getOrCreate()
-            # Prefer Arrow table -> Spark (Spark 4+), fallback to pandas
-            try:
-                arrow_tbl = ds.to_table()  # pyarrow.Table
-                return spark.createDataFrame(arrow_tbl)  # Spark 4.0+
-            except Exception:
-                # Enable Arrow for pandas conversions
-                try:
-                    spark.conf.set("spark.sql.execution.arrow.pyspark.enabled", "true")
-                except Exception:
-                    pass
-                log.warning(
-                    f"Converting to pandas from Hugging Face dataset as fallback. Upgrade to Spark 4+ to avoid this."
-                )
-                pdf = ds.to_pandas()
-                return spark.createDataFrame(pdf)
+            arrow_tbl = ds.to_table()
+            return spark.createDataFrame(arrow_tbl)  # Spark 4.0+
         elif df_type == "polars":
-            try:
-                return ds.to_polars()
-            except Exception as exc:  # pragma: no cover
-                raise RuntimeError("Polars not available for conversion. `uv add polars`.") from exc
+            return ds.to_polars()
         elif df_type == "pandas":
             return ds.to_pandas()
         else:
