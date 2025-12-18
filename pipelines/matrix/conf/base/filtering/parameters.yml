@@ -40,6 +40,11 @@ filtering:
           - biolink:Publication
           - biolink:Treatment
 
+          -biolink:AnatomicalEntity
+          -biolink:ChemicalEntity
+          -biolink:MolecularMixture
+          -biolink:Transcript
+
   edge_filters:
     filter_sources:
       _object: matrix.pipelines.filtering.filters.KeepRowsContaining
