@@ -124,7 +124,6 @@ def register_pipelines() -> dict[str, Pipeline]:
     )
     pipelines["test_sample"] = (
         pipelines["feature_and_modelling_run"]
-        + pipelines["known_entity_removal"]
     )
     # fmt: on
 
