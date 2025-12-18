@@ -227,6 +227,23 @@ ingestion.int.off_label.edges:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/int/off_label_data/translator/${globals:data_sources.off_label.version}/edges_conflated_raw
 
+
+# -------------------------------------------------------------------------
+# Ground truth EC indications list (JaM)
+# -------------------------------------------------------------------------  
+
+ingestion.int.ec_indications_list.edges:
+  <<: [*_spark_parquet, *_layer_int]
+  filepath: ${globals:paths.ingestion}/int/ec_indications_list/${globals:data_sources.ec_indications_list.version}/ec_indications_list.parquet
+
+ingestion.raw.ec_indications_list.edges@pandas:
+  <<: [*_layer_raw, *_pandas_parquet]
+  filepath: ${globals:paths.raw}/ec_indications_list/${globals:data_sources.ec_indications_list.version}/ec_indications_list.parquet
+
+ingestion.raw.ec_indications_list.edges@spark:
+  <<: [*_layer_int, *_spark_parquet]
+  filepath: ${globals:paths.raw}/ec_indications_list/${globals:data_sources.ec_indications_list.version}/ec_indications_list.parquet
+
 # -------------------------------------------------------------------------
 # DrugMech
 # -------------------------------------------------------------------------  
@@ -320,27 +337,27 @@ ingestion.int.kgml_xdtd_ground_truth.negative.edges@spark:
 # Ground truth EC
 # -------------------------------------------------------------------------  
 
-ingestion.raw.ec_ground_truth.positives:
+ingestion.raw.medic_ground_truth.positives:
   <<: [*_layer_raw, *_pandas_parquet]
   filepath: ${globals:paths.raw_public}/medic/${globals:data_sources.ec_gt.version}/indicationList.parquet
 
-ingestion.raw.ec_ground_truth.negatives:
+ingestion.raw.medic_ground_truth.negatives:
   <<: [*_layer_raw, *_pandas_parquet]
   filepath: ${globals:paths.raw_public}/medic/${globals:data_sources.ec_gt.version}/contraindicationList.parquet
 
-ingestion.int.ec_ground_truth.negative.edges@pandas:
+ingestion.int.medic_ground_truth.negative.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
 
-ingestion.int.ec_ground_truth.positive.edges@pandas:
+ingestion.int.medic_ground_truth.positive.edges@pandas:
   <<: [*_pandas_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
-ingestion.int.ec_ground_truth.negative.edges@spark:
+ingestion.int.medic_ground_truth.negative.edges@spark:
   <<: [*_spark_parquet, *_layer_int] 
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tn_pairs
 
-ingestion.int.ec_ground_truth.positive.edges@spark:
+ingestion.int.medic_ground_truth.positive.edges@spark:
   <<: [*_spark_parquet, *_layer_int]
   filepath: ${globals:paths.ingestion}/ground_truth/ec/${globals:data_sources.ec_gt.version}/tp_pairs
 
