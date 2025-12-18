@@ -154,7 +154,7 @@ class HFIterableDataset(AbstractDataset):
         # Push to hub; tolerate older signatures lacking data_dir
         push_kwargs = self.config.build_push_kwargs(token or "")
         ci = hf_ds.push_to_hub(**push_kwargs)
-        self._verify_hf_upload(self.config.repo_id, ci.oid)
+        self._verify_hf_upload(self.config.repo_id, ci.oid, token=token)
 
     def _resolve_token(self) -> str | None:
         # Precedence: explicit token override > credentials > env var
@@ -176,25 +176,31 @@ class HFIterableDataset(AbstractDataset):
             "explicit dataset `token`, or HF_TOKEN environment variable."
         )
 
-    def _get_latest_sha(self, dataset_id, revision="main"):
+    def _get_auth_headers(self, token: str | None) -> dict[str, str]:
+        """Build authorization headers for HF API requests."""
+        if token:
+            return {"Authorization": f"Bearer {token}"}
+        return {}
+
+    def _get_latest_sha(self, dataset_id, revision="main", token: str | None = None):
         """Fetch the latest commit SHA from the HuggingFace Hub."""
         url = f"https://huggingface.co/api/datasets/{dataset_id}/revision/{revision}"
-        resp = requests.get(url)
+        resp = requests.get(url, headers=self._get_auth_headers(token))
         resp.raise_for_status()
         return resp.json()["sha"]
 
-    def _list_hub_files(self, dataset_id, revision="main"):
+    def _list_hub_files(self, dataset_id, revision="main", token: str | None = None):
         """List files in the dataset repository on HF Hub."""
         url = f"https://huggingface.co/api/datasets/{dataset_id}/tree/{revision}"
-        resp = requests.get(url)
+        resp = requests.get(url, headers=self._get_auth_headers(token))
         resp.raise_for_status()
         return resp.json()
 
-    def _wait_for_sha(self, dataset_id, expected_sha, timeout=300, interval=5):
-        """Wait for a specified amount of timeuntil the Hub reports the expected SHA."""
+    def _wait_for_sha(self, dataset_id, expected_sha, timeout=300, interval=5, token: str | None = None):
+        """Wait for a specified amount of time until the Hub reports the expected SHA."""
         start = time.time()
         while True:
-            current_sha = self._get_latest_sha(dataset_id)
+            current_sha = self._get_latest_sha(dataset_id, token=token)
             if current_sha == expected_sha:
                 log.info(f"✓ SHA match confirmed: {current_sha}")
                 return True
@@ -207,23 +213,23 @@ class HFIterableDataset(AbstractDataset):
             log.info(f"Waiting for SHA update... (current={current_sha}, expected={expected_sha})")
             time.sleep(interval)
 
-    def _verify_stream_load(self, dataset_id, revision="main"):
+    def _verify_stream_load(self, dataset_id, revision="main", token: str | None = None):
         """Try streaming one row from the dataset to confirm it is readable."""
         try:
-            ds = load_dataset(dataset_id, split="train", streaming=True, revision=revision)
+            ds = load_dataset(dataset_id, split="train", streaming=True, revision=revision, token=token)
             first_row = next(iter(ds))
             log.info("✓ Streaming load succeeded. Sample row:", first_row)
             return True
         except Exception as e:
             raise RuntimeError(f"Streaming load failed: {e}")
 
-    def _verify_hf_upload(self, dataset_id, pushed_sha):
+    def _verify_hf_upload(self, dataset_id, pushed_sha, token: str | None = None):
         """Verify if the upload to Hugging Face Hub was successful."""
         log.info("\n=== Step 1: Checking commit SHA ===")
-        self._wait_for_sha(dataset_id, pushed_sha)
+        self._wait_for_sha(dataset_id, pushed_sha, token=token)
 
         log.info("\n=== Step 2: Checking file exist on HF Hub ===")
-        files = self._list_hub_files(dataset_id)
+        files = self._list_hub_files(dataset_id, token=token)
         if not files:
             raise RuntimeError("No files found on Hub — upload may have failed!")
         log.info(f"✓ Found {len(files)} files on Hub.")
@@ -231,6 +237,6 @@ class HFIterableDataset(AbstractDataset):
             log.info(f" - {f['path']} ({f['size']} bytes)")
 
         log.info("\n=== Step 3 (optional): Checking streaming availability ===")
-        self._verify_stream_load(dataset_id)
+        self._verify_stream_load(dataset_id, token=token)
 
         log.info(f"\n🎉 All checks passed. Upload of {dataset_id} to Hugging Face Hub is verified.")
