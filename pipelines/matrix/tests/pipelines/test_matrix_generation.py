@@ -88,6 +88,7 @@ def sample_off_label(spark):
                 "subject_ec_id": ["ec_drug_1"],
                 "object": ["disease_2"],
                 "off_label": [1],
+                "predicate": ["off_label"],
             }
         )
     )
