@@ -91,7 +91,7 @@ dependencies = [
     "pyoxigraph>=0.4.5", # Needed for loading Mondo
     "bracex>=2.6",
     "xgboost>=3.1.2",
-    "owlready2>=0.49",
+    "owlready2",
 ]
 
 
