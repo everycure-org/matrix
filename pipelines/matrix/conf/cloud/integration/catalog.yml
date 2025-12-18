@@ -37,12 +37,12 @@ integration.int.{source}.edges.norm@spark:
   table: "{source}_edges_normalized"
 
 # Unified nodes/edges
-integration.prm.unified_nodes@spark:
+integration.prm.unified_nodes:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/unified/nodes
   table: nodes_unified
 
-integration.prm.unified_edges@spark:
+integration.prm.unified_edges:
   <<: *_bigquery_ds
   filepath: ${globals:paths.integration}/prm/unified/edges
   table: edges_unified

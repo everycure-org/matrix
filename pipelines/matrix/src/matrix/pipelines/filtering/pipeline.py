@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         ArgoNode(
             func=nodes.prefilter_unified_kg_nodes,
             inputs=[
-                "integration.prm.unified_nodes@spark",
+                "integration.prm.unified_nodes",
                 "params:filtering.node_filters",
             ],
             outputs=["filtering.prm.prefiltered_nodes", "filtering.prm.removed_nodes_initial"],
@@ -29,7 +29,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=nodes.filter_unified_kg_edges,
             inputs=[
                 "filtering.prm.prefiltered_nodes",
-                "integration.prm.unified_edges@spark",
+                "integration.prm.unified_edges",
                 "params:filtering.edge_filters",
             ],
             outputs=["filtering.prm.filtered_edges", "filtering.prm.removed_edges"],

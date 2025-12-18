@@ -8,13 +8,13 @@ def create_pipeline() -> Pipeline:
         [
             node(
                 func=lambda x: x,
-                inputs="integration.prm.unified_edges@pandas",
+                inputs="integration.prm.unified_edges",
                 outputs="data_publication.prm.kg_edges_hf_published",
                 name="publish_kg_edges_node",
             ),
             node(
                 func=lambda x: x,
-                inputs="integration.prm.unified_nodes@pandas",
+                inputs="integration.prm.unified_nodes",
                 outputs="data_publication.prm.kg_nodes_hf_published",
                 name="publish_kg_nodes_node",
             ),

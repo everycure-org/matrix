@@ -172,7 +172,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             if source.get("integrate_in_kg", True)
                         ],
                     ],
-                    outputs="integration.prm.unified_nodes@spark",
+                    outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
                 ),
                 node(
@@ -197,7 +197,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             if source.get("integrate_in_kg", True)
                         ],
                     ],
-                    outputs="integration.prm.unified_edges@spark",
+                    outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
                     argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
@@ -215,8 +215,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.check_nodes_and_edges_matching,
                     inputs={
-                        "nodes": "integration.prm.unified_nodes@spark",
-                        "edges": "integration.prm.unified_edges@spark",
+                        "nodes": "integration.prm.unified_nodes",
+                        "edges": "integration.prm.unified_edges",
                     },
                     outputs="integration.prm.nodes_edges_consistency_check",
                     name="check_merged_nodes_and_edges_consistency",
@@ -225,7 +225,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=nodes.compute_abox_tbox_metric,
                     inputs={
-                        "edges": "integration.prm.unified_edges@spark",
+                        "edges": "integration.prm.unified_edges",
                     },
                     outputs="integration.prm.metric_abox_tbox",
                     name="metric_abox_tbox",
@@ -234,8 +234,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ArgoNode(
                     func=connectivity_metrics.compute_connected_components,
                     inputs={
-                        "nodes": "integration.prm.unified_nodes@spark",
-                        "edges": "integration.prm.unified_edges@spark",
+                        "nodes": "integration.prm.unified_nodes",
+                        "edges": "integration.prm.unified_edges",
                         "algorithm": "params:integration.connectivity.algorithm",
                     },
                     outputs={
@@ -249,7 +249,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 node(
                     func=connectivity_metrics.compute_core_connectivity_metrics,
                     inputs={
-                        "nodes": "integration.prm.unified_nodes@spark",
+                        "nodes": "integration.prm.unified_nodes",
                         "core_id_mapping": "integration.int.core_node_mapping",
                         "connected_components": "integration.prm.connected_components_node_assignments",
                     },

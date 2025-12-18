@@ -10,14 +10,14 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             ArgoNode(
                 func=unified_edges_to_kgx,
-                inputs=["integration.prm.unified_edges@spark"],
+                inputs=["integration.prm.unified_edges"],
                 outputs="data_release.prm.kgx_edges",
                 name="write_edges_to_kgx",
                 tags=["kgx"],
             ),
             ArgoNode(
                 func=unified_nodes_to_kgx,
-                inputs=["integration.prm.unified_nodes@spark"],
+                inputs=["integration.prm.unified_nodes"],
                 outputs="data_release.prm.kgx_nodes",
                 name="write_nodes_to_kgx",
                 tags=["kgx"],
