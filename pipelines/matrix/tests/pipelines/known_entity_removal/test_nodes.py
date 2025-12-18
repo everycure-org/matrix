@@ -1,3 +1,4 @@
+import pandas as pd
 import pyspark.sql as ps
 import pytest
 from matrix.pipelines.known_entity_removal.mondo_ontology import OntologyTest
@@ -5,6 +6,7 @@ from matrix.pipelines.known_entity_removal.nodes import (
     apply_mondo_expansion,
     concatenate_datasets,
     create_known_entity_matrix,
+    preprocess_orchard_pairs,
 )
 from pyspark.testing import assertDataFrameEqual
 
@@ -49,6 +51,35 @@ def sample_disease_list(spark: ps.SparkSession) -> ps.DataFrame:
         ("disease_b",),
     ]
     return spark.createDataFrame(data, schema=["core_id"])
+
+
+@pytest.fixture
+def sample_orchard_pairs(spark: ps.SparkSession) -> dict[str, pd.DataFrame]:
+    """Create a sample orchard pairs dataframe."""
+    orchard_pairs = pd.DataFrame(
+        {
+            "report_date": ["2021-03-01", "2021-03-01", "2021-04-01"],
+            "last_created_at_at_report_date": [
+                "2020-06-20",
+                "2020-06-24",
+                "2020-09-21",
+            ],
+            "drug_kg_node_id": ["EC:00001", "EC:00002", "EC:00003"],
+            "disease_kg_node_id": ["RTX:00001", "RTX:00002", "RTX:00003"],
+            "status_transitions_up_to_report_date": [
+                "UNKNOWN > TRIAGE > SAC_ENDORSED",
+                "UNKNOWN > TRIAGE > DEEP_DIVE > ARCHIVED",
+                "UNKNOWN > TRIAGE> MEDICAL_REVIEW > DEEP_DIVE > ARCHIVED",
+            ],
+            "depriortization_reason_at_report_date": [
+                None,
+                "DRUG_ON_LABEL_FOR_DISEASE",
+                "DRUG_WIDELY_USED_OFF_LABEL",
+            ],
+        }
+    )
+    orchard_report_date = "2021-04-01"
+    return {"orchard_pairs": orchard_pairs, "orchard_report_date": orchard_report_date}
 
 
 def test_concatenate_datasets(spark: ps.SparkSession, sample_dataset_1, sample_dataset_2):
@@ -132,3 +163,33 @@ def test_create_known_entity_matrix(spark: ps.SparkSession, sample_drug_list, sa
         schema=["drug_translator_id", "target", "ec_drug_id", "is_known_entity"],
     )
     assertDataFrameEqual(result, expected)
+
+
+def test_preprocess_orchard_pairs(sample_orchard_pairs):
+    # Given a mock Orchard pairs by month dataframe and a fixed report date
+    orchard_pairs = sample_orchard_pairs["orchard_pairs"]
+    orchard_report_date = sample_orchard_pairs["orchard_report_date"]
+
+    # When we preprocess the Orchard pairs
+    result = preprocess_orchard_pairs(orchard_pairs=orchard_pairs, orchard_report_date=orchard_report_date)
+    result_with_latest = preprocess_orchard_pairs(orchard_pairs=orchard_pairs, orchard_report_date="latest")
+
+    # Then the report date info should be the same
+    report_date = result["report_date_info"].iloc[0]["orchard_data_report_date"]
+    report_date_latest = result_with_latest["report_date_info"].iloc[0]["orchard_data_report_date"]
+    assert report_date == pd.Timestamp("2021-04-01")
+    assert report_date_latest == pd.Timestamp("2021-04-01")
+
+    # Only one row for 2021-04-01
+    processed_pairs = result["processed_orchard_pairs"]
+    assert len(processed_pairs) == 1
+
+    # And the labels should have correct boolean values
+    assert processed_pairs.iloc[0]["reached_triage"] == True
+    assert processed_pairs.iloc[0]["reached_med_review"] == True
+    assert processed_pairs.iloc[0]["reached_deep_dive"] == True
+    assert processed_pairs.iloc[0]["reached_sac"] == False
+    assert processed_pairs.iloc[0]["archived_known_off_label"] == True
+    assert processed_pairs.iloc[0]["archived_known_on_label"] == False
+    assert processed_pairs.iloc[0]["archived_known_entity"] == True
+    assert processed_pairs.iloc[0]["triaged_not_known_entity"] == False  # Archived as known entity
