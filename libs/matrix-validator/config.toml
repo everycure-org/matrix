@@ -1,0 +1,21 @@
+[biolink]
+supplemental_prefixes = ["CHR", "CLYH"]
+
+[edges_attribute_checks]
+checks = [
+    { range = { column = "Coexpression", min = "80", max = "1000" } },
+    { range = { column = "Coexpression_transferred", min = "80", max = "1000" } },
+    { range = { column = "Experiments", min = "0", max = "1000" } },
+    { range = { column = "Experiments_transferred", min = "0", max = "1000" } },
+    { range = { column = "Database", min = "0", max = "1000" } },
+    { range = { column = "Database_transferred", min = "0", max = "1000" } },
+    { range = { column = "Textmining", min = "0", max = "1000" } },
+    { range = { column = "Textmining_transferred", min = "0", max = "1000" } }
+]
+
+[nodes_attribute_checks]
+checks = [
+    { range = { column = "information_content", min = "20", max = "100" } },
+    { enum = { column = "locus_group", nullable = true, values = [ "protein-coding gene", "non-coding RNA", "pseudogene", "other" ] } },
+]
+
