@@ -1,7 +1,7 @@
 from functools import partial
 from typing import List, Union
 
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ARGO_NODE_MEDIUM_MATRIX_GENERATION, ArgoNode
 from matrix.pipelines.modelling.utils import partial_fold
@@ -23,7 +23,7 @@ def _create_evaluation_fold_pipeline(
     Returns:
         Pipeline with nodes for given model, evaluation and fold
     """
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=partial_fold(
@@ -92,7 +92,7 @@ def _create_core_stability_pipeline(
                 argo_config=ARGO_NODE_MEDIUM_MATRIX_GENERATION,
             ),
         ]
-    return pipeline(pipeline_nodes, tags=["stability-metrics"])
+    return Pipeline(pipeline_nodes, tags=["stability-metrics"])
 
 
 # def create_model_pipeline(model: str, evaluation_names: List[str], n_cross_val_folds: int) -> Pipeline:
@@ -115,7 +115,7 @@ def create_model_pipeline(
     for fold in range(n_cross_val_folds):
         for evaluation in evaluation_names:
             pipelines.append(
-                pipeline(
+                Pipeline(
                     _create_evaluation_fold_pipeline(evaluation, fold, matrix_input, score_col_name),
                     tags=[evaluation],
                 )
@@ -124,7 +124,7 @@ def create_model_pipeline(
     # Consolidate all results
     for evaluation in evaluation_names:
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.aggregate_metrics,
@@ -178,7 +178,7 @@ def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
 
     # Consolidate metrics across models and folds
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
                 ArgoNode(
                     func=nodes.consolidate_evaluation_reports,
@@ -211,7 +211,7 @@ def create_pipeline(matrix_input: str, score_col_name: str) -> Pipeline:
                 if fold_main == fold_to_compare:
                     continue
                 pipelines.append(
-                    pipeline(
+                    Pipeline(
                         _create_core_stability_pipeline(
                             fold_main,
                             fold_to_compare,

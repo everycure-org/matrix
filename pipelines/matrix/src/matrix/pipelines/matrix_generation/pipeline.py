@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix import settings
 from matrix.kedro4argo_node import (
     ARGO_NODE_MEDIUM_MATRIX_GENERATION,
@@ -24,7 +24,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines = []
     # Add shared nodes
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
                 ArgoNode(
                     func=nodes.enrich_embeddings,
@@ -44,7 +44,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
         # For each fold, generate the pairs
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=partial_fold(nodes.generate_pairs, fold, arg_name="known_pairs"),
@@ -71,7 +71,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         model_names = [x["model_name"] for x in settings.DYNAMIC_PIPELINES_MAPPING().get("modelling")]
 
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     *[
                         ArgoNode(
@@ -112,7 +112,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
 
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
                 ArgoNode(
                     func=nodes.generate_reports,

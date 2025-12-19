@@ -1,6 +1,6 @@
 from functools import partial
 
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 
@@ -15,7 +15,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     pipelines = []
     for fold in range(n_cross_val_folds + 1):  # NOTE: final fold is full training data
         pipelines.append(
-            pipeline(
+            Pipeline(
                 [
                     ArgoNode(
                         func=nodes.apply_matrix_transformations,
@@ -34,7 +34,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # Persist the final fold predictions (trained on complete dataset) for BigQuery export
     pipelines.append(
-        pipeline(
+        Pipeline(
             [
                 ArgoNode(
                     func=partial(nodes.return_predictions, n_cross_val_folds),

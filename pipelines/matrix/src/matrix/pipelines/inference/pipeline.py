@@ -1,4 +1,4 @@
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 from matrix import settings
 from matrix.kedro4argo_node import ArgoNode
 
@@ -8,10 +8,10 @@ from . import nodes as nd
 
 def _create_resolution_pipeline() -> Pipeline:
     """Resolution pipeline for filtering out the input."""
-    return pipeline(
+    return Pipeline(
         [
             # TODO: Remove implement this node /modification of it thats consistent with integration/batch
-            # node(
+            # Node(
             #     func=nodes.clean_input_sheet,
             #     inputs={
             #         "input_df": "preprocessing.raw.infer_sheet",
@@ -49,13 +49,13 @@ def _create_inference_pipeline() -> Pipeline:
     n_cross_val_folds = settings.DYNAMIC_PIPELINES_MAPPING().get("cross_validation").get("n_cross_val_folds")
 
     mg_pipeline = matrix_generation_pipeline()
-    inference_nodes = pipeline(
+    inference_nodes = Pipeline(
         [  # Include only models trained on full ground truth data
             node for node in mg_pipeline.nodes if f"fold_{n_cross_val_folds}" in node.name
         ]
     )
 
-    return pipeline(
+    return Pipeline(
         [inference_nodes],
         parameters={
             "params:evaluation.treat_score_col_name": "params:inference.score_col_name",
@@ -80,7 +80,7 @@ def _create_inference_pipeline() -> Pipeline:
 
 def _create_reporting_pipeline() -> Pipeline:
     """Reporting nodes of the inference pipeline for visualisation purposes."""
-    return pipeline(
+    return Pipeline(
         [
             ArgoNode(
                 func=nd.visualise_treat_scores,
