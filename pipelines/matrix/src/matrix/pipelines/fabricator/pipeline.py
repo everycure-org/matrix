@@ -243,6 +243,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
+                    "fabrication_params": "params:fabricator.ec_indications_list.graph",
+                    "drug_nodes": "ingestion.raw.drug_list",
+                    "disease_nodes": "ingestion.raw.disease_list",
+                },
+                outputs={
+                    "edges": "ingestion.raw.ec_indications_list.edges@pandas",
+                },
+                name="fabricate_ec_indications_list_datasets",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
                     "fabrication_params": "params:fabricator.off_label.graph",
                     "drug_nodes": "ingestion.raw.drug_list",
                     "disease_nodes": "ingestion.raw.disease_list",
@@ -316,15 +328,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             node(
                 func=fabricate_datasets,
                 inputs={
-                    "fabrication_params": "params:fabricator.ec_ground_truth",
+                    "fabrication_params": "params:fabricator.medic_ground_truth",
                     "disease_nodes": "ingestion.raw.disease_list",
                     "drug_nodes": "ingestion.raw.drug_list",
                 },
                 outputs={
-                    "positive_edges": "ingestion.raw.ec_ground_truth.positives",
-                    "negative_edges": "ingestion.raw.ec_ground_truth.negatives",
+                    "positive_edges": "ingestion.raw.medic_ground_truth.positives",
+                    "negative_edges": "ingestion.raw.medic_ground_truth.negatives",
                 },
-                name="fabricate_ec_ground_truth_pairs",
+                name="fabricate_medic_ground_truth_pairs",
             ),
             node(
                 func=fabricate_datasets,
@@ -417,6 +429,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "matrix_fold_2_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model",
                 },
                 name="fabricate_run_comparison_matrices",
+            ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.known_entity_removal",
+                    "drug_list": "ingestion.raw.drug_list",
+                    "disease_list": "ingestion.raw.disease_list",
+                },
+                outputs={"orchard_pairs_by_month": "known_entity_removal.raw.orchard_pairs_by_month"},
+                name="fabricate_orchard_pairs_by_month",
             ),
         ]
     )
