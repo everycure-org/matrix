@@ -364,6 +364,9 @@ spec:
               {% endraw %}
               nvidia.com/gpu: {% raw %} "{{inputs.parameters.num_gpus}}"
               {% endraw %}
+          volumeMounts:
+            - name: scratch
+              mountPath: /data
     container: 
       <<: *_kedro_container
       command: ["/bin/sh", "-c"]
@@ -394,6 +397,8 @@ spec:
           - name: gds-key
             mountPath: /licences
             readOnly: true
+          - name: scratch
+            mountPath: /data
         env:
           - name: NEO4J_AUTH
             valueFrom:
@@ -402,6 +407,15 @@ spec:
                 key: NEO4J_AUTH
           - name: NEO4J_gds_enterprise_license__file
             value: "/licences/gds-key"
+          # Configure Neo4j to use the PV mounted at /data for all storage
+          - name: NEO4J_server_directories_data
+            value: "/data/neo4j/data"
+          - name: NEO4J_server_directories_logs
+            value: "/data/neo4j/logs"
+          - name: NEO4J_server_directories_import
+            value: "/data/neo4j/import"
+          - name: NEO4J_server_directories_metrics
+            value: "/data/neo4j/metrics"
           - name: NEO4J_apoc_export_file_enabled
             value: "true"
           - name: NEO4J_apoc_import_file_enabled
