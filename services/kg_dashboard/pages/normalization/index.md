@@ -31,12 +31,16 @@ group by all
 
 The normalization statistics count distinct normalizations (any individual ID being normalized is counted once) from subject and object columns on associations. For a normalization to count, the ID needs to have been updated, and it needs to have been marked as a normalization success. 
 
-<SankeyDiagram data={edge_merged_normalization} 
-    sourceCol="original_prefix" 
-    targetCol="prefix" 
-    valueCol="count" 
+<SankeyDiagram data={edge_merged_normalization}
+    sourceCol="original_prefix"
+    targetCol="prefix"
+    valueCol="count"
     title="Normalization"
-    linkLabels='full'  
-    linkColor='gradient' 
+    linkLabels='full'
+    linkColor='gradient'
     chartAreaHeight={300}
 />
+
+## Per-Knowledge Graph Details
+
+For detailed normalization pipeline metrics by upstream knowledge graph, see the [Knowledge Graphs](/Knowledge%20Graphs) section.

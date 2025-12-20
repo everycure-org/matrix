@@ -31,8 +31,10 @@ export function createDebugInfo() {
 }
 
 export function updateDebugInfo(debugInfo, processedData, layout, positions, nodes, dynamicHeight, levelConfig = DEFAULT_LEVEL_CONFIG) {
-  // Use semantic access for readability
-  const { primaryNodes, aggregatorNodes, unifiedNodes } = processedData;
+  // Use semantic access for readability, defaulting to empty arrays for optional levels
+  const primaryNodes = processedData.primaryNodes || [];
+  const aggregatorNodes = processedData.aggregatorNodes || [];
+  const unifiedNodes = processedData.unifiedNodes || [];
   const firstLevel = levelConfig[0];
 
   const { nodeCount, centerX, centerY, radiusY, positioning, dynamicAngleRange } = layout;

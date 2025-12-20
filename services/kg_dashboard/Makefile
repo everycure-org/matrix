@@ -53,7 +53,7 @@ export EVIDENCE_VAR__key_drug_ids := $(KEY_DRUG_IDS)
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
+build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
@@ -76,10 +76,10 @@ populate-valid-edge-types-source:
 	rm -f scripts/temp_valid_edge_types.tsv
 
 # Generate release SQL files dynamically based on available BigQuery datasets
-sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql:
+sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql:
 	node ./scripts/generate-release-sql.cjs
 
-run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql
+run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql
 	npm run sources 
 
 run-dev:
@@ -92,3 +92,4 @@ clean:
 	rm -f sources/bq/release_trends.sql
 	rm -f sources/bq/key_nodes_release_trends.sql
 	rm -f sources/bq/key_nodes_release_aggregate.sql
+	rm -f sources/bq/kg_pipeline_metrics.sql
