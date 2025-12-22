@@ -20,15 +20,15 @@ run_comparison:
       #   score_col_name: <Name of column containing drug-disease pair scores>
 
       # WIP
-      - name: v0.13.0_main
+      - name: jam_run_1
         fold_paths_list: 
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/pilot-run-chunyu-filter-cfa81327/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/pilot-run-chunyu-filter-cfa81327/datasets/matrix_generation/model_output/fold_{0..2}/matrix_predictions"
         file_format: "parquet"
         score_col_name: "treat score"
 
-      - name: v0.13.0_ec_id_evaluation
+      - name: jam_run_2
         fold_paths_list:
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/pilot-run-chunyu-filter-cfa81327/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/pilot-run-chunyu-filter-cfa81327/datasets/matrix_generation/model_output/fold_{0..2}/matrix_predictions"
         file_format: "parquet"
         score_col_name: "treat score"
 
@@ -37,6 +37,8 @@ run_comparison:
     - &is_known_positive_col "is_known_positive"
     - &is_known_negative_col "is_known_negative"
     - &off_label_col "off_label"
+    - &ec_indications_list_on_label_col "ec_indications_list_on_label"
+    - &ec_indications_list_off_label_col "ec_indications_list_off_label"
 
   evaluations:
     ground_truth_recall_at_n: 
@@ -74,6 +76,32 @@ run_comparison:
 
     off_label_recall_at_n_bootstrap:
       <<: *off_label_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
+      N_bootstraps: 100
+
+    ec_indications_list_on_label_recall_at_n:
+      &ec_indications_list_on_label_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: *ec_indications_list_on_label_col
+      n_max: 100000
+      perform_sort: True
+      title: "Recall@n (EC indications list on or off label)"
+
+    ec_indications_list_on_label_recall_at_n_bootstrap:
+      <<: *ec_indications_list_on_label_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
+      N_bootstraps: 100
+
+    ec_indications_list_off_label_recall_at_n:
+      &ec_indications_list_off_label_recall_at_n
+      _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
+      ground_truth_col: *ec_indications_list_off_label_col
+      n_max: 100000
+      perform_sort: True
+      title: "Recall@n (EC indications list off label)"
+
+    ec_indications_list_off_label_recall_at_n_bootstrap:
+      <<: *ec_indications_list_off_label_recall_at_n
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
       N_bootstraps: 100
 
