@@ -2,6 +2,7 @@ from kedro.pipeline import Pipeline
 
 from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
+from matrix.pipelines.disease_list.pipeline import create_pipeline as create_disease_list_pipeline
 from matrix.pipelines.document_kg.pipeline import create_pipeline as create_document_kg_pipeline
 from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
@@ -10,6 +11,7 @@ from matrix.pipelines.filtering.pipeline import create_pipeline as create_filter
 from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
 from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
 from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
+from matrix.pipelines.known_entity_removal.pipeline import create_pipeline as create_known_entity_removal_pipeline
 from matrix.pipelines.matrix_generation.pipeline import (
     create_pipeline as create_matrix_pipeline,
 )
@@ -33,6 +35,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         # Individual pipelines
         "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
         "fabricator": create_fabricator_pipeline(),
+        "disease_list": create_disease_list_pipeline(),
         "ingestion": create_ingestion_pipeline(),
         "integration": create_integration_pipeline(),
         "filtering": create_filtering_pipeline(),
@@ -53,6 +56,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
         "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
         "run_comparison": create_run_comparison_pipeline(),
+        "known_entity_removal": create_known_entity_removal_pipeline(),
         # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
@@ -81,10 +85,16 @@ def register_pipelines() -> dict[str, Pipeline]:
         pipelines["feature"]
         + pipelines["modelling_run"]
     )
+
+    pipelines["default"] = (
+          pipelines["data_engineering"]
+        + pipelines["feature_and_modelling_run"]
+    )
     pipelines["__default__"] = (
           pipelines["data_engineering"]
         + pipelines["feature_and_modelling_run"]
     )
+
 
     pipelines["kg_release_and_matrix_run"] = (
         pipelines["data_engineering"]
@@ -110,9 +120,11 @@ def register_pipelines() -> dict[str, Pipeline]:
         + pipelines["data_release"]
         + pipelines["document_kg"]
         + pipelines["ingest_to_N4J"]
+        + pipelines["known_entity_removal"]
     )
     pipelines["test_sample"] = (
         pipelines["feature_and_modelling_run"]
+        + pipelines["known_entity_removal"]
     )
     # fmt: on
 

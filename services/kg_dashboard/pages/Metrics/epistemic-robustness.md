@@ -24,19 +24,35 @@ title: Epistemic Robustness
 
 
 ```sql knowledge_level_score
-SELECT * FROM bq.knowledge_level_score
+SELECT
+  SUM(edge_count) AS included_edges,
+  ROUND(SUM(kl_score * edge_count) / SUM(edge_count), 4) AS average_knowledge_level
+FROM bq.epistemic_scores
 ```
 
 ```sql agent_type_score
-SELECT * FROM bq.agent_type_score
+SELECT
+  SUM(edge_count) AS included_edges,
+  ROUND(SUM(at_score * edge_count) / SUM(edge_count), 4) AS average_agent_type
+FROM bq.epistemic_scores
 ```
 
 ```sql knowledge_level_by_source
-SELECT * FROM bq.knowledge_level_distribution
+SELECT
+  knowledge_level_label AS knowledge_level,
+  upstream_data_source,
+  SUM(edge_count) AS edge_count
+FROM bq.epistemic_scores
+GROUP BY knowledge_level_label, upstream_data_source
 ```
 
 ```sql agent_type_by_source
-SELECT * FROM bq.agent_type_distribution
+SELECT
+  agent_type_label AS agent_type,
+  upstream_data_source,
+  SUM(edge_count) AS edge_count
+FROM bq.epistemic_scores
+GROUP BY agent_type_label, upstream_data_source
 ```
 <!-- Explanatory header -->
 <div class="text-left text-md max-w-3xl mx-auto mb-6">

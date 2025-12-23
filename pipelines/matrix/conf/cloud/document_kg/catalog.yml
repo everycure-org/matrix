@@ -37,3 +37,9 @@ document_kg.int.pks_integrated_kg_list:
   type: pandas.CSVDataset
   <<: *_layer_int
   filepath: ${globals:paths.release}/document_kg/pks_integrated_kg_list.csv
+
+document_kg.prm.all_pks_metadata_table:
+  type: pandas.GBQTableDataset
+  dataset: release_${globals:versions.release}
+  table_name: all_pks_metadata_table
+  project: ${oc.env:RUNTIME_GCP_PROJECT_ID}

@@ -8,6 +8,8 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # For example, after creating a hooks.py and defining a ProjectHooks class there, do
 # from pandas_viz.hooks import ProjectHooks
 # Class that manages how configuration is loaded.
+import os
+
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
@@ -43,14 +45,14 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
     generate_dynamic_pipeline_mapping(
         {
             "cross_validation": {
-                "n_cross_val_folds": 5,
+                "n_cross_val_folds": int(os.getenv("N_CROSS_VAL", 5)),
             },
-            "num_shards": 3,
+            "num_shards": int(os.getenv("N_SHARDS", 3)),
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
                 {"name": "embiology", "integrate_in_kg": True, "is_private": True},
-                {"name": "robokop", "integrate_in_kg": True, "is_private": False},
+                {"name": "robokop", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "primekg", "integrate_in_kg": True, "is_private": False, "validate": True},
                 {"name": "drug_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
                 {"name": "disease_list", "integrate_in_kg": False, "has_edges": False, "is_core": True},
@@ -61,7 +63,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "integrate_in_kg": False,
                 },
                 {
-                    "name": "ec_ground_truth",
+                    "name": "medic_ground_truth",
                     "has_nodes": False,
                     "has_edges": True,
                     "integrate_in_kg": False,
@@ -74,8 +76,13 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "is_private": True,
                 },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
-                {"name": "ec_clinical_trails", "integrate_in_kg": False},
+                {"name": "ec_clinical_trials", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                {
+                    "name": "ec_indications_list",
+                    "has_nodes": False,
+                    "integrate_in_kg": False,
+                },
                 # TODO: enable orchard once permissions are clarified
                 {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
@@ -118,10 +125,25 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "ground_truth_recall_at_n_bootstrap",
                     "negative_recall_at_n_bootstrap",
                     "off_label_recall_at_n_bootstrap",
+                    "disease_specific_hit_at_k_bootstrap",
+                    "disease_specific_hit_at_k_off_label_bootstrap",
+                    "drug_entropy_at_n",
+                    "disease_entropy_at_n",
+                    "commonality_at_n",
                     # "ground_truth_recall_at_n",
                     # "negative_recall_at_n",
                     # "off_label_recall_at_n",
+                    # "disease_specific_hit_at_k",
+                    # "disease_specific_hit_at_k_off_label",
                 ],
+            },
+            "known_entity_removal": {
+                "available_datasets": [
+                    "kgml_xdtd_ground_truth",
+                    "medic_ground_truth",
+                    # "drugbank_ground_truth", TODO: figure out how to add private datasets
+                    "off_label",
+                ]
             },
         },
     )

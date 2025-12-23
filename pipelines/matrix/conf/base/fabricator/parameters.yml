@@ -1,6 +1,3 @@
-fabricator.ground_truth:
-  num_rows_per_category: 100
-
 fabricator.rtx_kg2:
   nodes:
     num_rows: 500
@@ -167,7 +164,7 @@ fabricator.rtx_kg2:
           - 195959
           - 5059595
   drug_list:
-    num_rows: 100
+    num_rows: 20
     columns:
       id:
         type: generate_unique_id
@@ -187,6 +184,12 @@ fabricator.rtx_kg2:
         sample:
           num_rows: "@drug_list.num_rows"
           seed: 6850
+      drugbank_id:
+        type: generate_unique_id
+        prefixes:
+          - "DB"
+        delimiter: ""
+        id_length: 5
       atc_main:
         type: faker
         provider: word
@@ -223,9 +226,14 @@ fabricator.rtx_kg2:
       smiles:
         type: faker
         provider: word
+      deleted:
+        type: generate_values
+        sample_values:
+          True: 0.1
+          False: 0.9
 
   disease_list:
-    num_rows: 100
+    num_rows: 20
     columns:
       id:
         type: copy_column
@@ -291,6 +299,11 @@ fabricator.rtx_kg2:
           - "RARE"
           - "UNCOMMON"
           - "COMMON"
+      deleted:
+        type: generate_values
+        sample_values:
+          True: 0.1
+          False: 0.9
 
 fabricator.clinical_trials:
   pos_cols:
@@ -300,46 +313,36 @@ fabricator.clinical_trials:
     - significantly_worse
     - non_significantly_worse
   graph:
-    nodes:
-      num_rows: 50
-      columns:
-        curie:
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40599
-        name:
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40599
-
     edges:
       num_rows: 10
       columns:
+        drug_ec_id:
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 40599
         drug_curie:
           type: copy_column
-          source_column: nodes.curie
+          source_column: drug_nodes.translator_id
           sample:
             num_rows: "@edges.num_rows"
             seed: 40599
         drug_name:
           type: copy_column
-          source_column: nodes.name
+          source_column: drug_nodes.name
           sample:
             num_rows: "@edges.num_rows"
             seed: 40599
         disease_curie:
           type: copy_column
-          source_column: nodes.curie
+          source_column: disease_nodes.id
           sample:
             num_rows: "@edges.num_rows"
             seed: 30599
         disease_name:
           type: copy_column
-          source_column: nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@edges.num_rows"
             seed: 30599
@@ -380,53 +383,97 @@ fabricator.clinical_trials:
 
 fabricator.off_label:
   graph:
-    nodes:
-      num_rows: 50
-      columns:
-        curie:
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40589
-        name:
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@nodes.num_rows"
-            seed: 40589
-
     edges:
       num_rows: 100
       columns:
+        drug_ec_id:
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
         curie_drug:
           type: copy_column
-          source_column: nodes.curie
+          source_column: drug_nodes.translator_id
           sample:
             num_rows: "@edges.num_rows"
-            seed: 40599
+            seed: 32132
         drug_name:
           type: copy_column
-          source_column: nodes.name
+          source_column: drug_nodes.name
           sample:
             num_rows: "@edges.num_rows"
-            seed: 40599
+            seed: 32132
         disease_name:
           type: copy_column
-          source_column: nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@edges.num_rows"
-            seed: 30599
+            seed: 12312
         curie_disease:
           type: copy_column
-          source_column: nodes.curie
+          source_column: disease_nodes.id
           sample:
             num_rows: "@edges.num_rows"
-            seed: 30599
+            seed: 12312
         relation:
           type: generate_values
           sample_values:
             - off-label use
+
+
+fabricator.ec_indications_list:
+  graph:
+    edges:
+      num_rows: 100
+      columns:
+        ec_id:
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        translator_id:
+          type: copy_column
+          source_column: drug_nodes.translator_id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        drugbank_id:
+          type: copy_column
+          source_column: drug_nodes.drugbank_id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        drug_name:
+          type: copy_column
+          source_column: drug_nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 32132
+        target:
+          type: copy_column
+          source_column: disease_nodes.id
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 12312
+        disease_name:
+          type: copy_column
+          source_column: disease_nodes.name
+          sample:
+            num_rows: "@edges.num_rows"
+            seed: 12312
+        on_label:
+          type: generate_values
+          sample_values:
+            True: 0.7
+            False: 0.3
+        off_label:
+          type: generate_values
+          sample_values:
+            True: 0.25
+            False: 0.75
+
 
 fabricator.orchard:
   edges:
@@ -1333,7 +1380,6 @@ fabricator.primekg:
           num_rows: '@edges.num_rows'
     num_rows: 100
 
-
 fabricator.ec_medical_kg:
   nodes:
     num_rows: 30
@@ -2197,31 +2243,81 @@ fabricator.embiology:
           - "PMID:12345678"
           - "DOI:10.1234/example.5678"
 
-fabricator.ec_gt:
+fabricator.kgml_xdtd_ground_truth:
+  positive_edges:
+    num_rows: 100
+    columns:
+      drug_id:
+        type: copy_column
+        source_column: drug_nodes.translator_id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 40399
+      drug_ec_id:
+        type: copy_column
+        source_column: drug_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 40399
+      disease_id:
+        type: copy_column
+        source_column: rtx_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 12456
+  negative_edges:
+    num_rows: 100
+    columns:
+      drug_id:
+        type: copy_column
+        source_column: drug_nodes.translator_id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 43399
+      drug_ec_id:
+        type: copy_column
+        source_column: drug_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 43399
+      disease_id:
+        type: copy_column
+        source_column: rtx_nodes.id
+        sample:
+          num_rows: "@positive_edges.num_rows"
+          seed: 47856
+
+fabricator.medic_ground_truth:
     positive_edges:
       num_rows: 50
       columns:
         "final normalized drug id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: drug_nodes.translator_id
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40399
         "final normalized drug label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: drug_nodes.name
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 40399
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40399
         "final normalized disease id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: disease_nodes.id
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40389
         "final normalized disease label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40389
@@ -2251,31 +2347,37 @@ fabricator.ec_gt:
       columns:
         "active ingredients":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: drug_nodes.name
           sample:
             num_rows: "@negative_edges.num_rows"
-            seed: 40399
-        "final normalized disease id":
-          type: copy_column
-          source_column: rtx_nodes.id
-          sample:
-            num_rows: "@negative_edges.num_rows"
-            seed: 40189
-        "final normalized disease label":
-          type: copy_column
-          source_column: rtx_nodes.name
-          sample:
-            num_rows: "@negative_edges.num_rows"
-            seed: 40189
+            seed: 40279
         "final normalized drug id":
           type: copy_column
-          source_column: rtx_nodes.id
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@negative_edges.num_rows"
+            seed: 40279
+        "final normalized drug label":
+          type: copy_column
+          source_column: drug_nodes.name
+          sample:
+            num_rows: "@negative_edges.num_rows"
+            seed: 40279
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@negative_edges.num_rows"
+            seed: 40279
+        "final normalized disease id":
+          type: copy_column
+          source_column: disease_nodes.id
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40199
-        "final normalized drug label":
+        "final normalized disease label":
           type: copy_column
-          source_column: rtx_nodes.name
+          source_column: disease_nodes.name
           sample:
             num_rows: "@negative_edges.num_rows"
             seed: 40199
@@ -2296,7 +2398,7 @@ fabricator.ec_gt:
             - True
             - False
 
-fabricator.drugbank_gt:
+fabricator.drugbank_ground_truth:
     positive_edges:
       num_rows: 50
       columns:
@@ -2358,6 +2460,12 @@ fabricator.drugbank_gt:
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 40399
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 55555
     negative_edges:
       num_rows: 50
       columns:
@@ -2419,14 +2527,18 @@ fabricator.drugbank_gt:
           sample:
             num_rows: "@positive_edges.num_rows"
             seed: 20399
-
+        "drug_ec_id":
+          type: copy_column
+          source_column: drug_nodes.id
+          sample:
+            num_rows: "@positive_edges.num_rows"
+            seed: 55555
 
 fabricator.run_comparison:
   matrix_size: 150
   skew_good_model: 20
   skew_bad_model: 2
   test_set_proportion: 0.1
-
 
 fabricator.document_kg.infores_catalog:
   information_resources:
@@ -2760,3 +2872,51 @@ fabricator.document_kg.mapping_kgregistry_infores:
         type: faker
         provider: sentence
 
+
+fabricator.known_entity_removal:
+  orchard_pairs_by_month:
+    num_rows: 20
+    columns:
+      drug_kg_node_id:
+        type: copy_column
+        source_column: drug_list.id
+        sample:
+          num_rows: "@orchard_pairs_by_month.num_rows"
+          seed: 40399
+      disease_kg_node_id:
+        type: copy_column
+        source_column: disease_list.id
+        sample:
+          num_rows: "@orchard_pairs_by_month.num_rows"
+          seed: 30399
+      report_date:
+        type: generate_values
+        sample_values:
+          - "2021-03-01"
+          - "2021-04-01"
+          - "2021-05-01"
+          - "2021-06-01"
+      last_created_at_at_report_date:
+        type: generate_dates
+        start_dt: 2020-01-01
+        end_dt: 2022-12-31
+        freq: D
+        date_format: "%Y-%m-%d %H:%M:%S"
+      depriortization_reason_at_report_date:
+        type: generate_values
+        sample_values:
+          - "DRUG_ON_LABEL_FOR_DISEASE"
+          - "DRUG_WIDELY_USED_OFF_LABEL"
+          - "NONE"
+      status_transitions_up_to_report_date:
+        type: generate_values
+        sample_values:
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW"
+          - "UNKNOWN > TRIAGE"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > SAC_ENDORSED> ARCHIVED"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > DEEP_DIVE > ARCHIVED"
+          - "UNKNOWN > TRIAGE > MEDICAL_REVIEW > ARCHIVED"
+          - "UNKNOWN > TRIAGE > ARCHIVED"
+          - "UNKNOWN > ARCHIVED"

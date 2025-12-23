@@ -1,0 +1,347 @@
+# {key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id}
+
+```sql key_node_info
+SELECT * FROM bq.key_nodes_stats WHERE id = '${params.key_node_id}'
+```
+
+```sql key_node_aggregate
+SELECT * FROM bq.key_nodes_release_aggregate
+WHERE key_node_id = '${params.key_node_id}'
+  AND bq_version = '${import.meta.env.VITE_release_version?.replace(/\./g, '_')}'
+```
+
+```sql key_node_category_summary
+SELECT * FROM bq.key_nodes_category_summary WHERE key_node_id = '${params.key_node_id}' ORDER BY distinct_nodes DESC
+```
+
+```sql key_node_category_edges
+SELECT
+  parent_category,
+  subject,
+  subject_name,
+  predicate,
+  object,
+  object_name,
+  primary_knowledge_sources,
+  upstream_data_source
+FROM bq.key_nodes_category_edges
+WHERE key_node_id = '${params.key_node_id}'
+ORDER BY parent_category, subject, predicate, object
+```
+
+```sql key_node_release_trends
+SELECT
+  key_node_id,
+  bq_version,
+  semantic_version,
+  release_order,
+  REPLACE(predicate, 'biolink:', '') as predicate,
+  REPLACE(subject_category, 'biolink:', '') as subject_category,
+  REPLACE(object_category, 'biolink:', '') as object_category,
+  REPLACE(primary_knowledge_source, 'infores:', '') as primary_knowledge_source,
+  edge_count,
+  unique_subjects,
+  unique_objects
+FROM bq.key_nodes_release_trends
+WHERE key_node_id = '${params.key_node_id}'
+ORDER BY release_order, edge_count DESC
+```
+
+```sql key_node_source_breakdown
+SELECT * FROM bq.key_nodes_source_breakdown WHERE key_node_id = '${params.key_node_id}'
+```
+
+<script>
+  import KeyNodeChordDashboard from '../../_components/KeyNodeChordDashboard.svelte';
+
+  const current_release_bq_version = import.meta.env.VITE_release_version?.replace(/\./g, '_') || 'v0_10_4';
+  const benchmark_bq_version = import.meta.env.VITE_benchmark_version?.replace(/\./g, '_') || 'v0_10_2';
+  const benchmark_semantic_version = import.meta.env.VITE_benchmark_version || 'v0.10.2';
+
+  // Filter release trends data in JavaScript
+  $: current_release_edges = key_node_release_trends.filter(row => row.bq_version === current_release_bq_version);
+  $: benchmark_release_edges = key_node_release_trends.filter(row => row.bq_version === benchmark_bq_version);
+
+  // Compute edges added (in current but not in benchmark)
+  $: edges_added = current_release_edges.filter(curr => {
+    return !benchmark_release_edges.some(bench =>
+      bench.predicate === curr.predicate &&
+      bench.subject_category === curr.subject_category &&
+      bench.object_category === curr.object_category &&
+      bench.primary_knowledge_source === curr.primary_knowledge_source
+    );
+  }).sort((a, b) => b.edge_count - a.edge_count);
+
+  // Compute edges removed (in benchmark but not in current)
+  $: edges_removed = benchmark_release_edges.filter(bench => {
+    return !current_release_edges.some(curr =>
+      curr.predicate === bench.predicate &&
+      curr.subject_category === bench.subject_category &&
+      curr.object_category === bench.object_category &&
+      curr.primary_knowledge_source === bench.primary_knowledge_source
+    );
+  }).sort((a, b) => b.edge_count - a.edge_count);
+
+  // Compute edges with significant changes
+  $: edges_changed = current_release_edges
+    .map(curr => {
+      const bench = benchmark_release_edges.find(b =>
+        b.predicate === curr.predicate &&
+        b.subject_category === curr.subject_category &&
+        b.object_category === curr.object_category &&
+        b.primary_knowledge_source === curr.primary_knowledge_source
+      );
+      if (bench && Math.abs(curr.edge_count - bench.edge_count) > 10) {
+        return {
+          ...curr,
+          benchmark_count: bench.edge_count,
+          current_count: curr.edge_count,
+          count_change: curr.edge_count - bench.edge_count,
+          pct_change: Math.round(1000 * (curr.edge_count - bench.edge_count) / bench.edge_count) / 10
+        };
+      }
+      return null;
+    })
+    .filter(x => x !== null)
+    .sort((a, b) => Math.abs(b.count_change) - Math.abs(a.count_change));
+</script>
+
+{#if key_node_info.length > 0}
+
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+  <strong>ID:</strong> {key_node_info[0].id}<br/>
+  <strong>Category:</strong> {key_node_info[0].category?.replace('biolink:', '') || 'N/A'}
+</div>
+
+## Overview Statistics
+
+<Details title="Understanding These Metrics">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+Statistics are shown for both the key node directly and including all its descendants (subtypes/subclasses).
+Descendants are found by recursively following biolink:subclass_of edges up to 20 levels deep.
+This provides a comprehensive view of the entire hierarchy under this node.
+</div>
+</Details>
+
+<Grid col=2 class="max-w-4xl mx-auto mb-6">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-4xl" style="color: #1e40af;">
+      <Value data={key_node_info} column="descendant_count" fmt="num0" />
+    </span><br/>
+    <span class="text-xl">Descendants</span><br/>
+    <span class="text-sm text-gray-600">(including self)</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-4xl" style="color: #1e40af;">
+      <Value data={key_node_info} column="max_descendant_depth" fmt="num0" />
+    </span><br/>
+    <span class="text-xl">Max Hierarchy Depth</span>
+  </div>
+</Grid>
+
+<Grid col=2 class="max-w-4xl mx-auto mb-6">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-2xl" style="color: #059669;">
+      <Value data={key_node_info} column="direct_total_edges" fmt="num0" />
+    </span><br/>
+    <span class="text-md">Direct Edges</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-2xl" style="color: #059669;">
+      <Value data={key_node_aggregate} column="with_descendants_total_edges" fmt="num0" />
+    </span><br/>
+    <span class="text-md">Edges (with descendants)</span>
+  </div>
+</Grid>
+
+<Grid col=2 class="max-w-4xl mx-auto mb-6">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-2xl" style="color: #7c3aed;">
+      <Value data={key_node_info} column="direct_unique_neighbors" fmt="num0" />
+    </span><br/>
+    <span class="text-md">Direct Unique Neighbors</span>
+  </div>
+</Grid>
+
+## {key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id} Graph Edges
+
+<Details title="Understanding This Visualization">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+
+<strong>Interactive Components:</strong>
+
+This visualization consists of three interactive, interconnected components that work together to help you explore the knowledge graph:
+
+1. <strong>Network Diagram</strong> (top): Shows the key node in the center with connected biolink categories arranged around it. Node size represents the number of distinct connected entities, and link width represents total edge count.
+
+2. <strong>Source Filter Bar Charts</strong> (middle): Two horizontal bar charts showing the distribution of edges across knowledge graph sources (KG Sources like RTX-KG2, ROBOKOP) and primary knowledge sources (like HPO, MONDO).
+
+3. <strong>Edge Sample Table</strong> (bottom): Displays actual example edges with their details including subject, predicate, object, KG source, and primary knowledge sources.
+
+<strong>How Filtering Works:</strong>
+
+- <strong>Click a category</strong> in the network diagram → Updates bar charts to show only sources for that category + displays sample edges for that category
+- <strong>Click a bar segment</strong> in the source charts → Updates the network diagram to show only categories with edges from that source + filters the edge table to matching edges
+- <strong>Click multiple sources</strong> → Combines filters (only edges matching ALL selected sources are shown)
+- <strong>Active filters</strong> are displayed in colored chips below the bar charts (purple=category, blue=KG source, green=primary source)
+- <strong>Click "Clear all"</strong> or click individual filter chips to remove filters and return to the full view
+
+All three components stay synchronized, ensuring you're always viewing consistent, filtered data across the visualization.
+
+</div>
+</Details>
+
+{#if key_node_category_summary.length > 0}
+<KeyNodeChordDashboard
+  categoryData={key_node_category_summary}
+  edgeData={key_node_category_edges}
+  sourceData={key_node_source_breakdown}
+  keyNodeId={params.key_node_id}
+  keyNodeName={key_node_info.length > 0 ? key_node_info[0].name || params.key_node_id : params.key_node_id}
+  keyNodeCategory={key_node_info.length > 0 ? key_node_info[0].category?.replace('biolink:', '') : null}
+/>
+{:else}
+<div class="text-center text-lg text-gray-500 mt-10">
+  No category data available for visualization.
+</div>
+{/if}
+
+## Release Trends
+
+```sql key_node_aggregate_trends
+SELECT * FROM bq.key_nodes_release_aggregate WHERE key_node_id = '${params.key_node_id}' ORDER BY release_order
+```
+
+<Details title="Understanding Release Trends">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+This section shows how the neighborhood of this key node (including descendants) has evolved across releases.
+Direct edges are connections involving only the key node itself, while "with descendants" includes all subtypes/subclasses.
+The comparison tables below show edge types that have been added, removed, or changed significantly between the benchmark and current release.
+</div>
+</Details>
+
+{#if key_node_aggregate_trends.length > 0}
+
+### Edge Counts Over Time
+
+<LineChart
+    data={key_node_aggregate_trends}
+    x="semantic_version"
+    y={['direct_total_edges', 'with_descendants_total_edges']}
+    ySeriesLabels={['Direct Edges', 'With Descendants']}
+    title="Total Edges Across Releases"
+    yGridlines=false
+    xBaseline=false
+    xAxisLabels=false
+    markers=false
+    step=true
+    sort=false
+>
+    <ReferenceLine x={benchmark_semantic_version} label="Benchmark" hideValue=true/>
+</LineChart>
+
+{/if}
+
+{#if key_node_release_trends.length > 0}
+
+### Edge Types Added (Current vs Benchmark)
+
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+These edge types are <strong>completely new</strong> in the current release - they did not exist in the benchmark release at all.
+Each row represents a unique combination of subject category, predicate, object category, and primary knowledge source that has been newly added to the knowledge graph.
+These are distinct from "significant changes" because there's no previous count to compare against - the entire edge type is brand new.
+</div>
+</Details>
+
+{#if edges_added.length > 0}
+<DataTable
+    data={edges_added}
+    pagination=true
+    pageSize={10}
+    title="Edge types present in current release but not in benchmark">
+    <Column id="edge_count" title="Edge Count" contentType="bar" fmt="num0" />
+    <Column id="subject_category" title="Subject Category" />
+    <Column id="predicate" title="Predicate" />
+    <Column id="object_category" title="Object Category" />
+    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
+</DataTable>
+{:else}
+<div class="text-center text-lg text-gray-500 mt-4 mb-4">
+  No new edge types added in current release.
+</div>
+{/if}
+
+### Edge Types Removed (Current vs Benchmark)
+
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+These edge types existed in the benchmark release but are <strong>no longer present</strong> in the current release.
+Each row represents a unique combination of subject category, predicate, object category, and primary knowledge source that has been removed.
+This could indicate data source changes, improved curation removing low-quality edges, or updates to ontology mappings.
+The edge count shown reflects how many edges of this type existed in the benchmark release before removal.
+</div>
+</Details>
+
+{#if edges_removed.length > 0}
+<DataTable
+    data={edges_removed}
+    pagination=true
+    pageSize={10}
+    title="Edge types present in benchmark but not in current release">
+    <Column id="edge_count" title="Edge Count (Benchmark)" contentType="bar" fmt="num0" />
+    <Column id="subject_category" title="Subject Category" />
+    <Column id="predicate" title="Predicate" />
+    <Column id="object_category" title="Object Category" />
+    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
+</DataTable>
+{:else}
+<div class="text-center text-lg text-gray-500 mt-4 mb-4">
+  No edge types removed in current release.
+</div>
+{/if}
+
+### Edge Types with Significant Changes
+
+<Details title="Understanding This Table">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
+These edge types exist in <strong>both</strong> the benchmark and current releases, but their edge counts have changed by more than 10 edges.
+Each row represents the same edge type (same subject category, predicate, object category, and primary knowledge source) with a significant count difference.
+Large increases may indicate improved data coverage or new data sources, while decreases could reflect improved curation, deduplication, or source changes.
+The percentage change helps contextualize whether the absolute change represents a major shift in available knowledge.
+<strong>Note:</strong> Edge types that are completely new (added) or completely removed won't appear here - only edge types that existed in both releases.
+</div>
+</Details>
+
+{#if edges_changed.length > 0}
+<DataTable
+    data={edges_changed}
+    pagination=true
+    pageSize={10}
+    title="Edge types with significant count changes (>10 edges difference)">
+    <Column id="count_change" title="Change" contentType="delta" fmt="num0" />
+    <Column id="pct_change" title="% Change" fmt="pct1" />
+    <Column id="benchmark_count" title="Benchmark Count" fmt="num0" />
+    <Column id="current_count" title="Current Count" fmt="num0" />
+    <Column id="subject_category" title="Subject Category" />
+    <Column id="predicate" title="Predicate" />
+    <Column id="object_category" title="Object Category" />
+    <Column id="primary_knowledge_source" title="Primary Knowledge Source" />
+</DataTable>
+{:else}
+<div class="text-center text-lg text-gray-500 mt-4 mb-4">
+  No significant changes in edge counts.
+</div>
+{/if}
+
+{:else}
+<div class="text-center text-lg text-gray-500 mt-10">
+  No release trend data available for this key node.
+</div>
+{/if}
+
+{:else if key_node_info !== undefined}
+<div class="text-center text-lg text-red-500 mt-10">
+  Key node "{params.key_node_id}" not found in the knowledge graph.
+</div>
+{/if}

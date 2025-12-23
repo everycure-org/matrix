@@ -7,7 +7,6 @@ import pyspark.sql.functions as F
 from jinja2 import Template
 from matrix_inject.inject import inject_object
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -67,9 +66,19 @@ def integrate_all_metadata(
     all_pks_metadata: Dict[str, Dict[str, Any]],
     unified_edges: ps.DataFrame,
 ) -> Dict[str, Any]:
-    """Filter PKS metadata to sources found in unified edges."""
+    """Filter PKS metadata to sources found in unified edges.
+
+    Args:
+        all_pks_metadata: Complete PKS metadata from all sources
+        unified_edges: Unified edges to extract relevant PKS from
+
+    Returns:
+        Filtered PKS metadata dict containing only sources used in unified edges
+    """
     relevant_sources = extract_pks_from_unified_edges(unified_edges)
-    return _create_pks_subset_relevant_to_matrix(all_pks_metadata, relevant_sources)
+    matrix_subset = _create_pks_subset_relevant_to_matrix(all_pks_metadata, relevant_sources)
+
+    return matrix_subset
 
 
 def _create_default_pks_entry(source_id: str) -> Dict[str, Any]:
@@ -106,7 +115,7 @@ def _create_pks_subset_relevant_to_matrix(
             missing_sources.append(source)
 
     if missing_sources:
-        logger.warning(f"Created default entries for {len(missing_sources)} PKS with no metadata: {missing_sources}")
+        logger.warning(f"Created default entries for {len(missing_sources)} PKS with no metadata.")
 
     return subset
 
@@ -257,6 +266,47 @@ def _generate_pks_markdown_documentation(
     return pks_docs
 
 
+def _generate_pks_table(source_data: Dict[str, Dict[str, Any]], template: dict) -> pd.DataFrame:
+    """Generate tabular representation of PKS metadata based on template configuration.
+
+    Args:
+        source_data: PKS metadata dictionary
+        template: Template configuration including table_columns
+
+    Returns:
+        Pandas DataFrame with flattened PKS metadata
+    """
+    table_columns = template.get("table_columns", [])
+
+    rows = []
+    for pks_id, source_info in source_data.items():
+        row = {}
+
+        for col_config in table_columns:
+            col_name = col_config["name"]
+
+            if col_config.get("source") == "pks_id":
+                row[col_name] = pks_id
+                continue
+
+            source = col_config.get("source")
+            field = col_config.get("field")
+
+            if source and field:
+                value = _get_property_from_source(source_info, source, field)
+
+                if isinstance(value, list):
+                    row[col_name] = "; ".join(str(v) for v in value) if value else None
+                else:
+                    row[col_name] = value
+            else:
+                row[col_name] = None
+
+        rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
 def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, Any]], template: dict) -> str:
     """Generate PKS overview table in markdown."""
     pks_jinja2_template = Template(template["overview"])
@@ -277,9 +327,20 @@ def _generate_overview_table_of_pks_markdown(source_data: Dict[str, Dict[str, An
     return pks_table_docstring
 
 
-def create_pks_documentation(matrix_subset_relevant_sources: Dict[str, Any], templates: Dict[str, str]) -> str:
-    """Generate markdown documentation for PKS used in the matrix."""
+def create_pks_documentation(
+    matrix_subset_relevant_sources: Dict[str, Any], templates: Dict[str, str]
+) -> tuple[str, pd.DataFrame]:
+    """Generate markdown documentation and tabular data for PKS used in the matrix.
+
+    Args:
+        matrix_subset_relevant_sources: Filtered PKS metadata dict
+        templates: Template configuration including markdown templates and table_columns
+
+    Returns:
+        Tuple of (markdown documentation string, PKS metadata table as Pandas DataFrame)
+    """
     pks_documentation_texts = _generate_list_of_pks_markdown_strings(matrix_subset_relevant_sources, template=templates)
     overview_table = _generate_overview_table_of_pks_markdown(matrix_subset_relevant_sources, template=templates)
     documentation_md = _generate_pks_markdown_documentation(pks_documentation_texts, overview_table, template=templates)
-    return documentation_md
+    pks_table = _generate_pks_table(matrix_subset_relevant_sources, template=templates)
+    return documentation_md, pks_table

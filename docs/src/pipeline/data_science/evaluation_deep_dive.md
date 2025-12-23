@@ -1,16 +1,13 @@
 ---
-title: "Deep dive: Evaluation pipeline"
+title: "Deep dive: Evaluation suite"
 ---
 
-# Deep dive: Evaluation pipeline
+# Deep dive: Evaluation suite
 
-The evaluation pipeline is a crucial component of our drug repurposing system, designed to assess the performance and reliability of our predictive models. This pipeline employs a variety of metrics and techniques to provide a comprehensive understanding of how well our models are performing in identifying potential new drug-disease associations.
+The evaluation pipeline is a crucial component of our drug repurposing system, designed to assess the performance and reliability of our predictive models. 
+This pipeline employs a variety of metrics and techniques to provide a comprehensive understanding of how well our models are performing in identifying potential new drug-disease associations.
 
-In this deep dive, we'll explore the different aspects of our evaluation pipeline, including:
-
-1. The types of evaluation metrics we use
-2. How we generate negative test pairs
-3. Implementation details in Kedro
+In this deep dive, we give a detailed overview of the evaluation suite. 
 
 ## Overview of the suite
 
@@ -32,7 +29,7 @@ The following table summarises the evaluation metrics that comprise the current 
 | Recall@n, AUROC | Hit@k, MRR | Accuracy, F1 score |
 | Computed using the full matrix | Computed using diseases in the known positive test set  | Computed using the set of known positive and negative pairs |
 
-Additionally, our evaluation pipeline now also includes model stability metrics which compare the stability of output between models trained ondifferent k-folds of the data (as these are now a part of our pipeline by default). These metrics address issues such as: how stable is the output between different runss/folds.
+Additionally, our evaluation pipeline now also includes model stability metrics which compare the stability of output between models trained on different k-folds of the data (as these are now a part of our pipeline by default). These metrics address issues such as: how stable is the output between different runss/folds.
 
 ## Time-split validation and recent clinical trials data
 
@@ -57,6 +54,7 @@ The input to the evaluation pipeline consists of the matrix pairs dataset with t
 In addition, we remove from the matrix any known positive or known negative pairs that were used by the model during training, so that these are not used in the computation of the metrics.
 
 > __Key philosophy.__ In order to compute ranking metrics, we must synthesise negative pairs since only a small portion of negative pairs are known. To do this, we exploit the fact that the vast majority of drug disease pairs are negatives. However, synthesising negative pairs by random sampling can lead to unexpected and undesirable effects on the data distribution, as well as introducing noise. For example, the distribution for geodesic distance may be altered (see Yang et. al. ). Therefore, our ranking metrics are computed using pairs dataset that are as close as possible to what the model will see while performing its downstream task.
+
 
 ### Full matrix ranking metrics
 
@@ -144,29 +142,56 @@ We have two versions corresponding to different choices of test dataset:
 
 Accuracy is the proportion of pairs in the dataset that are correctly classified. We fix the threshold to 0.5, that is, the model classifies a drug-disease pair to be "treat" if the treat score is > 0.5 and otherwise "not treat". 
 
-
 #### F1 Score
 
 The F1 score is designed to take into account class imbalances and is defined as the harmonic mean of precision and recall (see [Wikipedia: F1 score](https://en.wikipedia.org/wiki/F1_score)). 
 
-### Stability metrics
+#### Precision-Recall curve 
 
-These metrics differ from the above as there is no specific 'ground truth' to compare against. Instead, we compare the output of the model between different folds (in the future, we might extract the stability evaluation suite into a separate pipeline, giving us ability to compare stability between different runs).
+The precision-recall curve is a standard figure which plots precision against recall across all possible thresholds for a classifier.
+A larger area under the curve corresponds to a better classifier.  
 
-All of these metrics are computed at a given rank $k$. 
+### Entropy@n metrics
 
-#### Commonality at k 
+Frequent flyers refers to a phenomenon whereby certain drugs or diseases have disproportionally high average treat scores and therefore dominate the top of the matrix output. 
+Prevalence of drug or disease frequent flyers are measured by the __Drug-Entropy@n__ and __Disease-Entropy@n__ metrics, which directly measure the _variety of drugs and diseases appearing in the top n_. 
 
-Commonality at k essentially tells us about overlap of pairs in the top $k$ of two lists. Consider two ranked lists of drugs where $S_k$ is the number of common drug-disease pairs in the top $k$ of both lists. The minimum value of $S_k$ can be 0 while the maximum is 1.
+Both metrics are between 0 and 1, with *higher* values indicating a larger *variety* therefore a *smaller* prevalence of frequent flyers. 
+
+More precisely, we define Drug-Entropy@n as follows. Disease-Entropy@n is defined analogously. 
+
+_Definition._ Let $D$ be the set of drugs of interest. Let $\text{count}_n(d)$ be the number of times drug $d \in D$ appears in the top $n$ pairs. 
+
+Then the Drug-Entropy@n score is defined at the entropy of the discrete probability distribution 
 
 $$
-\text{S}_{k} = \frac{S}{k}
+p(d) = \frac{\text{count}_n(d)}{n}, \qquad d \in D.
+$$ 
+
+To ensure the metric is between 0 and 1, we set the base of the entropy to the number of unique drugs $|D|$. This is written as
+
+$$
+\text{Drug-Entropy}\text{@n} = - \sum_{d \in D} p(d) \log_{|D|} p(d).
 $$
 
-We calculate commonality at k at several different k values however in the future we might expand it to a more continuous range of k values. 
+
+### Comparison and stability metrics
+
+These metrics allow us to compare two ranked lists of drug-disease pairs and also do use ground truth data. 
+There are two applications: 
+
+  - Comparing predictions between multiple models
+  - Comparing predictions between folds of a single model.
+
+All of these metrics are computed for the top $k$ of ranked lists for a given $k$. 
+
+#### Commonality@k 
+
+Commonality at k essentially tells us about overlap of pairs in the top $k$ of two lists. Let $S_k$ denote the number of common drug-disease pairs in the top $k$ of both lists.
+Then Commonality@k is defined as follows:
 
 $$
-\text{S} = \frac{1}{k_{max}}\sum_{k=1}^{k_{max}}\frac{{S}_{k}}{k} 
+\text{Commonality}@k = \frac{S_k}{k}. 
 $$
 
 #### Spearman's rank at k
@@ -194,141 +219,8 @@ $$
 where $C_{k}$ is the commonality at k and $S_{k}$ is the absolute value of Spearman's rank at k (for details on these, see sections below). Note that Rank-Commonality at K metric should be only interpreted together with p-value associated with Spearman's rank at K. 
 
 
-## Kedro Implementation 
-
-The evaluation pipeline takes as input the full matrix dataset of drug-disease pairs, along with with their treat scores. 
-For each evaluation metric, this large input dataset is processed by:
-- Restricting to only the pairs required for the evaluation metric
-- Labelling any ground truth pairs
-The processed dataset is then used to compute the evaluation metric. 
-
-This process is summarised by the following high-level diagram:
-
-![Evaluation Pipeline](../../assets/deep_dive/evaluation_simple.drawio.svg)
-
-Notably, inference is not performed within the evaluation pipeline since the treat scores are provided in the input matrix.
-
-> *Example.* (ground truth classification metric) The full matrix dataframe is restricted to ground truth positives, which are labelled by `y=1`, and ground truth negatives which are labelled by `y=0`.   
-
-The following diagram gives a more detailed overview of how the evaluation pipeline fits into the wider MATRIX system. 
-
-![Evaluation Pipeline Full](../../assets/deep_dive/evaluation_full_matrix_docs.drawio.svg)
-
-
-### Parameters configuration file 
-
-The evaluation metrics are configured in the file `parameters.yml`. Let us explain the structure of this file through two examples. 
-#### Example 1 (classification metrics, clinical trials version)
-
-```yaml
-# Threshold-based classification metrics for ground truth data (clinical trials version)
-evaluation.simple_classification_trials:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.GroundTruthTestPairs
-      positive_columns: 
-        - "trial_sig_better"
-        - "trial_non_sig_better"
-      negative_columns:
-        - "trial_sig_worse"
-        - "trial_non_sig_worse"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.DiscreteMetrics
-      metrics:
-        - object: sklearn.metrics.accuracy_score
-        - object: sklearn.metrics.f1_score
-      score_col_name: *score-col
-      threshold: 0.5
-```
-- `generator` defines the dataset that is required for the metrics. 
-- `GroundTruthTestPairs` is represents a dataset consisting ground truth positives and negatives.
-- `positive_columns` and `negative_columns` define the ground truth sets by specifying columns in the matrix dataframe. 
-- `evaluation` defines the evaluation metrics used. 
-
-#### Example 2 (full matrix ranking metrics, standard version)
-
-```yaml
-# Full matrix ranking 
-evaluation.full_matrix:
-  evaluation_options:
-    generator:
-      object: matrix.datasets.pair_generator.FullMatrixPositives
-      positive_columns: 
-        - "is_known_positive"
-    evaluation:
-      object: matrix.pipelines.evaluation.evaluation.FullMatrixRanking 
-      rank_func_lst: 
-        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN 
-          n: 1000
-        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-          n: 10000
-        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-          n: 100000
-        - object:  matrix.pipelines.evaluation.named_metric_functions.RecallAtN
-          n: 1000000
-      quantile_func_lst: 
-        - object: matrix.pipelines.evaluation.named_metric_functions.AUROC
-``` 
-- `FullMatrixPositives` is the object defining the dataset containing the necessary information for the computation of the full matrix ranking metrics. This dataset consists of the ground truth positive drug-disease pairs with columns giving:
-    - The matrix rank of each pair
-    - The matrix quantile rank of each pair
-- This is enough for the computation of the metrics since:
-    - Recall@n may be computed using the ranks of the ground truth positive pairs
-    - AUROC may be computed using the quantile ranks of the ground truth positive pairs  
-- `positive_columns` defines the ground truth positive set by specifying columns in the matrix dataframe. 
-- `rank_func_lst` specifies the list of metrics which require the rank for computation.
-- `quantile_func_lst` specifies the list of metrics which require the quantile rank for computation.
- 
-
-## Appendix: Equivalence between AUROC and MQR (optional)
-
-In this section, we clarify the definition of mean quantile rank against non-positives $\text{MQR}$ and justify the equation
-
-$$
-\text{AUROC} = 1 - \text{MQR}.
-$$
-
-In essence, this relationship stems from the fact that the AUROC is equal to the probability that a randomly chosen positive datapoint ranks higher than a randomly chosen negative (Hanley et. al.). 
-
-
-The *rank against non-positives* for a pair $(d,i)$, denoted by $\text{rank}_{np}(d,i)$,
-refers to it's position among non-positive (i.e. unknown or known negative) pairs when sorted by treat score. In other words, it is the rank with any other positive pairs taken out.
-The *quantile rank against non-positives* measures the proportion of non-positive pairs that have a lower rank than the pair. It is defined as 
-
-$$
-QR_{np}(d,i) = \frac{\text{rank}_{np}(d,i) - 1}{N}
-$$
-
-where $N$ is the number of known or known negative pairs. The mean quantile rank against non-positives is given by 
-
-$$
-\text{MQR} = \frac{1}{|GT|} \sum_{(d,i) \in GT} QR_{np}(d,i).
-$$
-
-
-To see the relationship between $\text{AUROC}$ and $\text{MQR}$, let $\mathcal{P}$ and $\mathcal{N}$ denote the set of positive and negative pairs respectively. By the aforementioned characterisation of AUROC,
-
-$$
-\text{AUROC} = \mathbb{P}_{x \sim \mathcal{P}} \mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]
-$$
-
-where $\gamma$ denotes the treat score. Then, 
-
-$$
-\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)]  = \frac{|\{y \in \mathcal{N} : \gamma(x) \geq \gamma(y)\}|}{N} = \frac{N - |\{y \in \mathcal{N} : \gamma(x) < \gamma(y)\}|}{N}
-$$
-
-where $N = |\mathcal{N}|$. But $|\{y \in \mathcal{N} : \gamma(x) < \gamma(y)\}|$ is equal to $\text{rank}_{np}(x) - 1$
- so by the above definition of  quantile rank, 
-
-$$
-\mathbb{P}_{y \sim \mathcal{N}} [\gamma(x) \geq \gamma(y)] = 1 - \text{QR}(x).
-$$ 
-
-Substituting back above shows that the desired equation holds.
 
 ## References
 
 - Yang, Yang, Ryan N. Lichtenwalter, and Nitesh V. Chawla. "Evaluating link prediction methods." Knowledge and Information Systems 45 (2015): 751-782.
-- Hanley, James A., and Barbara J. McNeil. "The meaning and use of the area under a receiver operating characteristic (ROC) curve." Radiology 143.1 (1982): 29-36.
 

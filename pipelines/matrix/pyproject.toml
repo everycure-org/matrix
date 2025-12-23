@@ -2,6 +2,10 @@
 requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["conf*", "data*", "compose*", "tests*", "tmp*", "docs*"]
+
 [tool.pytest.ini_options]
 pythonpath = "src"
 addopts = [
@@ -42,7 +46,9 @@ dependencies = [
     "google-cloud-bigquery-storage",
     "db-dtypes", # needed for bigquery in line queries in notebooks
     "google-cloud-iam",
+    "grape>=0.2.4",
     "graphdatascience",
+    "graphframes-py>=0.10.0",
     "ipython>=8.10",
     "ipywidgets",
     "jsonpath-ng",
@@ -50,7 +56,7 @@ dependencies = [
     "kedro-datasets>=6.0.0",
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
-    "kedro~=0.19.13",
+    "kedro~=0.19.15",
     "langchain",
     "langchain-openai",
     "matplotlib",
@@ -62,11 +68,12 @@ dependencies = [
     "openpyxl",
     "pandera==0.24.0",
     "pandas>=2.1.1", #due to pandera requiring this or higher
-    "polars-lts-cpu==1.30.0",
+    "polars-lts-cpu>=1.30.0",
     "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
     "pyarrow>=14.0.2",
     "gspread>=6.2.1",
     "pyspark==3.5.1",
+    "rustworkx>=0.15.0",
     "python-cypher==0.20.1",
     "responses",
     "rich",
@@ -81,7 +88,10 @@ dependencies = [
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost-cpu",
     "tqdm>=4.67.1",
+    "pyoxigraph>=0.4.5", # Needed for loading Mondo
     "bracex>=2.6",
+    "xgboost>=3.1.2",
+    "owlready2>=0.49",
 ]
 
 
