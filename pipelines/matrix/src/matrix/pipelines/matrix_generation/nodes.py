@@ -65,6 +65,7 @@ def generate_pairs(
     node_embeddings: ps.DataFrame,
     clinical_trials: Optional[ps.DataFrame] = None,
     off_label: Optional[ps.DataFrame] = None,
+    ec_indications_list: Optional[ps.DataFrame] = None,
     orchard: Optional[ps.DataFrame] = None,
 ) -> ps.DataFrame:
     """Function to generate matrix dataset.
@@ -84,14 +85,8 @@ def generate_pairs(
         pyspark dataframe containing all combinations of drugs and diseases that do not lie in the training set with flags
     """
 
-    def get_join_columns(left_columns: list[str], right_columns: list[str]) -> list[str]:
-        # if "source_ec_id" in left_columns and "source_ec_id" in right_columns:
-        #     return ["source_ec_id", "target"]
-        # else:
-        return ["source", "target"]
-
     def add_test_pairs_flags(matrix: ps.DataFrame, known_pairs: ps.DataFrame) -> ps.DataFrame:
-        matrix_known_pairs_join_columns = get_join_columns(matrix.columns, known_pairs.columns)
+        matrix_known_pairs_join_columns = ["source", "target"]
 
         test_pairs = (
             known_pairs.filter(F.col("split") == "TEST")
@@ -111,7 +106,7 @@ def generate_pairs(
         return matrix
 
     def add_clinical_trials_flags(matrix: ps.DataFrame, clinical_trials: ps.DataFrame) -> ps.DataFrame:
-        matrix_clinical_trials_join_columns = get_join_columns(matrix.columns, clinical_trials.columns)
+        matrix_clinical_trials_join_columns = ["source", "target"]
         clinical_trials = (
             clinical_trials.withColumnsRenamed(
                 {"subject": "source", "subject_ec_id": "source_ec_id", "object": "target"}
@@ -149,7 +144,7 @@ def generate_pairs(
         return matrix
 
     def add_off_label_flags(matrix: ps.DataFrame, off_label: ps.DataFrame) -> ps.DataFrame:
-        matrix_off_label_join_columns = get_join_columns(matrix.columns, off_label.columns)
+        matrix_off_label_join_columns = ["source", "target"]
         off_label = (
             off_label.withColumnsRenamed(
                 colsMap={"subject": "source", "drug_ec_id": "source_ec_id", "object": "target"}
@@ -169,7 +164,7 @@ def generate_pairs(
         return matrix
 
     def add_orchard_flags(matrix: ps.DataFrame, orchard: ps.DataFrame) -> ps.DataFrame:
-        matrix_orchard_join_columns = get_join_columns(matrix.columns, orchard.columns)
+        matrix_orchard_join_columns = ["source", "target"]
         orchard = (
             orchard.withColumnsRenamed({"subject": "source", "object": "target"})
             .select(
@@ -206,16 +201,38 @@ def generate_pairs(
         )
         return matrix
 
+    def add_ec_indications_list_flags(matrix: ps.DataFrame, ec_indications_list: ps.DataFrame) -> ps.DataFrame:
+        matrix_ec_indications_list_join_columns = ["source_ec_id", "target"]
+
+        ec_indications_list = ec_indications_list.withColumnsRenamed(
+            {"subject_ec_id": "source_ec_id", "object": "target"}
+        )
+        matrix = (
+            matrix.alias("matrix")
+            .join(
+                ec_indications_list.alias("ec_indications_list"), on=matrix_ec_indications_list_join_columns, how="left"
+            )
+            .select(
+                F.col("matrix.*"),
+                F.coalesce(F.col("ec_indications_list.on_label"), F.lit(False)).alias("ec_indications_list_on_label"),
+                F.coalesce(F.col("ec_indications_list.off_label"), F.lit(False)).alias("ec_indications_list_off_label"),
+            )
+            .select(
+                F.col("matrix.*"),
+                F.col("ec_indications_list_off_label"),
+                F.col("ec_indications_list_on_label"),
+            )
+        )
+        return matrix
+
     # Filter out drugs and diseases without embeddings
-    drugs_in_graph = (
-        drugs.alias("drugs")
-        .join(node_embeddings.select("id"), on="id", how="inner")
-        .select(F.col("drugs.id").alias("source"))
-    )
-    # if "ec_id" in drugs.columns:
-    #    drugs_in_graph = drugs_in_graph.select(
-    #        F.col("source"), F.col("drugs.ec_id").alias("source_ec_id")
-    #    )
+    drugs_in_graph = drugs.alias("drugs").join(node_embeddings.select("id"), on="id", how="inner")
+    if "ec_id" in drugs.columns:
+        drugs_in_graph = drugs_in_graph.select(
+            F.col("drugs.id").alias("source"), F.col("drugs.ec_id").alias("source_ec_id")
+        )
+    else:
+        drugs_in_graph = drugs_in_graph.select(F.col("drugs.id").alias("source"))
 
     diseases_in_graph = (
         diseases.alias("diseases")
@@ -227,7 +244,7 @@ def generate_pairs(
     matrix = drugs_in_graph.crossJoin(diseases_in_graph)
 
     # Filter out training pairs
-    matrix_known_pairs_join_columns = get_join_columns(matrix.columns, known_pairs.columns)
+    matrix_known_pairs_join_columns = ["source", "target"]
     train_pairs = known_pairs.filter(F.col("split") == "TRAIN")
     matrix = matrix.join(train_pairs, on=matrix_known_pairs_join_columns, how="leftanti")
 
@@ -242,6 +259,9 @@ def generate_pairs(
 
     if orchard is not None:
         matrix = add_orchard_flags(matrix, orchard)
+
+    if ec_indications_list is not None:
+        matrix = add_ec_indications_list_flags(matrix, ec_indications_list)
 
     return matrix
 
