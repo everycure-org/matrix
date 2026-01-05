@@ -102,6 +102,7 @@ matrix = "matrix.__main__:main"
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
+default = true
 
 # 2) Use that index for torch packages
 [tool.uv.sources]
