@@ -430,5 +430,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 },
                 name="fabricate_run_comparison_matrices",
             ),
+            node(
+                func=fabricate_datasets,
+                inputs={
+                    "fabrication_params": "params:fabricator.known_entity_removal",
+                    "drug_list": "ingestion.raw.drug_list",
+                    "disease_list": "ingestion.raw.disease_list",
+                },
+                outputs={"orchard_pairs_by_month": "known_entity_removal.raw.orchard_pairs_by_month"},
+                name="fabricate_orchard_pairs_by_month",
+            ),
         ]
     )

@@ -6,6 +6,10 @@ _spark_parquet: &_spark_parquet
   save_args:
     mode: overwrite
 
+_spark_csv: &_spark_csv
+  <<: [*_spark_parquet]
+  file_format: csv
+
 known_entity_removal.int.concatenated_ground_truth:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/concatenated_ground_truth
@@ -17,3 +21,33 @@ known_entity_removal.int.expanded_ground_truth:
 known_entity_removal.model_output.known_entity_matrix:
   <<: [*_spark_parquet]
   filepath: ${globals:paths.known_entity_removal}/known_entity_matrix
+
+known_entity_removal.raw.orchard_pairs_by_month:
+  type: matrix_gcp_datasets.gcp.PandasBigQueryDataset
+  project: ec-orchard-prod
+  dataset: dbt
+  table: pair_status_transitions_per_month
+
+known_entity_removal.int.processed_orchard_pairs@pandas:
+  type: pandas.ParquetDataset
+  filepath: &processed_orchard_pairs ${globals:paths.known_entity_removal}/preprocessed_orchard_pairs.parquet  
+
+known_entity_removal.int.processed_orchard_pairs@spark:
+  <<: [*_spark_parquet]
+  filepath: *processed_orchard_pairs
+
+known_entity_removal.evaluation.orchard_data_report_date:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.known_entity_removal}/orchard_data_report_date.csv
+
+known_entity_removal.int.orchard_pairs_with_predictions@pandas:
+  type: pandas.ParquetDataset
+  filepath: &orchard_pairs_with_predictions ${globals:paths.known_entity_removal}/orchard_pairs_with_predictions.parquet
+
+known_entity_removal.int.orchard_pairs_with_predictions@spark:
+  <<: [*_spark_parquet]
+  filepath: *orchard_pairs_with_predictions
+
+known_entity_removal.evaluation.metrics:
+  type: yaml.YAMLDataset
+  filepath: ${globals:paths.known_entity_removal}/metrics.yml
