@@ -221,6 +221,9 @@ def generate_pairs(
                 F.col("matrix.*"),
                 F.col("ec_indications_list_off_label"),
                 F.col("ec_indications_list_on_label"),
+                (F.col("ec_indications_list_on_label") | F.col("ec_indications_list_off_label")).alias(
+                    "ec_indications_list"
+                ),
             )
         )
         return matrix
