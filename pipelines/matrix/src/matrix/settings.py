@@ -127,6 +127,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "off_label_recall_at_n_bootstrap",
                     "ec_indications_list_on_label_recall_at_n_bootstrap",
                     "ec_indications_list_off_label_recall_at_n_bootstrap",
+                    "ec_indications_list_recall_at_n_bootstrap",
                     "disease_specific_hit_at_k_bootstrap",
                     "disease_specific_hit_at_k_off_label_bootstrap",
                     "drug_entropy_at_n",
