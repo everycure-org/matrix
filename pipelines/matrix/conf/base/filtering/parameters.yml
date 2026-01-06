@@ -68,10 +68,10 @@ filtering:
           - biolink:Publication
           - biolink:Treatment
 
-    #       - biolink:AnatomicalEntity
-    #       - biolink:ChemicalEntity
-    #       - biolink:MolecularMixture
-    #       - biolink:Transcript
+          - biolink:AnatomicalEntity
+          - biolink:ChemicalEntity
+          - biolink:MolecularMixture
+          - biolink:Transcript
 
   edge_filters:
     filter_sources:
