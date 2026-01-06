@@ -37,7 +37,7 @@ filtering:
         
     # exp 2    
     filter_node_labels:
-        _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
+        _object: matrix.pipelines.filtering.filtersnOverlap
         excluded_sources: ["ec_medical"]
         column: category
         remove_list:
@@ -86,11 +86,11 @@ filtering:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
 
     filter_triples:
-    _object: matrix.pipelines.filtering.filters.TriplePattern
-    triples_to_exclude:
+      _object: matrix.pipelines.filtering.filters.TriplePattern
+      triples_to_exclude:
        - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
-    #   - ["biolink:Drug", "biolink:interacts_with", "biolink:SmallMolecule"]
-    #   - ["biolink:SmallMolecule", "biolink:interacts_with", "biolink:Drug"]
+       - ["biolink:Drug", "biolink:interacts_with", "biolink:SmallMolecule"]
+       - ["biolink:SmallMolecule", "biolink:interacts_with", "biolink:Drug"]
     #   - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
     #   - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
     #   - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
