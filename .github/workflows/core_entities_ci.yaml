@@ -48,7 +48,7 @@ jobs:
           version: latest
         
       - name: Create service account key file
-        run: printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_RW_KEY }}" > pipelines/core_entities/conf/local/gsheet_service_account.json
+        run: printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_RW_KEY }}" > conf/local/gsheet_service_account.json
 
       - run: make install
       - run: make precommit
