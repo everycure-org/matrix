@@ -1,0 +1,158 @@
+name: Create Core Entities Release Pull Request
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version'
+        required: true
+        type: string
+      pipeline:
+        description: 'Pipeline name'
+        required: true
+        type: choice
+        options:
+          - drug_list
+          - disease_list
+
+jobs:
+  create-release-pr:
+    environment: dev
+    runs-on: gha-runner-scale-set
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+    steps:
+    - name: Configure Git to use PAT
+      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+    - uses: actions/checkout@v4 
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "releasebot@everycure.org"
+        git config --global user.name "All of us at Every Cure"
+        git config --global push.autosetupremote true
+
+    - name: Create and checkout release branch
+      run: |
+        BRANCH_NAME="release/${{ inputs.release_version }}-${{ inputs.pipeline }}"
+
+        if git ls-remote --exit-code origin "${BRANCH_NAME}"; then
+          git switch "${BRANCH_NAME}"
+          git pull --ff-only
+        else
+          git switch -C "${BRANCH_NAME}"
+          git push -u origin "${BRANCH_NAME}"
+        fi
+
+        echo "Created and checked out branch: $BRANCH_NAME"
+
+    - name: Authenticate with Google Cloud for access_token
+      id: auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RW }}
+          service_account: ${{ vars.SERVICE_ACCOUNT_RW }}
+          
+    - name: Install gcloud storage
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        version: latest
+
+    - name: Get latest public release version from public GCS
+      id: get_latest_public_version
+      run: |
+        BUCKET_PATH="gs://data.dev.everycure.org/data/01_RAW/${{ inputs.pipeline }}"
+        echo "Searching for latest version in: $BUCKET_PATH"
+        
+        # List all version directories (public bucket, no auth needed)
+        # Extract version tags matching v*.*.* pattern
+        VERSIONS=$(gcloud storage ls "$BUCKET_PATH/" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | sort -V -r || echo "")
+        
+        if [ -z "$VERSIONS" ]; then
+          echo "Warning: No previous versions found in GCS"
+          exit 1
+        else
+          # Get the first (latest) version
+          LATEST_PUBLIC_VERSION=$(echo "$VERSIONS" | head -n 1)
+          echo "Latest public version found: ${LATEST_PUBLIC_VERSION}"
+        fi
+        
+        echo "latest_public_version=${LATEST_PUBLIC_VERSION}" >> "$GITHUB_OUTPUT"
+
+    - name: Echo parameters
+      run: |
+        echo "Release Version: ${{ inputs.release_version }}"
+        echo "Pipeline: ${{ inputs.pipeline }}"
+        echo "Latest Public Version from GCS: ${{ steps.get_latest_public_version.outputs.latest_public_version }}"
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+
+    - name: Install dependencies
+      run: make install
+
+    - name: Install GitHub CLI
+      run: |
+        if ! command -v gh &> /dev/null; then
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+        fi
+        gh --version
+
+    - name: Create PR with release comparison
+      env:
+        GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+      run: |
+        BASE_VERSION="${{ steps.get_latest_public_version.outputs.latest_public_version }}"
+        RELEASE_VERSION="${{ inputs.release_version }}"
+        PIPELINE="${{ inputs.pipeline }}"
+        RELEASE_FILE_NAME="ec-${PIPELINE%_list}-list.parquet"
+        
+        BASE_FILE="gs://data.dev.everycure.org/data/01_RAW/${PIPELINE}/${BASE_VERSION}/${RELEASE_FILE_NAME}"
+        RELEASE_FILE="gs://mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/${PIPELINE}/${RELEASE_VERSION}/03_primary/release/${RELEASE_FILE_NAME}"
+        
+        echo "Comparing releases:"
+        echo "  Base: ${BASE_VERSION}"
+        echo "  New: ${RELEASE_VERSION}"
+        
+        uv run python scripts/compare_releases.py \
+          --base-release-file-path "${BASE_FILE}" \
+          --release-file-path "${RELEASE_FILE}" \
+          --base-release-tag "${BASE_VERSION}-${PIPELINE}" \
+          --release-tag "${RELEASE_VERSION}-${PIPELINE}" \
+          --output-markdown "docs/releases/release-comparison-${PIPELINE}-${RELEASE_VERSION}-from-${BASE_VERSION}.md"
+
+        git add .
+        git commit -m "Release ${RELEASE_VERSION} notes for ${PIPELINE}"
+        git push origin release/${RELEASE_VERSION}-${PIPELINE}
+
+        gh pr create \
+          --title "Release/${RELEASE_VERSION}-${PIPELINE}" \
+          --base main \
+          --body "$(cat <<EOM
+        
+        # ⚠️ The title of this PR will be used in the datasets repository, please change it ⚠️
+        
+        This pull request contains the release notes for the ${PIPELINE} release ${RELEASE_VERSION}. The release will be published when the PR is merged.
+
+        EOM
+        )" \
+          --draft \
+          --label "Core Entities Release"

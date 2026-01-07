@@ -1,0 +1,140 @@
+name: Core Entities Release
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version (e.g., v0.2.0)'
+        required: true
+        type: string
+      pipeline:
+        description: 'Pipeline name'
+        required: true
+        type: choice
+        options:
+          - drug_list
+          - disease_list
+      release_message:
+        description: 'Release message (used in the datasets repository)'
+        required: true
+        type: string
+
+jobs:
+  approved:
+    name: Check PR approval or workflow dispatch
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: 'read'
+    steps:
+      - name: "Check the PR state"
+        if: |
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.merged == true &&
+          contains(github.event.pull_request.labels.*.name, 'Core Entities Release')
+        run: echo "The release PR is approved and merged"
+      - name: "Skip for workflow_dispatch"
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "Skipping PR approval check for manual workflow dispatch"
+
+  create_release:
+    name: Create release
+    needs: [approved]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && 
+       github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'Core Entities Release'))
+    environment: dev
+    runs-on: gha-runner-scale-set
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      RELEASE_MESSAGE: ${{ github.event.pull_request.title || github.event.inputs.release_message }}
+    
+    steps:
+    - name: Configure Git to use PAT
+      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+    - uses: actions/checkout@v4 
+
+    - name: Discover the intended release version and pipeline
+      id: fetch_release_version
+      env:
+        PR_BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+        WORKFLOW_RELEASE_VERSION: ${{ github.event.inputs.release_version }}
+        WORKFLOW_PIPELINE: ${{ github.event.inputs.pipeline }}
+      run: |
+        set -euxo pipefail
+        
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          # Use inputs from workflow_dispatch
+          RELEASE_VERSION="${WORKFLOW_RELEASE_VERSION}"
+          PIPELINE="${WORKFLOW_PIPELINE}"
+        else
+          # Extract release version and pipeline from branch name: release/${RELEASE_VERSION}-${PIPELINE}
+          intended_release=${PR_BRANCH_NAME##release/}
+          
+          # Split on the last hyphen to get version and pipeline
+          # e.g., "v0.2.0-drug_list" -> RELEASE_VERSION="v0.2.0", PIPELINE="drug_list"
+          RELEASE_VERSION="${intended_release%-*}"
+          PIPELINE="${intended_release##*-}"
+        fi
+        
+        # Validate pipeline is either "drug_list" or "disease_list"
+        if [ "$PIPELINE" != "drug_list" ] && [ "$PIPELINE" != "disease_list" ]; then
+          echo "❌ Error: Invalid pipeline '${PIPELINE}'. Pipeline must be 'drug_list' or 'disease_list'"
+          exit 1
+        fi
+
+        RELEASE_VERSION_UNDERSCORE="${RELEASE_VERSION//./_}"
+        RELEASE_VERSION_SEMVER="${RELEASE_VERSION#v}"
+
+        echo "Release version: ${RELEASE_VERSION}"
+        echo "Release version underscore: ${RELEASE_VERSION_UNDERSCORE}"
+        echo "Release version semver: ${RELEASE_VERSION_SEMVER}"
+        echo "Pipeline: ${PIPELINE}"
+
+        echo "release_version=${RELEASE_VERSION}" >> "$GITHUB_OUTPUT"
+        echo "pipeline=${PIPELINE}" >> "$GITHUB_OUTPUT"
+        echo "RELEASE_VERSION_UNDERSCORE=${RELEASE_VERSION_UNDERSCORE}" >> "$GITHUB_OUTPUT"
+        echo "RELEASE_VERSION_SEMVER=${RELEASE_VERSION_SEMVER}" >> "$GITHUB_OUTPUT"
+        
+    - name: Authenticate with Google Cloud
+      id: auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+        project_id: ${{ vars.PROJECT_ID }}
+        workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RW }}
+        service_account: ${{ vars.SERVICE_ACCOUNT_RW }}
+
+    - name: Create service account key file
+      run: printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_RW_KEY }}" > pipelines/core_entities/conf/local/gsheet_service_account.json
+      
+    - name: Install gcloud storage
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        version: latest
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+
+    - name: Install dependencies
+      run: make install
+
+    - name: Publish release
+      env:
+        PIPELINE_NAME: ${{ steps.fetch_release_version.outputs.pipeline }}
+        RELEASE_VERSION: ${{ steps.fetch_release_version.outputs.release_version }}
+        RELEASE_VERSION_UNDERSCORE: ${{ steps.fetch_release_version.outputs.release_version_underscore }}
+        RELEASE_VERSION_SEMVER: ${{ steps.fetch_release_version.outputs.release_version_semver }}
+      run: |
+        uv run kedro run -e cloud --pipeline=publish_"${PIPELINE_NAME}"
+    
