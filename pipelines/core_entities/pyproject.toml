@@ -189,9 +189,6 @@ show-fixes = true
 select = [ "F", "W", "E", "I", "UP", "PL", "T201",]
 ignore = [ "E501",]
 
-[tool.ruff.lint.per-file-ignores]
-"scripts/compare_releases.py" = ["F", "W", "E", "I", "UP", "PL", "T201"]
-
 [project.entry-points."kedro.hooks"]
 
 [tool.pytest.ini_options]
