@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./pipelines/core_entities
+        working-directory: pipelines/core_entities
     permissions:
       contents: write
       id-token: write  # Required for GCP authentication
@@ -31,15 +31,15 @@ jobs:
       LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
     
     steps:
-      - name: Configure Git to use PAT
-        run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
         
+      - name: Configure Git to use PAT
+        run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
