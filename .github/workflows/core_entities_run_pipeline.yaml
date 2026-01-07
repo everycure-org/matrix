@@ -44,6 +44,9 @@ jobs:
     needs: setup-matrix
     environment: dev
     runs-on: gha-runner-scale-set
+    defaults:
+      run:
+        working-directory: ./pipelines/core_entities
     strategy:
       matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
       fail-fast: false

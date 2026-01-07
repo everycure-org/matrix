@@ -47,6 +47,9 @@ jobs:
        contains(github.event.pull_request.labels.*.name, 'Core Entities Release'))
     environment: dev
     runs-on: gha-runner-scale-set
+    defaults:
+      run:
+        working-directory: ./pipelines/core_entities
     permissions:
       contents: 'write'
       id-token: 'write'
