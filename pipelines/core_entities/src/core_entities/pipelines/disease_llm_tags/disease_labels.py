@@ -151,7 +151,7 @@ class DiseaseLabelsGraph(InvokableGraph):
             return "not_drug_amenable"
 
     @staticmethod
-    def defer_nodes() -> State:
+    def defer_nodes(_) -> State:
         """Static method to buffer between entity labels and disease labels"""
         return {}
 
