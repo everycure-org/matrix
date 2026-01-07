@@ -1,0 +1,7 @@
+# see: https://github.com/Galileo-Galilei/kedro-mlflow/issues/441
+tracking:
+  params:
+    dict_params:
+      flatten: True # -> change to True. parameter which are dictionary will be splitted in multiple parameters when logged in mlflow, one for each key.
+      recursive: True  # Should the dictionary flattening be applied recursively (i.e for nested dictionaries)? Not use if `flatten_dict_params` is False.
+      sep: "." # In case of recursive flattening, what separator should be used between the keys? E.g. {hyperaparam1: {p1:1, p2:2}} will be logged as hyperaparam1.p1 and hyperaparam1.p2 in mlflow.

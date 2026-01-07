@@ -20,17 +20,35 @@ run_comparison:
       #   score_col_name: <Name of column containing drug-disease pair scores>
 
       # WIP
-      - name: xg_ensemble_untransformed
+      - name: 1_chunyu_default_filters
         fold_paths_list: 
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.11.2/runs/auto-kg-release-v0-11-2-39910042/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/pilot--exclude-chunyu-default-categories-7c246223/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
         file_format: "parquet"
         score_col_name: "treat score"
 
-      - name: xg_ensemble_transformed
-        fold_paths_list:
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.11.2/runs/auto-kg-release-v0-11-2-39910042/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
+      - name: 2_plus_org_taxon
+        fold_paths_list: 
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/pilot-exclude-default-plus-org-taxon-3bb64551/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
         file_format: "parquet"
-        score_col_name: "transformed_treat_score"
+        score_col_name: "treat score"
+
+      # - name: 3_plus_high_prevalence
+      #   fold_paths_list: 
+      #     - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/exclude-high-prevalence-catergeories-b9804ce4/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+      #   file_format: "parquet"
+      #   score_col_name: "treat score"
+
+      # - name: 4_plus_drug_drug_edges
+      #   fold_paths_list: 
+      #     - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/exclude-drug-interacts-with-drug-edges-25cdffdf/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+      #   file_format: "parquet"
+      #   score_col_name: "treat score"
+
+      # - name: 5_plus_drug_small_molecule_edges
+      #   fold_paths_list: 
+      #     - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/exclude-drug-interacts-with-small-molecule-edges-0a5651ca/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+      #   file_format: "parquet"
+      #   score_col_name: "treat score"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.

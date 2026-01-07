@@ -1,0 +1,164 @@
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+  save_args:
+    sep: "\t"
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+  load_args:
+    engine: pyarrow
+  save_args:
+    engine: pyarrow
+
+# -------------------------------------------------------------------------
+# Input
+# -------------------------------------------------------------------------
+
+input.disease_name_patch:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.input}/patch/disease_name_patch.tsv
+
+input.manual_disease_remapping:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.input}/manual_disease_remapping.tsv
+
+# -------------------------------------------------------------------------
+# Raw
+# -------------------------------------------------------------------------
+
+raw.disease_list:
+  type: core_entities.utils.matrix_utils.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-disease-list
+  release_name: ${globals:data_sources.disease_list.version}
+  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: ${globals:github_token}
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+
+raw.disease_obsolete:
+  type: core_entities.utils.matrix_utils.github.GitHubReleaseCSVDataset
+  repository_url: https://github.com/everycure-org/matrix-disease-list
+  release_name: ${globals:data_sources.disease_list.version}
+  release_asset_name: mondo-obsoletes.tsv
+  fs_args:
+    Accept: application/octet-stream
+    Authorization: ${globals:github_token}
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+
+raw.curated_disease_list:
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
+  spreadsheet_url: https://docs.google.com/spreadsheets/d/1l29b-2MNfNf0EBtjLq7tFEZmZwxTZz1rfezx5RevuaA/edit?gid=632653766#gid=632653766
+  worksheet_gid: 632653766
+  service_account_file_path: ${globals:service_account_file_path}
+  
+raw.disease_categories:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.raw_llm}/disease_categories/${globals:data_sources.disease_categories.version}/03_primary/release/disease_categories.parquet
+
+raw.disease_umn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.raw_llm}/disease_umn/${globals:data_sources.disease_umn.version}/03_primary/release/disease_umn.parquet
+
+raw.disease_labels:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.raw_llm}/disease_labels/${globals:data_sources.disease_labels.version}/03_primary/release/disease_labels.parquet
+
+raw.disease_prevalence:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.raw_llm}/disease_prevalence/${globals:data_sources.disease_prevalence.version}/03_primary/release/disease_prevalence.parquet
+
+# -------------------------------------------------------------------------
+# Primary
+# -------------------------------------------------------------------------
+
+primary.disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/mondo-disease-list.parquet
+
+primary.curated_disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/curated-disease-list.parquet
+
+primary.disease_name_patch:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-name-patch.parquet
+
+primary.disease_categories:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-categories.parquet
+
+primary.disease_umn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-umn.parquet
+
+primary.disease_prevalence:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-prevalence.parquet
+
+primary.disease_obsolete:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-obsolete.parquet
+
+primary.manual_disease_remapping:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/manual-disease-remapping.parquet
+
+primary.disease_list_merged:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-list-merged.parquet
+
+primary.disease_list_patched:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-list-patched.parquet
+
+primary.orchard_reviews:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/orchard-reviews.parquet
+
+primary.disease_list_formatted:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-list-formatted.parquet
+
+# -------------------------------------------------------------------------
+# Release
+# -------------------------------------------------------------------------
+
+primary.release.disease_list_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.release}/ec-disease-list.parquet
+
+primary.release.disease_list_tsv:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.release}/ec-disease-list.tsv
+
+primary.release.reviews_to_map:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.release}/reviews-to-map.tsv
+
+# -------------------------------------------------------------------------
+# Published
+# -------------------------------------------------------------------------
+
+primary.published.disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.published}/ec-disease-list.parquet
+
+primary.published.disease_list_tsv:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.published}/ec-disease-list.tsv
+
+primary.published.disease_list_bq:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.published}/ec-disease-list-bq.parquet
+
+primary.published.disease_list_bq_latest:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.published}/ec-disease-list-bq-latest.parquet
