@@ -47,11 +47,11 @@ jobs:
         with:
           version: latest
         
-      - run: make install
-      - run: make precommit
-
       - name: Create service account key file
         run: printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_RW_KEY }}" > pipelines/core_entities/conf/local/gsheet_service_account.json
+        
+      - run: make install
+      - run: make precommit
 
       - run: uv run kedro catalog resolve --env base
       - run: uv run kedro catalog resolve --env test
