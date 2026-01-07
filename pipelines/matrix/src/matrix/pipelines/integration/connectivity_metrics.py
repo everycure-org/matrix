@@ -72,6 +72,8 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
 
     logger.info("Computing connected components using GraphFrames...")
 
+    # Ensure SparkSession is active in this thread (needed for GraphFrame)
+    # GraphFrame relies on SparkSession.getActiveSession() which may return None in parallel threads
     gf_nodes = nodes.select(F.col("id"))
 
     # Prepare edges for GraphFrame (needs 'src' and 'dst' columns)
