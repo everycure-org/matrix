@@ -69,11 +69,15 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
         - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
     """
     from graphframes import GraphFrame
+    from pyspark.sql import SparkSession
 
     logger.info("Computing connected components using GraphFrames...")
 
     # Ensure SparkSession is active in this thread (needed for GraphFrame)
     # GraphFrame relies on SparkSession.getActiveSession() which may return None in parallel threads
+    if SparkSession.getActiveSession() is None:
+        SparkSession.builder.getOrCreate()
+
     gf_nodes = nodes.select(F.col("id"))
 
     # Prepare edges for GraphFrame (needs 'src' and 'dst' columns)
