@@ -130,6 +130,8 @@ jobs:
             run: "uv run kedro catalog resolve --env cloud"
           - name: "kedro-catalog-test"
             run: "uv run kedro catalog resolve --env test"
+          - name: "kedro-catalog-sample"
+            run: "uv run kedro catalog resolve --env sample"
           - name: "full-test"
             run: "make full_test"
           - name: "docker-test"
