@@ -25,15 +25,6 @@ on:
           - patch
           - minor
           - major
-  # TO REMOVE
-  pull_request:
-    branches:
-      - main
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
 
 jobs:
   setup-matrix:
@@ -46,9 +37,7 @@ jobs:
           if [ "${{ github.event_name }}" == "schedule" ]; then
             echo 'matrix={"include":[{"pipeline_name":"drug_list","version_bump_type":"patch"},{"pipeline_name":"disease_list","version_bump_type":"patch"}]}' >> "$GITHUB_OUTPUT"
           else
-            # echo 'matrix={"include":[{"pipeline_name":"${{ github.event.inputs.pipeline_name }}","version_bump_type":"${{ github.event.inputs.version_bump_type }}"}]}' >> "$GITHUB_OUTPUT"
-            #  TO REMOVE
-            echo 'matrix={"include":[{"pipeline_name":"disease_list","version_bump_type":"patch"}]}' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"pipeline_name":"${{ github.event.inputs.pipeline_name }}","version_bump_type":"${{ github.event.inputs.version_bump_type }}"}]}' >> "$GITHUB_OUTPUT"
           fi
 
   run-pipeline:
