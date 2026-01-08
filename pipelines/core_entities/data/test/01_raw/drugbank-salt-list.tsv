@@ -1,0 +1,4 @@
+drugbank_id	name	moldb_smiles
+DBSALT000002	Acamprosate calcium	[Ca++].CC(O)=NCCCS(O)(=O)=O.CC([O-])=NCCCS([O-])(=O)=O
+DBSALT001173	Abiraterone acetate	[H][C@@]12CC=C(C3=CC=CN=C3)[C@@]1(C)CC[C@@]1([H])[C@@]2([H])CC=C2C[C@H](CC[C@]12C)OC(C)=O
+DBSALT000003	Aclidinium bromide	[Br-].OC(C(=O)O[C@H]1C[N+]2(CCCOC3=CC=CC=C3)CCC1CC2)(C1=CC=CS1)C1=CC=CS1
