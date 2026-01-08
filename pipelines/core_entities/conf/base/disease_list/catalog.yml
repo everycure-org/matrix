@@ -30,7 +30,7 @@ input.manual_disease_remapping:
 # -------------------------------------------------------------------------
 
 raw.disease_list:
-  type: core_entities.utils.matrix_utils.github.GitHubReleaseCSVDataset
+  type: matrix_gcp_datasets.github.GitHubReleaseCSVDataset
   repository_url: https://github.com/everycure-org/matrix-disease-list
   release_name: ${globals:data_sources.disease_list.version}
   release_asset_name: matrix-disease-list-unfiltered-processed.tsv
@@ -42,7 +42,7 @@ raw.disease_list:
     keep_default_na: False
 
 raw.disease_obsolete:
-  type: core_entities.utils.matrix_utils.github.GitHubReleaseCSVDataset
+  type: matrix_gcp_datasets.github.GitHubReleaseCSVDataset
   repository_url: https://github.com/everycure-org/matrix-disease-list
   release_name: ${globals:data_sources.disease_list.version}
   release_asset_name: mondo-obsoletes.tsv

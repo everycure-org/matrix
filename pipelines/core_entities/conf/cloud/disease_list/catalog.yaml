@@ -30,7 +30,7 @@ primary.published.disease_list_bq:
   table_name: ec_disease_list_${globals:release_version_underscore}
 
 primary.published.disease_list_bq_latest:
-  type: core_entities.utils.matrix_utils.google_datasets.GBQTableDataset
+  type: matrix_gcp_datasets.gcp.GBQTableDataset
   project: ec-orchard-prod
   dataset: disease_list
   table_name: ec_disease_list_latest
