@@ -198,6 +198,18 @@ def get_github_repo_url() -> str:
     return url
 
 
+def calculate_null_counts(df: pd.DataFrame) -> dict[str, int]:
+    """
+    Calculate the number of null values per column in a DataFrame.
+
+    Returns a dictionary mapping column names to null counts.
+    """
+    null_counts = {}
+    for col in df.columns:
+        null_counts[col] = int(df[col].isna().sum())
+    return null_counts
+
+
 def get_commits_between_tags(base_tag: str, release_tag: str) -> list[dict[str, str]]:
     """
     Get commits between two git tags.
@@ -250,6 +262,8 @@ def generate_markdown_report(
     github_repo_url: str | None = None,
     base_release_file_path: str | None = None,
     release_file_path: str | None = None,
+    null_counts_base: dict[str, int] | None = None,
+    null_counts_new: dict[str, int] | None = None,
 ) -> str:
     """Generate a markdown report from comparison results."""
     lines = ["# Release Comparison Report", ""]
@@ -268,6 +282,27 @@ def generate_markdown_report(
     lines.append("")
     lines.append(f"**Base Release File:** `{base_release_file_path}`")
     lines.append("")
+
+    # 0. Null values per column
+    if null_counts_base is not None and null_counts_new is not None:
+        lines.append("## Null Values per Column")
+        lines.append("")
+        lines.append("| Column | Base Release Null Count | New Release Null Count |")
+        lines.append("|--------|-------------------------|------------------------|")
+
+        # Get all unique columns from both releases
+        all_columns = sorted(set(list(null_counts_base.keys()) + list(null_counts_new.keys())))
+
+        for col in all_columns:
+            base_count = null_counts_base.get(col) if col in null_counts_base else None
+            new_count = null_counts_new.get(col) if col in null_counts_new else None
+
+            base_count_str = str(base_count) if base_count is not None else "N/A"
+            new_count_str = str(new_count) if new_count is not None else "N/A"
+
+            lines.append(f"| `{col}` | {base_count_str} | {new_count_str} |")
+
+        lines.append("")
 
     # 1. Column changes
     lines.append("## Column Changes")
@@ -527,6 +562,11 @@ def compare_releases_cli(
     click.echo(f"  - Columns with changed values: {len(comparison_results['changed_values'])}")
     click.echo(f"  - Example changes: {len(comparison_results['changed_values_examples'])}")
 
+    # Calculate null counts for both releases
+    click.echo("\nCalculating null value counts...")
+    null_counts_base = calculate_null_counts(df_base)
+    null_counts_new = calculate_null_counts(df_new)
+
     # Get commits between tags if tags are provided
     commits = None
     github_repo_url = get_github_repo_url()
@@ -546,10 +586,12 @@ def compare_releases_cli(
             github_repo_url=github_repo_url,
             base_release_file_path=base_release_file_path,
             release_file_path=release_file_path,
+            null_counts_base=null_counts_base,
+            null_counts_new=null_counts_new,
         )
         with open(output_markdown, "w") as f:
             f.write(markdown_content)
-        click.echo("✅ Markdown report saved to `{output_markdown}`!")
+        click.echo(f"✅ Markdown report saved to `{output_markdown}`!")
 
 
 if __name__ == "__main__":
