@@ -18,10 +18,11 @@ libraries, applications and services.
 
 - `/pipelines/matrix` - 🧬 [Main Drug Repurposing ML Pipeline](pipelines/matrix/README.md) - Main ML
   pipeline for drug repurposing using Kedro framework
+- `/pipelines/core_entities` - 🧬 [Core Entities Pipeline](pipelines/core_entities/README.md) - Pipeline to generate high quality disease and drug lists.
 - `/libs/` - 📚 Shared Libraries:
   - `matrix-auth/` - Authentication and environment utilities
   - `matrix-fabricator/` - Data fabrication and generation tools
-  - `matrix-gcp-datasets/` - GCP integration and Spark utilities
+  - `matrix-gcp-datasets/` - GCP and Github integration and Spark utilities
   - `matrix-mlflow-utils/` - MLflow integration and metric utilities
 - `/infra` - 🏗️ [Infrastructure as Code (IaC) configuration](docs/src/infrastructure) -
   Infrastructure as Code using Terraform/Terragrunt for GCP deployment
