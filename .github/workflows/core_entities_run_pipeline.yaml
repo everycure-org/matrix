@@ -48,7 +48,7 @@ jobs:
           else
             # echo 'matrix={"include":[{"pipeline_name":"${{ github.event.inputs.pipeline_name }}","version_bump_type":"${{ github.event.inputs.version_bump_type }}"}]}' >> "$GITHUB_OUTPUT"
             #  TO REMOVE
-            echo 'matrix={"include":[{"pipeline_name":"drug_list","version_bump_type":"patch"}]}' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"pipeline_name":"disease_list","version_bump_type":"patch"}]}' >> "$GITHUB_OUTPUT"
           fi
 
   run-pipeline:
