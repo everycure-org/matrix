@@ -1,3 +1,4 @@
+# Note: this file was generated with AI. It works, but it's not beautiful code.
 import os
 import re
 import subprocess
