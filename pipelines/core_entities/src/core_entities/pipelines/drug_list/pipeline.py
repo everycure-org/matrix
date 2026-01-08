@@ -3,12 +3,9 @@ from kedro.pipeline import Pipeline, node, pipeline
 from . import nodes
 
 
-def create_pipeline(**kwargs) -> Pipeline:
+def create_ingestion_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
-            # ----------
-            # Ingestion
-            # ----------
             node(
                 func=nodes.ingest_curated_drug_list,
                 inputs="raw.curated_drug_list",
@@ -45,9 +42,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.drugbank_pure_atc",
                 name="ingest_drugbank_pure_atc",
             ),
-            # ----------
-            # Drug resolution
-            # ----------
+        ]
+    )
+
+
+def create_resolution_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
             node(
                 func=nodes.resolve_drug_curies,
                 inputs={
@@ -105,6 +106,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.drug_list_with_atc_codes",
                 name="resolve_atc_codes",
             ),
+        ]
+    )
+
+
+def create_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
+            create_ingestion_pipeline(),
+            create_resolution_pipeline(),
             node(
                 func=nodes.merge_drug_lists,
                 inputs={
