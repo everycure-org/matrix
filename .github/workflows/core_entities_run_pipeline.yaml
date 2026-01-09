@@ -62,12 +62,11 @@ jobs:
       LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
     
     steps:
+    - uses: actions/checkout@v4 
 
     - name: Configure Git to use PAT
       run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
-    - uses: actions/checkout@v4 
-    
     - name: Log parameters
       run: |
         echo "Pipeline name: ${PIPELINE_NAME}"

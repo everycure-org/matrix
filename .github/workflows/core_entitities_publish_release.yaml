@@ -58,10 +58,11 @@ jobs:
       RELEASE_MESSAGE: ${{ github.event.pull_request.title || github.event.inputs.release_message }}
     
     steps:
-    - name: Configure Git to use PAT
-      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
     - uses: actions/checkout@v4 
+
+    - name: Configure Git to use PAT
+      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
     - name: Discover the intended release version and pipeline
       id: fetch_release_version
