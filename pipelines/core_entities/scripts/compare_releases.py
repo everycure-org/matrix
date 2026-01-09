@@ -1,9 +1,4 @@
 # Note: this file was generated with AI. It works, but it's not beautiful code.
-import os
-import re
-import subprocess
-from datetime import datetime
-
 import click
 import pandas as pd
 
@@ -160,94 +155,12 @@ def compare_releases(
     return results
 
 
-def get_github_repo_url() -> str:
-    """Get the GitHub repository URL from GitHub Actions env vars or git remote origin."""
-    # First, try GitHub Actions environment variables (available in CI/CD)
-    # These don't contain tokens and are the safest option
-    github_repo = os.environ.get("GITHUB_REPOSITORY")
-    github_server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
-
-    if github_repo:
-        # GITHUB_REPOSITORY format: "owner/repo"
-        url = f"{github_server}/{github_repo}"
-        return url.rstrip("/")
-
-    # Fallback to git remote (for local development)
-    # This may contain tokens in GitHub Actions, so we sanitize them
-    cmd = ["git", "remote", "get-url", "origin"]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    url = result.stdout.strip()
-
-    if not url:
-        raise ValueError("Empty URL from origin remote")
-
-    # Sanitize tokens from URL (e.g., https://x-access-token:TOKEN@github.com/owner/repo.git)  # pragma: allowlist secret
-    # Remove any authentication tokens from the URL
-    url = re.sub(r"https?://[^@]+@", "https://", url)
-
-    # Convert to GitHub URL format
-    # Handle both https and git@ formats
-    if url.startswith("git@"):
-        url = url.replace("git@github.com:", "https://github.com/")
-    # Remove .git suffix if present
-    if url.endswith(".git"):
-        url = url.rstrip(".git")
-    # Remove trailing slash if present
-    url = url.rstrip("/")
-
-    return url
-
-
-def get_commits_between_tags(base_tag: str, release_tag: str) -> list[dict[str, str]]:
-    """
-    Get commits between two git tags.
-
-    Returns a list of dictionaries with 'hash' (full), 'message', 'author', 'date'.
-    """
-    try:
-        # Get commits between tags
-        cmd = [
-            "git",
-            "log",
-            f"{base_tag}..{release_tag}",
-            "--pretty=format:%H|%s|%an|%ad",
-            "--date=short",
-            "--no-merges",
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-        commits = []
-        for line in result.stdout.strip().split("\n"):
-            if not line:
-                continue
-            parts = line.split("|", 3)
-            if len(parts) >= 4:
-                commits.append(
-                    {
-                        "hash": parts[0],  # Full hash
-                        "message": parts[1],
-                        "author": parts[2],
-                        "date": parts[3],
-                    }
-                )
-
-        return commits
-    except subprocess.CalledProcessError as e:
-        click.echo(f"Warning: Failed to get commits: {e.stderr}", err=True)
-        return []
-    except FileNotFoundError:
-        click.echo("Warning: Git not found. Skipping commit history.", err=True)
-        return []
-
-
 def generate_markdown_report(
     results: dict[str, pd.DataFrame],
     id_column: str = "id",
     name_column: str = "name",
-    commits: list[dict[str, str]] | None = None,
     base_tag: str | None = None,
     release_tag: str | None = None,
-    github_repo_url: str | None = None,
     base_release_file_path: str | None = None,
     release_file_path: str | None = None,
 ) -> str:
@@ -414,52 +327,6 @@ def generate_markdown_report(
         lines.append("*No value changes detected*")
         lines.append("")
 
-    # Add commits section if available
-    if commits is not None:
-        lines.append("## Commits")
-        lines.append("")
-
-        if len(commits) > 0:
-            # Get date range and authors
-            dates = [commit["date"] for commit in commits if commit.get("date")]
-            authors = sorted(set(commit["author"] for commit in commits if commit.get("author")))
-
-            # Format date range
-            if dates:
-                start_date = min(dates)
-                end_date = max(dates)
-                # Format date from YYYY-MM-DD to DD/MM/YYYY
-                try:
-                    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                    start_formatted = start_dt.strftime("%d/%m/%Y")
-                    end_formatted = end_dt.strftime("%d/%m/%Y")
-                except Exception:
-                    start_formatted = start_date
-                    end_formatted = end_date
-
-                authors_str = ", ".join(authors) if authors else "unknown"
-                lines.append(
-                    f"{len(commits)} commits between {start_formatted} and {end_formatted} "
-                    f"from the following authors: {authors_str}"
-                )
-            else:
-                lines.append(f"{len(commits)} commits")
-
-            lines.append("")
-
-            # Bullet point list of commits with links
-            for commit in commits:
-                hash_full = commit["hash"]
-                hash_short = hash_full[:8]
-                message = commit["message"]
-                author = commit.get("author", "unknown")
-                commit_url = f"{github_repo_url}/commit/{hash_full}"
-                lines.append(f"- [{hash_short}]({commit_url}): {message} ({author})")
-        else:
-            lines.append("*No commits found*")
-        lines.append("")
-
     return "\n".join(lines)
 
 
@@ -480,13 +347,13 @@ def generate_markdown_report(
     "--release-tag",
     "-rt",
     default=None,
-    help="Git tag for the new release (optional, for commit/PR history)",
+    help="Git tag for the new release (optional, for display in report)",
 )
 @click.option(
     "--base-release-tag",
     "-bt",
     default=None,
-    help="Git tag for the base release (optional, for commit/PR history)",
+    help="Git tag for the base release (optional, for display in report)",
 )
 @click.option(
     "--output-markdown",
@@ -527,29 +394,19 @@ def compare_releases_cli(
     click.echo(f"  - Columns with changed values: {len(comparison_results['changed_values'])}")
     click.echo(f"  - Example changes: {len(comparison_results['changed_values_examples'])}")
 
-    # Get commits between tags if tags are provided
-    commits = None
-    github_repo_url = get_github_repo_url()
-    if release_tag and base_release_tag:
-        click.echo(f"\nFetching commits between {base_release_tag} and {release_tag}...")
-        commits = get_commits_between_tags(base_release_tag, release_tag)
-        click.echo(f"  Found {len(commits)} commits")
-
     # Generate markdown report if requested
     if output_markdown:
         click.echo(f"\nGenerating markdown report: {output_markdown}")
         markdown_content = generate_markdown_report(
             comparison_results,
-            commits=commits,
             base_tag=base_release_tag,
             release_tag=release_tag,
-            github_repo_url=github_repo_url,
             base_release_file_path=base_release_file_path,
             release_file_path=release_file_path,
         )
         with open(output_markdown, "w") as f:
             f.write(markdown_content)
-        click.echo("✅ Markdown report saved to `{output_markdown}`!")
+        click.echo(f"✅ Markdown report saved to `{output_markdown}`!")
 
 
 if __name__ == "__main__":
