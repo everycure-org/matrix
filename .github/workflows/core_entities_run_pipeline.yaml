@@ -95,7 +95,7 @@ jobs:
         BUCKET_PATH="${BASE_PATH}/${PIPELINE_NAME}"
         echo "Searching for versions in: ${BUCKET_PATH}"
         
-        # List all version folders and extract versions 
+        # List all version folders and extract versions
         VERSIONS=$(gcloud storage ls "$BUCKET_PATH/" | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | sort -V -r || echo "")
         echo "Versions: ${VERSIONS}"
         
