@@ -1,0 +1,23 @@
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+  save_args:
+    sep: "\t"
+
+# -------------------------------------------------------------------------
+# Raw
+# -------------------------------------------------------------------------
+
+raw.disease_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease-list.tsv
+
+raw.curated_disease_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/curated-disease-list.tsv
+
+raw.disease_labels:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease-labels.tsv

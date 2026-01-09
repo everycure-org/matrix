@@ -1,0 +1,213 @@
+[build-system]
+requires = [ "setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "core-entities-pipeline"
+requires-python = "~=3.11.0"
+readme = "README.md"
+dynamic = [ "version",]
+dependencies = [
+    "ag-ui-protocol",
+    "aiohappyeyeballs",
+    "aiohttp",
+    "aiosignal",
+    "annotated-types",
+    "anthropic",
+    "anyio",
+    "appnope",
+    "argcomplete",
+    "asttokens",
+    "async-timeout",
+    "attrs",
+    "boto3",
+    "botocore",
+    "cachetools",
+    "certifi",
+    "charset-normalizer",
+    "click>=8.0.0",
+    "cohere",
+    "colorama",
+    "comm",
+    "db-dtypes",
+    "debugpy",
+    "decorator",
+    "distro",
+    "eval_type_backport",
+    "everycure-datasets[kedro]>=0.2.9",
+    "exceptiongroup",
+    "executing",
+    "fastavro",
+    "filelock",
+    "frozenlist",
+    "fsspec",
+    "gcsfs",
+    "google-api-core",
+    "google-auth",
+    "google-cloud-bigquery",
+    "google-cloud-core",
+    "google-crc32c",
+    "google-genai",
+    "google-resumable-media",
+    "googleapis-common-protos",
+    "griffe",
+    "groq",
+    "grpcio",
+    "grpcio-status",
+    "h11",
+    "hf-xet",
+    "httpcore",
+    "httpx",
+    "httpx-sse",
+    "huggingface-hub",
+    "idna",
+    "importlib_metadata",
+    "ipykernel",
+    "ipython>=8.10",
+    "ipywidgets",
+    "jedi",
+    "jiter",
+    "jmespath",
+    "jupyter_client",
+    "jupyter_core",
+    "jupyterlab>=3.0",
+    "jupyterlab_widgets",
+    "kedro>=0.19.15",
+    "kedro-datasets>=6.0.0",
+    "kedro-mlflow==0.13.4",
+    "kedro-telemetry>=0.3.1",
+    "kedro-viz>=11.0.0",
+    "langchain",
+    "langchain-core",
+    "langchain_openai",
+    "langgraph",
+    "langgraph-checkpoint",
+    "langgraph-prebuilt",
+    "langgraph-sdk",
+    "langsmith",
+    "logfire-api",
+    "markdown-it-py",
+    "matplotlib",
+    "matplotlib-inline",
+    "matrix-gcp-datasets",
+    "matrix-inject",
+    "mdurl",
+    "mistralai",
+    "multidict",
+    "nest-asyncio",
+    "notebook",
+    "numpy",
+    "openai",
+    "opentelemetry-api",
+    "orjson",
+    "ormsgpack",
+    "packaging",
+    "pandas",
+    "pandera",
+    "parso",
+    "pexpect",
+    "platformdirs",
+    "prompt_toolkit",
+    "pre-commit",
+    "propcache",
+    "proto-plus",
+    "protobuf",
+    "psutil",
+    "ptyprocess",
+    "pure_eval",
+    "pyarrow",
+    "pyasn1",
+    "pyasn1_modules",
+    "pydantic",
+    "pydantic-ai-slim==1.20.0",
+    "pydantic-evals",
+    "pydantic-graph",
+    "pydantic_core",
+    "pydantic_settings",
+    "Pygments",
+    "pyspark==3.5.1",
+    "pytest",
+    "pytest-cov",
+    "python-dateutil",
+    "python-dotenv",
+    "pytz",
+    "PyYAML",
+    "pyzmq",
+    "requests",
+    "requests-toolbelt",
+    "rich",
+    "rsa",
+    "s3transfer",
+    "semantic_version",
+    "six",
+    "sniffio",
+    "stack-data",
+    "starlette",
+    "tenacity",
+    "tokenizers",
+    "tomlkit",
+    "tornado",
+    "tqdm",
+    "traitlets",
+    "typer",
+    "types-requests",
+    "types-urllib3",
+    "typing-inspection",
+    "typing_extensions",
+    "tzdata",
+    "urllib3",
+    "wcwidth",
+    "websockets",
+    "widgetsnbextension",
+    "xxhash",
+    "yarl",
+    "zipp",
+    "zstandard",
+]
+
+[tool.uv.sources]
+matrix-gcp-datasets = { workspace = true }
+matrix-inject = { workspace = true }
+
+[project.scripts]
+core-entities = "core_entities.__main__:main"
+
+[project.optional-dependencies]
+dev = [ "pytest-cov~=3.0", "pytest-mock>=1.7.1, <2.0", "ruff>=0.12.4",]
+
+[tool.kedro]
+package_name = "core_entities"
+project_name = "core-entities"
+kedro_init_version = "0.19.13"
+tools = "['Linting', 'Testing', 'Data Structure']"
+example_pipeline = "False"
+source_dir = "src"
+
+[tool.ruff]
+line-length = 88
+show-fixes = true
+select = [ "F", "W", "E", "I", "UP", "PL", "T201",]
+ignore = [ "E501",]
+
+[project.entry-points."kedro.hooks"]
+
+[tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov src/core_entities -ra"
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true
+exclude_lines = [ "pragma: no cover", "raise NotImplementedError",]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.setuptools.dynamic.version]
+attr = "core_entities.__version__"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+namespaces = false
+
+[tool.kedro_telemetry]
+project_id = "12b58a6e2b7e4ad7bbf13ef056687c4c"

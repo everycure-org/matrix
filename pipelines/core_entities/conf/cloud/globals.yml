@@ -1,0 +1,20 @@
+dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
+public_gcs_bucket: gs://data.dev.everycure.org
+prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
+
+pipeline_name: ${oc.env:PIPELINE_NAME, dummy_pipeline_name}
+release_version: ${oc.env:RELEASE_VERSION, dummy_release_version}
+release_message: ${oc.env:RELEASE_MESSAGE, dummy_release_message}
+release_version_underscore: ${oc.env:RELEASE_VERSION_UNDERSCORE, dummy_release_version_underscore}
+release_version_semver: ${oc.env:RELEASE_VERSION_SEMVER, dummy_release_version_semver}
+
+base_path: ${dev_gcs_bucket}/kedro/data/core-entities
+run_path: ${base_path}/${pipeline_name}/${release_version}
+
+paths:
+  input: data/00_input
+  raw_llm: ${base_path}
+  raw_drugbank: ${prod_gcs_bucket}/data/01_RAW/source_data/drugbank/1332218/prm
+  primary: ${run_path}/03_primary
+  release: ${run_path}/03_primary/release
+  published: ${public_gcs_bucket}/data/01_RAW/${pipeline_name}/${release_version}
