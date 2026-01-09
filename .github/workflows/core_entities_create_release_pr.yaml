@@ -29,13 +29,13 @@ jobs:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
-    - name: Configure Git to use PAT
-      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
-
     - uses: actions/checkout@v4 
       with:
         fetch-depth: 0
         fetch-tags: true
+
+    - name: Configure Git to use PAT
+      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
     - name: Configure Git
       run: |

@@ -25,26 +25,10 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-    paths: 
-      - .github/workflows/matrix-ci.yml
-      - pipelines/matrix/compose/docker-compose.ci.yml
-      - pipelines/matrix/compose/docker-compose.yml
-      - pipelines/matrix/**
-      - libs/*
-      - pyproject.toml
-      - uv.lock
 
   push:
     branches:
       - main
-    paths: 
-      - .github/workflows/matrix-ci.yml
-      - pipelines/matrix/compose/docker-compose.ci.yml
-      - pipelines/matrix/compose/docker-compose.yml
-      - pipelines/matrix/**
-      - libs/*
-      - pyproject.toml
-      - uv.lock
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -76,7 +60,10 @@ jobs:
           filters: |
             src:
               - pipelines/matrix/**
+              - libs/**
               - .github/workflows/matrix-ci.yml
+              - pipelines/matrix/compose/docker-compose.ci.yml
+              - pipelines/matrix/compose/docker-compose.yml
               - pyproject.toml
               - uv.lock
               - .dockerignore
