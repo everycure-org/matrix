@@ -16,10 +16,10 @@ data_sources:
     version: "Release v2.3.1"
   disease_list:
     # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
-    version: "2025-10-01"
+    version: 2025-10-01
   disease_categories:
     # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_categories
-    version: "v0.0.1"
+    version: v0.1.1
   disease_labels: 
     # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_labels
     version: v0.0.2

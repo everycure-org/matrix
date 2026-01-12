@@ -50,8 +50,6 @@ curated_list_speciality_columns = [
                     "category_class",
                     "label",
                     "synonyms",
-                    "is_glucose_dysfunction",
-                    "is_pathogen_caused",
                     "harrisons_view",
                     "mondo_txgnn",
                     "mondo_top_grouping",
@@ -63,8 +61,6 @@ curated_list_speciality_columns = [
             "category_class": pa.Column(nullable=False),
             "label": pa.Column(nullable=False),
             "synonyms": pa.Column(nullable=True),
-            "is_glucose_dysfunction": pa.Column(nullable=False),
-            "is_pathogen_caused": pa.Column(nullable=False),
             "harrisons_view": pa.Column(nullable=True),
             "mondo_txgnn": pa.Column(nullable=True),
             "mondo_top_grouping": pa.Column(nullable=True),
@@ -79,8 +75,6 @@ curated_list_speciality_columns = [
             "id": pa.Column(dtype=str, nullable=False),
             "name": pa.Column(dtype=str, nullable=False),
             "synonyms": pa.Column(dtype=str, nullable=True),
-            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=False),
-            "is_pathogen_caused": pa.Column(dtype=bool, nullable=False),
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
@@ -107,23 +101,6 @@ def ingest_disease_list(disease_list: pd.DataFrame) -> pd.DataFrame:
     disease_list["harrisons_view"] = disease_list["harrisons_view"].apply(parse_string_column)
     disease_list["mondo_txgnn"] = disease_list["mondo_txgnn"].fillna("other")
     disease_list["mondo_top_grouping"] = disease_list["mondo_top_grouping"].apply(parse_string_column)
-
-    def parse_boolean_column(x: str):
-        if isinstance(x, bool) and x:
-            return True
-        elif isinstance(x, bool) and not x:
-            return False
-        elif x.strip() == "True":
-            return True
-        elif x.strip() == "False":
-            return False
-        else:
-            return None
-
-    disease_list["is_glucose_dysfunction"] = (
-        disease_list["is_glucose_dysfunction"].apply(parse_boolean_column).astype(bool)
-    )
-    disease_list["is_pathogen_caused"] = disease_list["is_pathogen_caused"].apply(parse_boolean_column).astype(bool)
 
     return disease_list
 
@@ -282,6 +259,8 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
                     "is_psychiatric_disease",
                     "is_malignant_cancer",
                     "is_benign_tumour",
+                    "is_pathogen_caused",
+                    "is_glucose_dysfunction",
                 ]
             ]
         ),
@@ -290,6 +269,8 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
             "is_psychiatric_disease": pa.Column(nullable=False),
             "is_malignant_cancer": pa.Column(nullable=False),
             "is_benign_tumour": pa.Column(nullable=False),
+            "is_pathogen_caused": pa.Column(nullable=False),
+            "is_glucose_dysfunction": pa.Column(nullable=False),
         },
         unique=["id"],
     )
@@ -301,6 +282,8 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
             "is_psychiatric_disease": pa.Column(nullable=False),
             "is_malignant_cancer": pa.Column(nullable=False),
             "is_benign_tumour": pa.Column(nullable=False),
+            "is_pathogen_caused": pa.Column(nullable=False),
+            "is_glucose_dysfunction": pa.Column(nullable=False),
         },
         strict=True,
         unique=["id"],
@@ -642,11 +625,11 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
             "is_malignant_cancer": pa.Column(nullable=True),
             "is_benign_tumour": pa.Column(nullable=True),
             "is_infectious_disease": pa.Column(nullable=True),
+            "is_glucose_dysfunction": pa.Column(nullable=True),
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
             "txgnn": pa.Column(dtype=str, nullable=False),
-            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=False),
         },
         strict=True,
         unique=["id"],
