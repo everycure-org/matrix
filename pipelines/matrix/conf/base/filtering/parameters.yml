@@ -35,7 +35,7 @@ filtering:
     #       - biolink:Publication
     #       - biolink:Treatment
         
-    exp 2    
+    #exp 2    
     filter_node_labels:
         _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
         excluded_sources: ["ec_medical"]
@@ -68,10 +68,10 @@ filtering:
           - biolink:Publication
           - biolink:Treatment
 
-          - biolink:AnatomicalEntity
-          - biolink:ChemicalEntity
-          - biolink:MolecularMixture
-          - biolink:Transcript
+          # - biolink:AnatomicalEntity
+          # - biolink:ChemicalEntity
+          # - biolink:MolecularMixture
+          # - biolink:Transcript
 
   edge_filters:
     filter_sources:
