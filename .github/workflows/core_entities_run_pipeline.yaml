@@ -1,0 +1,170 @@
+name: Run Core Entities pipeline
+
+on:
+  schedule:
+    # Run every two weeks on Monday at 00:00 UTC
+    - cron: '0 0 * * 1/14'
+  workflow_dispatch:
+    inputs:
+      pipeline_name:
+        description: 'Pipeline to run'
+        required: true
+        type: choice
+        options:
+          - drug_list
+          - disease_list
+          - disease_categories
+          - disease_labels
+          - disease_umn
+          - disease_prevalence
+      version_bump_type:
+        description: 'Type of version bump'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix 
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            echo 'matrix={"include":[{"pipeline_name":"drug_list","version_bump_type":"patch"},{"pipeline_name":"disease_list","version_bump_type":"patch"}]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix={"include":[{"pipeline_name":"${{ github.event.inputs.pipeline_name }}","version_bump_type":"${{ github.event.inputs.version_bump_type }}"}]}' >> "$GITHUB_OUTPUT"
+          fi
+
+  run-pipeline:
+    needs: setup-matrix
+    environment: dev
+    runs-on: gha-runner-scale-set
+    defaults:
+      run:
+        working-directory: ./pipelines/core_entities
+    strategy:
+      matrix: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+      fail-fast: false
+    permissions:
+      contents: 'write'
+      id-token: 'write'
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      PIPELINE_NAME: ${{ matrix.pipeline_name }}
+      VERSION_BUMP_TYPE: ${{ matrix.version_bump_type }}
+      LITELLM_BASE_URL: ${{ vars.LITELLM_BASE_URL }}
+      LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+    
+    steps:
+    - uses: actions/checkout@v4 
+
+    - name: Configure Git to use PAT
+      run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+    - name: Log parameters
+      run: |
+        echo "Pipeline name: ${PIPELINE_NAME}"
+        echo "Version bump type: ${VERSION_BUMP_TYPE}"
+    
+    - name: Create service account key file
+      run: printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_RW_KEY }}" > conf/local/gsheet_service_account.json
+      
+    - name: Authenticate with Google Cloud for access_token
+      id: auth
+      uses: 'google-github-actions/auth@v2'
+      with:
+          project_id: ${{ vars.PROJECT_ID }}
+          workload_identity_provider: ${{ vars.WORKLOAD_IDENTITY_PROVIDER_RW }}
+          service_account: ${{ vars.SERVICE_ACCOUNT_RW }}
+    
+    - name: Install gcloud storage
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        version: latest
+
+    - name: Get latest version from GCS and bump it
+      id: get_version
+      run: |
+        BASE_PATH="gs://mtrx-us-central1-hub-dev-storage/kedro/data/core-entities"
+        BUCKET_PATH="${BASE_PATH}/${PIPELINE_NAME}"
+        echo "Searching for versions in: ${BUCKET_PATH}"
+        
+        # List all version folders and extract versions
+        VERSIONS=$(gcloud storage ls "$BUCKET_PATH/" | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | sort -V -r || echo "")
+        echo "Versions: ${VERSIONS}"
+        
+        if [ -z "$VERSIONS" ]; then
+          echo "No previous versions found, starting with v0.0.0"
+          LATEST_VERSION="v0.0.0"
+        else
+          # Get the first (latest) version
+          LATEST_VERSION=$(echo "$VERSIONS" | head -n 1)
+          echo "Latest version found: ${LATEST_VERSION}"
+        fi
+        
+        # Remove 'v' prefix for bumping
+        VERSION_NUMBER=${LATEST_VERSION#v}
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUMBER"
+        
+        if [ "$VERSION_BUMP_TYPE" = "major" ]; then
+          MAJOR=$((MAJOR + 1))
+          MINOR=0
+          PATCH=0
+        elif [ "$VERSION_BUMP_TYPE" = "minor" ]; then
+          MINOR=$((MINOR + 1))
+          PATCH=0
+        elif [ "$VERSION_BUMP_TYPE" = "patch" ]; then
+          PATCH=$((PATCH + 1))
+        else
+          echo "Error: Invalid version bump type: ${VERSION_BUMP_TYPE}"
+          exit 1
+        fi
+        
+        NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+        echo "New version: ${NEW_VERSION}"
+        echo "RELEASE_VERSION=${NEW_VERSION}" >> "$GITHUB_ENV"
+    
+    - name: Check if release folder already exists
+      run: make check_release_folder_is_empty PIPELINE_NAME="${PIPELINE_NAME}" RELEASE_VERSION="${RELEASE_VERSION}"
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+    
+    - name: Install dependencies
+      run: make install
+    
+    - name: Run pipeline
+      run: uv run kedro run -e cloud -p "${PIPELINE_NAME}"
+
+    - name: Tag and push release
+      run: |
+        git tag "${RELEASE_VERSION}-${PIPELINE_NAME}"
+        git push origin "${RELEASE_VERSION}-${PIPELINE_NAME}"
+    
+    - name: Install GitHub CLI
+      if: env.PIPELINE_NAME == 'drug_list' || env.PIPELINE_NAME == 'disease_list'
+      run: |
+        if ! command -v gh &> /dev/null; then
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+        fi
+        gh --version
+
+    - name: Create release pull request
+      if: env.PIPELINE_NAME == 'drug_list' || env.PIPELINE_NAME == 'disease_list'
+      run: |
+        gh workflow run core_entities_create_release_pr.yaml -f release_version="${RELEASE_VERSION}"  -f pipeline="${PIPELINE_NAME}"

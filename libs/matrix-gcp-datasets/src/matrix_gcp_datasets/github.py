@@ -1,14 +1,30 @@
 import os
 import tempfile
-from abc import ABC, abstractmethod
 from typing import Any
 
 import requests
-from kedro.io.core import PROTOCOL_DELIMITER
-from kedro_datasets.pandas import CSVDataset, ExcelDataset
+from kedro_datasets.pandas import CSVDataset
 
 
-class GitHubReleaseBaseDataset(ABC):
+class GitHubReleaseCSVDataset(CSVDataset):
+    """
+    A Kedro dataset for loading CSV files from GitHub release assets.
+
+    This dataset downloads CSV files directly from GitHub release assets,
+    handling authentication and temporary file management automatically.
+
+    Example:
+        ```python
+        dataset = GitHubReleaseCSVDataset(
+            repository_url="https://github.com/owner/repo",
+            release_name="v1.0.0",
+            release_asset_name="data.csv",
+            fs_args={"Authorization": "token ghp_..."},
+        )
+        df = dataset.load()
+        ```
+    """
+
     def __init__(
         self,
         repository_url: str,
@@ -19,7 +35,7 @@ class GitHubReleaseBaseDataset(ABC):
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """
-        Initialize the GitHub Release Base Dataset.
+        Initialize the GitHub Release CSV Dataset.
 
         Args:
             repository_url: GitHub repository URL (e.g., "https://github.com/owner/repo")
@@ -108,11 +124,14 @@ class GitHubReleaseBaseDataset(ABC):
             raise ValueError(f"Could not find release '{release_name}' in releases {available_releases}")
 
         # Find the target asset within the release
-        asset_id = next((a["id"] for a in release["assets"] if a["name"] == release_asset_name), None)
+        asset_id = next(
+            (a["id"] for a in release["assets"] if a["name"] == release_asset_name),
+            None,
+        )
         if not asset_id:
             available_assets = [a["name"] for a in release["assets"]]
             raise ValueError(
-                f"Could not find file '{release_asset_name}' in release '{release_name}' " f"assets {available_assets}"
+                f"Could not find file '{release_asset_name}' in release '{release_name}' assets {available_assets}"
             )
 
         return str(asset_id)
@@ -151,39 +170,6 @@ class GitHubReleaseBaseDataset(ABC):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as temp_file:
             temp_file.write(content)
             return temp_file.name
-
-    @abstractmethod
-    def load(self):
-        pass
-
-
-class GitHubReleaseCSVDataset(GitHubReleaseBaseDataset, CSVDataset):
-    def __init__(
-        self,
-        repository_url: str,
-        release_name: str,
-        release_asset_name: str,
-        load_args: dict[str, Any] | None = None,
-        fs_args: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ):  # Initialize base GitHub functionality
-        GitHubReleaseBaseDataset.__init__(
-            self,
-            repository_url=repository_url,
-            release_name=release_name,
-            release_asset_name=release_asset_name,
-            load_args=load_args,
-            fs_args=fs_args,
-            metadata=metadata,
-        )
-        # Initialize CSV dataset functionality
-        CSVDataset.__init__(
-            self,
-            filepath=self.release_url,
-            fs_args=fs_args,
-            load_args=load_args,
-            metadata=metadata,
-        )
 
     def load(self):
         """
@@ -224,41 +210,3 @@ class GitHubReleaseCSVDataset(GitHubReleaseBaseDataset, CSVDataset):
 
             if os.path.exists(temp_filepath):
                 os.unlink(temp_filepath)
-
-
-class GitHubReleaseExcelDataset(GitHubReleaseBaseDataset, ExcelDataset):
-    def __init__(
-        self,
-        repository_url: str,
-        release_name: str,
-        release_asset_name: str,
-        load_args: dict[str, Any] | None = None,
-        fs_args: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
-    ):
-        GitHubReleaseBaseDataset.__init__(
-            self,
-            repository_url=repository_url,
-            release_name=release_name,
-            release_asset_name=release_asset_name,
-            load_args=load_args,
-            fs_args=fs_args,
-            metadata=metadata,
-        )
-        # Initialize Excel dataset functionality
-        ExcelDataset.__init__(
-            self,
-            filepath=self.release_url,
-            fs_args=fs_args,
-            load_args=load_args,
-            metadata=metadata,
-        )
-
-    def load(self):
-        release_json = self._get_release_json(self.release_url, self.fs_args)
-        asset_id = self._get_asset_id(release_json, self.release_name, self.release_asset_name)
-
-        asset_url = f"{self.release_url}/assets/{asset_id}".removeprefix(f"{self._protocol}{PROTOCOL_DELIMITER}")
-        self._filepath = asset_url
-
-        return ExcelDataset.load(self)

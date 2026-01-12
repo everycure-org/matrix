@@ -1,0 +1,66 @@
+name: Core Entities CI pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    paths: 
+      - pipelines/core_entities/**
+      - .github/workflows/core_entities_ci.yml
+
+jobs:
+  integration-test:
+    if: github.event.pull_request.draft == false
+    environment: dev
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipelines/core_entities
+    permissions:
+      contents: write
+      id-token: write  # Required for GCP authentication
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LITELLM_BASE_URL: ${{ vars.LITELLM_BASE_URL }}
+      LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+        
+      - name: Configure Git to use PAT
+        run: git config --global url."https://everycure:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          version: latest
+        
+      - name: Create service account key file
+        run: printf '%s\n' "${{ secrets.SERVICE_ACCOUNT_RW_KEY }}" > conf/local/gsheet_service_account.json
+
+      - run: make install
+      - run: make precommit
+
+      - run: uv run kedro catalog resolve --env base
+      - run: uv run kedro catalog resolve --env test
+      - run: uv run kedro catalog resolve --env llm_test
+      - run: uv run kedro catalog resolve --env cloud
+      
+      - run: make test
+      - run: make test_llm
+      - run: make integration_test

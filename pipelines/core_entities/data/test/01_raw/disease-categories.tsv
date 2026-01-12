@@ -1,0 +1,9 @@
+id	name	is_psychiatric_disease	is_malignant_cancer	is_benign_tumour	is_pathogen_caused	is_glucose_dysfunction
+MONDO:0008661	vitiligo	False	False	False	False	False
+MONDO:0011155	vacuolar Neuromyopathy	False	False	False	False	True
+MONDO:0004112	radiation cystitis	False	False	False	False	False
+MONDO:0019784	12q14 microdeletion syndrome	False	False	False	False	False
+MONDO:0017781	12p12.1 microdeletion syndrome	False	False	False	False	False
+MONDO:0018632	11q22.2q22.3 microdeletion syndrome	False	False	False	False	True
+MONDO:0017580	11p15.4 microduplication syndrome	False	False	False	True	False
+MONDO:0017180	10q22.3q23.3 microduplication syndrome	False	False	False	False	False

@@ -1,0 +1,61 @@
+drug_list:
+  name_resolver:
+    base_url: https://name-resolution-sri.renci.org
+    path: /lookup?string={name}&autocomplete=False&highlighting=False&offset=0&limit=10
+    parallelism: 60
+    accepted_drug_categories:
+      - biolink:SmallMolecule
+      - biolink:Drug
+      - biolink:MolecularEntity
+      - biolink:ChemicalEntity
+      - biolink:PhysicalEssence
+      - biolink:ChemicalOrDrugOrTreatment
+      - biolink:ChemicalMixture
+      - biolink:Protein
+      - biolink:Polypeptide
+
+  node_normalizer:
+    base_url: https://nodenormalization-sri.renci.org
+    path: /1.5/get_normalized_nodes
+
+  drug_exception_list:
+    # Diazoxide choline was approved in 2025; none of the KGs will have it within the near future so it currently maps to Diazoxide despite those two being distinct entities. This leads to duplicates -> pipeline throws error. Decision was made to keep it but to drop this specific duplicate
+    - diazoxide choline 
+
+  release_columns:
+    - id
+    - name
+    - translator_id
+    - drugbank_id
+    - synonyms
+    - aggregated_with
+    - drug_class
+    - therapeutic_area
+    - drug_function
+    - drug_target
+    - approved_usa
+    - is_antipsychotic
+    - is_sedative
+    - is_antimicrobial
+    - is_glucose_regulator
+    - is_chemotherapy
+    - is_steroid
+    - is_analgesic
+    - is_cardiovascular
+    - is_cell_therapy
+    - smiles
+    - atc_main
+    - atc_level_1
+    - atc_level_2
+    - atc_level_3
+    - atc_level_4
+    - atc_level_5
+    - l1_label
+    - l2_label
+    - l3_label
+    - l4_label
+    - l5_label
+    - deleted
+    - deleted_reason
+    - new_id
+    
