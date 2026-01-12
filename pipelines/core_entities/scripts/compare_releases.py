@@ -163,6 +163,8 @@ def generate_markdown_report(
     release_tag: str | None = None,
     base_release_file_path: str | None = None,
     release_file_path: str | None = None,
+    null_counts_base: dict[str, int] | None = None,
+    null_counts_new: dict[str, int] | None = None,
 ) -> str:
     """Generate a markdown report from comparison results."""
     lines = ["# Release Comparison Report", ""]
@@ -181,6 +183,27 @@ def generate_markdown_report(
     lines.append("")
     lines.append(f"**Base Release File:** `{base_release_file_path}`")
     lines.append("")
+
+    # 0. Null values per column
+    if null_counts_base is not None and null_counts_new is not None:
+        lines.append("## Null Values per Column")
+        lines.append("")
+        lines.append("| Column | Base Release Null Count | New Release Null Count |")
+        lines.append("|--------|-------------------------|------------------------|")
+
+        # Get all unique columns from both releases
+        all_columns = sorted(set(list(null_counts_base.keys()) + list(null_counts_new.keys())))
+
+        for col in all_columns:
+            base_count = null_counts_base.get(col) if col in null_counts_base else None
+            new_count = null_counts_new.get(col) if col in null_counts_new else None
+
+            base_count_str = str(base_count) if base_count is not None else "N/A"
+            new_count_str = str(new_count) if new_count is not None else "N/A"
+
+            lines.append(f"| `{col}` | {base_count_str} | {new_count_str} |")
+
+        lines.append("")
 
     # 1. Column changes
     lines.append("## Column Changes")
@@ -403,6 +426,8 @@ def compare_releases_cli(
             release_tag=release_tag,
             base_release_file_path=base_release_file_path,
             release_file_path=release_file_path,
+            null_counts_base=null_counts_base,
+            null_counts_new=null_counts_new,
         )
         with open(output_markdown, "w") as f:
             f.write(markdown_content)
