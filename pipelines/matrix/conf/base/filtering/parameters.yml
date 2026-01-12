@@ -85,14 +85,14 @@ filtering:
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
 
-    # filter_triples:
-    #   _object: matrix.pipelines.filtering.filters.TriplePattern
-    #   triples_to_exclude:
-    #    - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
-    #    - ["biolink:Drug", "biolink:interacts_with", "biolink:SmallMolecule"]
-    #    - ["biolink:SmallMolecule", "biolink:interacts_with", "biolink:Drug"]
-    # #   - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
-    # #   - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
-    # #   - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
-    # #   - ["biolink:Drug", "biolink:close_match", "biolink:Drug"]
-    #    - ["biolink:Drug", "biolink:coexists_with", "biolink:Drug"]
+    filter_triples:
+      _object: matrix.pipelines.filtering.filters.TriplePattern
+      triples_to_exclude:
+       - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
+       - ["biolink:Drug", "biolink:interacts_with", "biolink:SmallMolecule"]
+       - ["biolink:SmallMolecule", "biolink:interacts_with", "biolink:Drug"]
+    #   - ["biolink:Drug", "biolink:subclass_of", "biolink:Drug"]
+    #   - ["biolink:Drug", "biolink:has_part", "biolink:Drug"]
+    #   - ["biolink:Drug", "biolink:related_to", "biolink:Drug"]
+    #   - ["biolink:Drug", "biolink:close_match", "biolink:Drug"]
+       - ["biolink:Drug", "biolink:coexists_with", "biolink:Drug"]
