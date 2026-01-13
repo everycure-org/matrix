@@ -107,7 +107,8 @@ def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFram
 def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
     """Test handling of empty dataframe."""
     empty_df = spark.createDataFrame(
-        [], "id string, name string, category string, description string, upstream_data_source array<string>"
+        [],
+        "id string, name string, category string, description string, upstream_data_source array<string>, publications array<string>",
     )
 
     result = ingest_nodes(empty_df)
