@@ -63,7 +63,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "integrate_in_kg": False,
                 },
                 {
-                    "name": "ec_ground_truth",
+                    "name": "medic_ground_truth",
                     "has_nodes": False,
                     "has_edges": True,
                     "integrate_in_kg": False,
@@ -78,6 +78,11 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trials", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
+                {
+                    "name": "ec_indications_list",
+                    "has_nodes": False,
+                    "integrate_in_kg": False,
+                },
                 # TODO: enable orchard once permissions are clarified
                 {"name": "orchard", "integrate_in_kg": False, "has_nodes": False, "is_private": True},
             ],
@@ -120,6 +125,9 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "ground_truth_recall_at_n_bootstrap",
                     "negative_recall_at_n_bootstrap",
                     "off_label_recall_at_n_bootstrap",
+                    "ec_indications_list_on_label_recall_at_n_bootstrap",
+                    "ec_indications_list_off_label_recall_at_n_bootstrap",
+                    "ec_indications_list_recall_at_n_bootstrap",
                     "disease_specific_hit_at_k_bootstrap",
                     "disease_specific_hit_at_k_off_label_bootstrap",
                     "drug_entropy_at_n",
@@ -135,7 +143,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             "known_entity_removal": {
                 "available_datasets": [
                     "kgml_xdtd_ground_truth",
-                    "ec_ground_truth",
+                    "medic_ground_truth",
                     # "drugbank_ground_truth", TODO: figure out how to add private datasets
                     "off_label",
                 ]

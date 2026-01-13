@@ -1,9 +1,13 @@
 known_entity_removal:
+  # Specify a time-cutoff for the Orchard data used for evaluation and training. 
+  # Format: "YYYY-MM". Enter "latest" to use the latest available pairs.  
+  orchard_report_date: "latest"
+
   datasets_to_include:
     kgml_xdtd_ground_truth:
       positives: true
       negatives: true
-    ec_ground_truth:
+    medic_ground_truth:
       positives: true
       negatives: true
     drugbank_ground_truth:
@@ -16,3 +20,40 @@ known_entity_removal:
   mondo_ontology:
     _object: matrix.pipelines.known_entity_removal.mondo_ontology.OntologyMONDO
     owl_url: https://purl.obolibrary.org/obo/mondo.owl
+
+  metrics_to_report:
+    positive_retrieval_rate:
+      label_col_name: "triaged_not_known_entity"
+      evaluation_fn: give_retrieval_rate
+
+    known_entity_removal_rate:
+      label_col_name: "archived_known_entity"
+      evaluation_fn: give_removal_rate
+
+    projected_triage_yield:
+      label_col_name: "reached_triage"
+      evaluation_fn: give_projected_proportion
+
+    med_review_retrieval_rate:
+      label_col_name: "reached_med_review"
+      evaluation_fn: give_retrieval_rate
+
+    projected_med_review_yield:
+      label_col_name: "reached_med_review"
+      evaluation_fn: give_projected_proportion
+
+    deep_dive_retrieval_rate:
+      label_col_name: "reached_deep_dive"
+      evaluation_fn: give_retrieval_rate
+
+    sac_retrieval_rate:
+      label_col_name: "reached_sac"
+      evaluation_fn: give_retrieval_rate
+
+    on_label_removal_rate:
+      label_col_name: "archived_known_on_label"
+      evaluation_fn: give_removal_rate
+
+    off_label_removal_rate:
+      label_col_name: "archived_known_off_label"
+      evaluation_fn: give_removal_rate

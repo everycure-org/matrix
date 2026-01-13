@@ -69,8 +69,14 @@ def compute_connected_components_graphframes(nodes: ps.DataFrame, edges: ps.Data
         - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
     """
     from graphframes import GraphFrame
+    from pyspark.sql import SparkSession
 
     logger.info("Computing connected components using GraphFrames...")
+
+    # Ensure SparkSession is active in this thread (needed for GraphFrame)
+    # GraphFrame relies on SparkSession.getActiveSession() which may return None in parallel threads
+    if SparkSession.getActiveSession() is None:
+        SparkSession.builder.getOrCreate()
 
     gf_nodes = nodes.select(F.col("id"))
 
@@ -146,7 +152,7 @@ def compute_connected_components_grape(nodes: ps.DataFrame, edges: ps.DataFrame)
 
     # Convert results back to Spark DataFrames for pipeline compatibility
     # Use RDD with explicit partitioning to avoid large task closures
-    spark = nodes.sparkSession
+    spark = ps.SparkSession.builder.getOrCreate()
     node_assignment_data = [
         {"id": node_id, "component_id": int(comp_id)} for node_id, comp_id in zip(nodes_list, component_per_node)
     ]
@@ -218,7 +224,7 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
 
     # Convert results back to Spark DataFrames for pipeline compatibility
     # Use RDD with explicit partitioning to avoid large task closures
-    spark = nodes.sparkSession
+    spark = ps.SparkSession.builder.getOrCreate()
     node_assignment_data = [
         {"id": index_to_id[node_idx], "component_id": component_id}
         for component_id, node_indices_set in enumerate(components)
@@ -454,7 +460,7 @@ def compute_core_connectivity_metrics(
         logger.info(f"  Number of subgraphs: {num_subgraphs:,}")
         logger.info(f"  Core entities in LCC: {c_lcc:,}")
         logger.info(f"  LCC Fraction: {lcc_fraction:.4f}")
-        logger.info(f"  Weighted Connectivity Score: {weighted_score:.4f}")
+        logger.info(f"  Weighted Connectivity score: {weighted_score:.4f}")
 
         summary_data.append(
             {

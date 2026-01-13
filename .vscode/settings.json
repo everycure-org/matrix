@@ -6,7 +6,7 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true,
-        "**/.venv/": true,
+        "**/.venv/": false,
         "**/.ruff_cache/": true,
         "**/*.egg-info/": true,
         "docs/site": true,

@@ -39,6 +39,46 @@ function compareVersions(a, b) {
 }
 
 /**
+ * Check if a version is a major release (patch version is 0)
+ */
+function isMajorRelease(semanticVersion) {
+  const parts = parseVersion(semanticVersion);
+  return parts.length >= 3 && parts[2] === 0;
+}
+
+/**
+ * Filter releases to only major releases + benchmark + current
+ * This reduces query costs by limiting the number of versions scanned
+ */
+function filterToKeyReleases(validReleases, benchmarkVersion, currentReleaseVersion) {
+  const keyReleases = validReleases.filter(release => {
+    // Keep major releases (x.y.0)
+    if (isMajorRelease(release.semantic_version)) {
+      return true;
+    }
+    // Keep benchmark version
+    if (release.semantic_version === benchmarkVersion) {
+      return true;
+    }
+    // Keep current release version
+    if (release.semantic_version === currentReleaseVersion) {
+      return true;
+    }
+    return false;
+  });
+
+  // Remove duplicates (in case benchmark or current is also a major release)
+  const seen = new Set();
+  return keyReleases.filter(release => {
+    if (seen.has(release.semantic_version)) {
+      return false;
+    }
+    seen.add(release.semantic_version);
+    return true;
+  });
+}
+
+/**
  * Discover all valid release datasets in BigQuery
  * Filters to releases <= currentReleaseVersion
  * Validates that each release has required tables
@@ -743,6 +783,7 @@ async function main() {
   const projectId = process.env.EVIDENCE_VAR__project_id;
   const currentReleaseVersion = process.env.EVIDENCE_VAR__release_version;
   const bqReleaseVersion = process.env.EVIDENCE_VAR__bq_release_version;
+  const benchmarkVersion = process.env.EVIDENCE_VAR__benchmark_version;
   const keyDiseaseIds = process.env.EVIDENCE_VAR__key_disease_ids || '';
   const keyDrugIds = process.env.EVIDENCE_VAR__key_drug_ids || '';
 
@@ -776,20 +817,26 @@ async function main() {
   const currentDatasetId = `release_${bqReleaseVersion}`;
 
   try {
-    // Step 1: Discover releases once
-    const validReleases = await discoverReleases(bigquery, projectId, currentReleaseVersion);
+    // Step 1: Discover all valid releases
+    const allValidReleases = await discoverReleases(bigquery, projectId, currentReleaseVersion);
 
-    // Step 2: Generate release_trends.sql
+    // Step 2: Filter to key releases (major + benchmark + current) to reduce query costs
+    const validReleases = filterToKeyReleases(allValidReleases, benchmarkVersion, currentReleaseVersion);
+    console.log(`\n=== Filtered to Key Releases ===`);
+    console.log(`Reduced from ${allValidReleases.length} to ${validReleases.length} releases`);
+    console.log(`Key releases: ${validReleases.map(r => r.semantic_version).join(', ')}`);
+
+    // Step 3: Generate release_trends.sql
     const releaseTrendsSQL = generateReleaseTrendsSQL(validReleases, projectId);
     const releaseTrendsPath = path.join(__dirname, '..', 'sources', 'bq', 'release_trends.sql');
     fs.writeFileSync(releaseTrendsPath, releaseTrendsSQL);
 
-    // Step 3: Generate key_nodes_release_trends.sql
+    // Step 4: Generate key_nodes_release_trends.sql
     const keyNodeTrendsSQL = generateKeyNodeTrendsSQL(validReleases, projectId, allKeyNodeIds);
     const keyNodeTrendsPath = path.join(__dirname, '..', 'sources', 'bq', 'key_nodes_release_trends.sql');
     fs.writeFileSync(keyNodeTrendsPath, keyNodeTrendsSQL);
 
-    // Step 4: Generate key_nodes_release_aggregate.sql
+    // Step 5: Generate key_nodes_release_aggregate.sql
     const keyNodeAggregateSQL = generateKeyNodeAggregateSQL(validReleases, projectId, allKeyNodeIds);
     const keyNodeAggregatePath = path.join(__dirname, '..', 'sources', 'bq', 'key_nodes_release_aggregate.sql');
     fs.writeFileSync(keyNodeAggregatePath, keyNodeAggregateSQL);
