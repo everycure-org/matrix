@@ -83,14 +83,14 @@ def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFram
             "label": "TestCategory",
             "property_keys": ["name", "category", "description"],
             "property_values": ["Test Node", "TestCategory", "Test Description"],
-            "array_property_keys": ["upstream_data_source"],
+            "array_property_keys": ["upstream_data_source", "publications"],
             "array_property_values": [["source1", "source2"]],
         },
         {
             "label": "TestCategory2",
             "property_keys": ["name", "category", "description"],
             "property_values": ["Test Node 2", "TestCategory2", "Test Description 2"],
-            "array_property_keys": ["upstream_data_source"],
+            "array_property_keys": ["upstream_data_source", "publications"],
             "array_property_values": [["source3"]],
         },
     ]
