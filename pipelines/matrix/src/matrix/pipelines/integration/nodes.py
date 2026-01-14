@@ -291,12 +291,7 @@ def normalize_nodes(
     """
     nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
 
-    # Deduplicate rows by id
-    return (
-        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
-    )
+    return nodes_normalized
 
 
 def normalize_core_nodes(
