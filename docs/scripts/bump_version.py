@@ -12,7 +12,7 @@ def branch_exists(branch_name: str) -> bool:
 
 
 def bump_version(bump_type: str, latest_tag: str) -> None:
-    latest_tag = latest_tag.lstrip("v")
+    latest_tag = latest_tag.lstrip("v").rstrip("-matrix")
     version = semver.Version.parse(latest_tag)
     while True:
         if bump_type == "minor":
