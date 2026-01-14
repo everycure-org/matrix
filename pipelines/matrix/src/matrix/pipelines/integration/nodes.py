@@ -118,6 +118,7 @@ def union_and_deduplicate_nodes(
         .withColumn("id", F.coalesce("core_id", "id"))
         .withColumn("name", F.coalesce("core_name", "name"))
         .withColumn("category", F.coalesce("core_category", "category"))
+        .withColumn("all_categories", F.array_append("all_categories", "category"))
         .drop("core_name", "core_category")
     )
 
