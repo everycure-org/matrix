@@ -526,7 +526,7 @@ class GBQTableDataset(KedroGBQTableDataset):
             metadata=metadata,
         )
         self.project = project
-        self.dataset = dataset
+        self.dataset = SparkDatasetWithBQExternalTable._sanitize_name(dataset)
         self.table_name = table_name
         self.label_key = label_key
         self.label_value = label_value
