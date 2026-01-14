@@ -54,7 +54,7 @@ def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
         df: Nodes dataframe
     """
     return (
-        df.select("id", "name", "category", "description", "upstream_data_source")
+        df.select("id", "name", "category", "description", "upstream_data_source", "publications")
         .withColumn("label", ps.functions.col("category"))
         # add string properties here
         .withColumn(
@@ -76,6 +76,8 @@ def ingest_nodes(df: ps.DataFrame) -> ps.DataFrame:
             ps.functions.create_map(
                 ps.functions.lit("upstream_data_source"),
                 ps.functions.col("upstream_data_source"),
+                ps.functions.lit("publications"),
+                ps.functions.col("publications"),
             ),
         )
         .withColumn("array_property_keys", ps.functions.map_keys(ps.functions.col("array_properties")))
@@ -202,6 +204,12 @@ def ingest_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
             "predicate",
             "object",
             "upstream_data_source",
+            "publications",
+            "aggregator_knowledge_source",
+            "subject_aspect_qualifier",
+            "subject_direction_qualifier",
+            "object_aspect_qualifier",
+            "object_direction_qualifier",
         )
         .withColumn("label", ps.functions.split(ps.functions.col("predicate"), ":", limit=2).getItem(1))
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.
