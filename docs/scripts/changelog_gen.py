@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Iterable, Iterator, List
 
 import yaml
+from matrix.git_utils import parse_release_version_from_matrix_tag
 
 
 def locate_releases_path() -> Path:
@@ -53,7 +54,7 @@ def parse_jsons(filepaths: Iterable[Path]) -> Iterator[dict]:
 
 
 def create_semver_sortkey(release_name: str) -> list[int]:
-    version_str = release_name.lstrip("v").split("-")[0]
+    version_str = parse_release_version_from_matrix_tag(release_name)
     sort_key = [int(u) for u in version_str.split(".")]
     return sort_key
 
