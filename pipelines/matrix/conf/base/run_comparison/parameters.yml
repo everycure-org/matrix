@@ -22,21 +22,21 @@ run_comparison:
       # WIP
       - name: Robokop_chunyu_filters
         fold_paths_list: 
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/chunyu-default-filters-ccf0bc7e/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/chunyu-default-filters-ccf0bc7e/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
         file_format: "parquet"
-        score_col_name: "treat score"
+        score_col_name: "transformed_treat_score"
 
       - name: robokop_chunyu_orgtaxon
         fold_paths_list: 
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/chunyu-plus-orgtaxon-fixed-0798af5a/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/chunyu-plus-orgtaxon-fixed-0798af5a/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
         file_format: "parquet"
-        score_col_name: "treat score"
+        score_col_name: "transformed_treat_score"
 
       - name: robokop_chunyu_orgtaxon_highprevelance
         fold_paths_list: 
-          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/chunyu-plus-orgtaxon-plus-high-prevalence-81c0c5a5/datasets/matrix_generation/model_output/fold_{0..4}/matrix_predictions"
+          - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/v0.13-jane-filtering/runs/chunyu-plus-orgtaxon-plus-high-prevalence-81c0c5a5/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
         file_format: "parquet"
-        score_col_name: "treat score"
+        score_col_name: "transformed_treat_score"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.
