@@ -197,8 +197,16 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         self._create_dataset()
 
         # Create external table, referencing the dataset in object storage
+        uri = self._path
+        if uri.endswith(f".{self._format}"):
+            # pointing at a single Parquet file – use it directly
+            source_uris = [uri]
+        else:
+            # pointing at a directory – match all parts in the folder
+            source_uris = [f"{uri}/*.{self._format}"]
+
         external_config = bigquery.ExternalConfig(self._format.upper())
-        external_config.source_uris = [f"{self._path}/*.{self._format}"]
+        external_config.source_uris = source_uris
 
         # Register the external table within BigQuery
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
