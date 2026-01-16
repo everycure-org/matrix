@@ -39,7 +39,7 @@ jobs:
           set -euxo pipefail
           # Note: this could be an intermediate release
           intended_release=${PR_BRANCH_NAME##release/}
-          echo "intended_tag=${intended_release}" >> "$GITHUB_ENV"  
+          echo "intended_tag=${intended_release}-matrix" >> "$GITHUB_ENV"  
 
       - name: Discover Latest Official Release on GitHub
         env:
