@@ -20,6 +20,38 @@ logger = logging.getLogger(__name__)
 tk = toolkit.Toolkit()
 
 
+def normalize_curie_prefixes(df: ps.DataFrame) -> ps.DataFrame:
+    """Normalize CURIE prefixes to ensure consistent formatting before normalization.
+    
+    This function normalizes known CURIE prefix variations to their canonical forms.
+    For example, HPO: -> HP: to ensure nodes with different prefix formats get
+    merged correctly during normalization.
+    
+    Args:
+        df: Spark DataFrame with node IDs in an 'id' column
+        
+    Returns:
+        DataFrame with normalized CURIE prefixes
+    """
+    # NOTE: This function was partially generated using AI assistance.
+    # Map of prefix variations to canonical forms
+    prefix_mappings = {
+        "HPO:": "HP:",
+    }
+    
+    result = df
+    for old_prefix, new_prefix in prefix_mappings.items():
+        result = result.withColumn(
+            "id",
+            F.when(
+                (F.col("id").isNotNull()) & (F.col("id").startswith(old_prefix)),
+                F.regexp_replace(F.col("id"), f"^{old_prefix}", new_prefix),
+            ).otherwise(F.col("id"))
+        )
+    
+    return result
+
+
 @inject_object()
 @check_output(
     DataFrameSchema(
