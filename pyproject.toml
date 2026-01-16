@@ -19,6 +19,7 @@ dependencies = [
     "matrix-io-utils",
     "matrix-inject",
     "matrix-pandera",
+    "matrix-validator",
     "pre-commit>=4.2.0",
     "owlready2>=0.49",
     "core-entities-pipeline"
@@ -35,6 +36,7 @@ matrix-io-utils = { workspace = true }
 matrix-inject = { workspace = true }
 matrix-cli = { workspace = true }
 matrix-pandera = { workspace = true }
+matrix-validator = { workspace = true }
 core-entities-pipeline = {workspace = true }
 
 [tool.uv.workspace]

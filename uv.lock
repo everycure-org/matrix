@@ -21,6 +21,7 @@ members = [
     "matrix-mlflow-utils",
     "matrix-pandera",
     "matrix-pipeline",
+    "matrix-validator",
 ]
 
 [[package]]
@@ -3421,6 +3422,7 @@ dependencies = [
     { name = "matrix-mlflow-utils" },
     { name = "matrix-pandera" },
     { name = "matrix-pipeline" },
+    { name = "matrix-validator" },
     { name = "owlready2" },
     { name = "pre-commit" },
 ]
@@ -3443,6 +3445,7 @@ requires-dist = [
     { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
     { name = "matrix-pandera", editable = "libs/matrix-pandera" },
     { name = "matrix-pipeline", editable = "pipelines/matrix" },
+    { name = "matrix-validator", editable = "libs/matrix-validator" },
     { name = "owlready2", specifier = ">=0.49" },
     { name = "pre-commit", specifier = ">=4.2.0" },
 ]
@@ -3496,7 +3499,8 @@ name = "matrix-cli"
 version = "0.1.0"
 source = { editable = "apps/matrix-cli" }
 dependencies = [
-    { name = "polars-lts-cpu" },
+    { name = "matrix-io-utils" },
+    { name = "matrix-validator" },
     { name = "typer" },
 ]
 
@@ -3508,7 +3512,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "polars-lts-cpu", specifier = "==1.30.0" },
+    { name = "matrix-io-utils", editable = "libs/matrix-io-utils" },
+    { name = "matrix-validator", editable = "libs/matrix-validator" },
     { name = "typer" },
 ]
 
@@ -3962,7 +3967,7 @@ requires-dist = [
     { name = "matrix-mlflow-utils", editable = "libs/matrix-mlflow-utils" },
     { name = "matrix-pandera", editable = "libs/matrix-pandera" },
     { name = "matrix-schema", specifier = "==0.4.3" },
-    { name = "matrix-validator", git = "https://github.com/everycure-org/matrix-validator.git?rev=v0.0.6" },
+    { name = "matrix-validator", editable = "libs/matrix-validator" },
     { name = "mlflow", specifier = "==2.20.3" },
     { name = "neo4j", specifier = ">=5.5.0" },
     { name = "notebook" },
@@ -4061,18 +4066,49 @@ wheels = [
 
 [[package]]
 name = "matrix-validator"
-version = "0.0.6"
-source = { git = "https://github.com/everycure-org/matrix-validator.git?rev=v0.0.6#31179ef2919b996c22c7c2526c8d7b1ab0ae72b8" }
+version = "0.1.0"
+source = { editable = "libs/matrix-validator" }
 dependencies = [
     { name = "biolink-model" },
-    { name = "click" },
+    { name = "google-api-core" },
+    { name = "grpcio" },
     { name = "importlib-metadata" },
-    { name = "matrix-schema" },
     { name = "pandas" },
     { name = "pandera" },
     { name = "patito" },
     { name = "polars-lts-cpu" },
+    { name = "pyarrow" },
+    { name = "pyspark" },
     { name = "tqdm" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "biolink-model", specifier = "==4.2.6rc4" },
+    { name = "google-api-core" },
+    { name = "grpcio" },
+    { name = "importlib-metadata", specifier = ">=8.2.0" },
+    { name = "pandas" },
+    { name = "pandera", specifier = "==0.24.0" },
+    { name = "patito", specifier = "==0.8.3" },
+    { name = "polars-lts-cpu", specifier = ">=1.23.0" },
+    { name = "pyarrow" },
+    { name = "pyspark", specifier = ">=3.5.0" },
+    { name = "tqdm", specifier = "==4.67.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
 ]
 
 [[package]]
