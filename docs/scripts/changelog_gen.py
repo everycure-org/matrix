@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Iterable, Iterator, List
 
 import yaml
-from matrix.git_utils import parse_release_version_from_matrix_tag
+from utils import parse_release_version_from_matrix_tag
 
 
 def locate_releases_path() -> Path:
