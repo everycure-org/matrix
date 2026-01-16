@@ -64,39 +64,37 @@ def git_tag_exists(tag: str) -> bool:
 
 def get_tags() -> List[str]:
     result = subprocess.run(["git", "ls-remote", "--tags", "origin"], check=True, capture_output=True, text=True)
-    return [
-        line.split("\t")[1].replace("refs/tags/", "")
-        for line in result.stdout.strip().split("\n")
-        if not line.split("\t")[1].endswith("^{}")  # exclude dereferenced annotated tags
+    raw_tags = result.stdout.strip().split("\n")
+    tags = [
+        line.split("\t")[1].replace("refs/tags/", "") for line in raw_tags if not line.split("\t")[1].endswith("^{}")
     ]
+    matrix_tags = [tag for tag in tags if tag.endswith("-matrix")]
+    return matrix_tags
 
 
-def get_latest_minor_release(releases_list: List[str]) -> str:
-    original_to_mapped = correct_non_semver_compliant_release_names(releases_list)
-    parsed_versions = [semver.Version.parse(v.lstrip("v")) for v in original_to_mapped]
+def get_latest_minor_release(tags_list: List[str]) -> str:
+    parsed_versions = [semver.Version.parse(parse_release_version_from_matrix_tag(v)) for v in tags_list]
     latest_major_minor = max(parsed_versions)
     # Find the earliest release in the latest major-minor series.
     latest_minor_release = min(
         [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
     )
 
-    return original_to_mapped[f"v{latest_minor_release}"]
-
-
-def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict[str, str]:
-    """Map versions that aren't semver compliant to compliant ones."""
-    mapper = {"v0.1": "v0.1.0", "v0.2": "v0.2.0"}
-    original_to_mapped = {mapper.get(release, release): release for release in releases_list}
-    return original_to_mapped
+    return f"v{latest_minor_release}-matrix"
 
 
 def abort_if_intermediate_release(release_version: str) -> None:
-    release_version = semver.Version.parse(release_version.lstrip("v"))
+    release_version = semver.Version.parse(parse_release_version_from_matrix_tag(release_version))
     tags_list = get_tags()
-    latest_minor_release = (get_latest_minor_release(tags_list)).lstrip("v").split(".")
+    release_list = [parse_release_version_from_matrix_tag(tag) for tag in tags_list]
+    latest_minor_release = get_latest_minor_release(release_list).split(".")
     latest_major = int(latest_minor_release[0])
     latest_minor = int(latest_minor_release[1])
     if (
         release_version.major == latest_major and release_version.minor < latest_minor
     ) or release_version.major < latest_major:
         raise ValueError("Cannot release a minor/major version lower than the latest official release")
+
+
+def parse_release_version_from_matrix_tag(release_version: str) -> str:
+    return release_version.lstrip("v").rstrip("-matrix")

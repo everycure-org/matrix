@@ -3,15 +3,12 @@
 import sys
 
 import semver
+from matrix.git_utils import parse_release_version_from_matrix_tag
 
 
 def get_generate_article_flag(latest_official_release, release):
-    latest_official_release = latest_official_release.lstrip("v")
-    tag_version = semver.Version.parse(latest_official_release)
-
-    release = release.lstrip("v")
-
-    release_version = semver.Version.parse(release)
+    tag_version = semver.Version.parse(parse_release_version_from_matrix_tag(latest_official_release))
+    release_version = semver.Version.parse(parse_release_version_from_matrix_tag(release))
 
     release_is_minor_bump = tag_version.major == release_version.major and tag_version.minor < release_version.minor
 
