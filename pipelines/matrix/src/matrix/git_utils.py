@@ -80,7 +80,7 @@ def get_latest_minor_release(tags_list: List[str]) -> str:
         [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
     )
 
-    return f"v{latest_minor_release}-matrix"
+    return f"{latest_minor_release}"
 
 
 def abort_if_intermediate_release(release_version: str) -> None:
