@@ -2,6 +2,7 @@ import argparse
 import subprocess
 
 import semver
+from utils import parse_release_version_from_matrix_tag
 
 
 def branch_exists(branch_name: str) -> bool:
@@ -12,8 +13,7 @@ def branch_exists(branch_name: str) -> bool:
 
 
 def bump_version(bump_type: str, latest_tag: str) -> None:
-    latest_tag = latest_tag.lstrip("v").rstrip("-matrix")
-    version = semver.Version.parse(latest_tag)
+    version = semver.Version.parse(parse_release_version_from_matrix_tag(latest_tag))
     while True:
         if bump_type == "minor":
             version = version.bump_minor()
