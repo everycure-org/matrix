@@ -2,7 +2,7 @@ import argparse
 import subprocess
 
 import semver
-from matrix.git_utils import parse_release_version_from_matrix_tag
+from utils import parse_release_version_from_matrix_tag
 
 
 def branch_exists(branch_name: str) -> bool:

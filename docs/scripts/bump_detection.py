@@ -3,7 +3,7 @@
 import sys
 
 import semver
-from matrix.git_utils import parse_release_version_from_matrix_tag
+from utils import parse_release_version_from_matrix_tag
 
 
 def get_generate_article_flag(latest_official_release, release):
