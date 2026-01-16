@@ -7,8 +7,8 @@ import pyspark.sql.types as T
 from bmt import toolkit
 from joblib import Memory
 from matrix_inject.inject import inject_object
+from matrix_pandera.schemas import get_matrix_node_schema, get_unioned_edge_schema
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
-from matrix_schema.datamodel.pandera import get_matrix_node_schema, get_unioned_edge_schema
 from pyspark.sql.window import Window
 
 from matrix.pipelines.integration.filters import determine_most_specific_category

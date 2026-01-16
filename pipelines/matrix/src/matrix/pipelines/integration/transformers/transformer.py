@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 import pyspark.sql as ps
-from matrix_schema.datamodel.pandera import get_matrix_edge_schema, get_matrix_node_schema
+from matrix_pandera.schemas import get_matrix_edge_schema, get_matrix_node_schema
 
 
 class Transformer(ABC):
