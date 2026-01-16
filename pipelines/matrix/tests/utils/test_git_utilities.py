@@ -56,7 +56,7 @@ def test_git_tag_exists(mock_subprocess, tag, mock_return_val, expected_result):
 @pytest.mark.parametrize(
     "releases_list, expected_result",
     [
-        (["v0.1-matrix", "v0.2-matrix", "v0.2.5-matrix"], "v0.2-matrix"),
+        (["v0.1.0-matrix", "v0.2.0-matrix", "v0.2.5-matrix"], "v0.2.0-matrix"),
         (["v2.1.2-matrix", "v1.2.3-matrix", "v1.3.2-matrix", "v1.1.2-matrix", "v1.1.1-matrix"], "v2.1.2-matrix"),
         (
             ["v2.1.5-matrix", "v2.1.2-matrix", "v1.2.3-matrix", "v1.3.2-matrix", "v1.1.2-matrix", "v1.1.1-matrix"],

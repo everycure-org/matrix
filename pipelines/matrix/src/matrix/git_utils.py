@@ -72,23 +72,15 @@ def get_tags() -> List[str]:
     return matrix_tags
 
 
-def get_latest_minor_release(releases_list: List[str]) -> str:
-    original_to_mapped = correct_non_semver_compliant_release_names(releases_list)
-    parsed_versions = [semver.Version.parse(parse_release_version_from_matrix_tag(v)) for v in original_to_mapped]
+def get_latest_minor_release(tags_list: List[str]) -> str:
+    parsed_versions = [semver.Version.parse(parse_release_version_from_matrix_tag(v)) for v in tags_list]
     latest_major_minor = max(parsed_versions)
     # Find the earliest release in the latest major-minor series.
     latest_minor_release = min(
         [v for v in parsed_versions if v.major == latest_major_minor.major and v.minor == latest_major_minor.minor]
     )
 
-    return original_to_mapped[f"v{latest_minor_release}-matrix"]
-
-
-def correct_non_semver_compliant_release_names(releases_list: List[str]) -> dict[str, str]:
-    """Map versions that aren't semver compliant to compliant ones."""
-    mapper = {"v0.1-matrix": "v0.1.0-matrix", "v0.2-matrix": "v0.2.0-matrix"}
-    original_to_mapped = {mapper.get(release, release): release for release in releases_list}
-    return original_to_mapped
+    return f"v{latest_minor_release}-matrix"
 
 
 def abort_if_intermediate_release(release_version: str) -> None:
