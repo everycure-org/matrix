@@ -90,7 +90,7 @@ jobs:
       - name: Fetch latest tag
         id: fetch_latest_tag
         run: |
-          latest_tag=$(git tag --list --sort="v:refname" | tail -n 1)
+          latest_tag=$(git tag --list --sort="v:refname" | grep -- "-matrix$" | tail -n 1)
           echo "latest_tag=${latest_tag}" >> "$GITHUB_ENV"
           echo "Latest tag is ${latest_tag}"
 
