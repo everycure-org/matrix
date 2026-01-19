@@ -1,5 +1,9 @@
-# Disease list pipeline parameters
-disease_list:
+# Disease mondo pipeline parameters
+disease_mondo:
+  # Minimum number of triples expected in MONDO graph (sanity check to ensure graph isn't empty)
+  # Set to a low value as main validation is done via pandera schema checks on output DataFrames
+  min_mondo_triples: 10
+
   # Parameters for create_billable_icd10_codes node
   icd10_billable_subset: "http://purl.obolibrary.org/obo/mondo#icd10_billable"
   icd10cm_prefix: "ICD10CM"

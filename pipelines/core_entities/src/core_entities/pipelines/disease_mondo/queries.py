@@ -36,6 +36,9 @@ def _run_sparql_select(store: Store, query: str) -> pd.DataFrame:
     """Execute a SPARQL SELECT query using PyOxigraph for fast performance."""
     results = store.query(query)
 
+    # Get variable names (column names) from the query result
+    variables = [str(v).replace("?", "") for v in results.variables]
+
     rows = []
 
     for solution in results:
@@ -52,7 +55,12 @@ def _run_sparql_select(store: Store, query: str) -> pd.DataFrame:
 
         rows.append(row)
 
-    results_df = pd.DataFrame(rows)
+    # Create DataFrame with explicit columns to handle empty results
+    if rows:
+        results_df = pd.DataFrame(rows)
+    else:
+        # Empty result - create DataFrame with expected columns from query variables
+        results_df = pd.DataFrame(columns=variables)
     return _clean_sparql_results(results_df)
 
 

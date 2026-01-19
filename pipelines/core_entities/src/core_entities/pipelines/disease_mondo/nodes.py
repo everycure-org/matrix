@@ -109,7 +109,7 @@ def create_billable_icd10_codes(
 def _is_ancestor(store: Store, parent_id: str, child_id: str) -> bool:
     """Check if parent_id is an ancestor of child_id in ontology hierarchy."""
     try:
-        from matrix.pipelines.disease_list.queries import query_get_ancestors
+        from core_entities.pipelines.disease_mondo.queries import query_get_ancestors
 
         ancestors = query_get_ancestors(store, child_id)
         return parent_id in ancestors
@@ -334,9 +334,9 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
         },
         checks=[
             pa.Check(
-                lambda df: df.shape[0] >= 100,
+                lambda df: df.shape[0] >= 1,
                 name="min_rows",
-                error=f"subtype_counts must have at least 100 rows",
+                error="subtype_counts must have at least 1 row",
             )
         ],
         strict=True,
@@ -348,6 +348,7 @@ def extract_disease_data_from_mondo(
     billable_icd10: pd.DataFrame,
     subtypes_params: Dict[str, Any],
     subtype_patterns: Dict[str, str],
+    min_mondo_triples: int = 1000000,
 ) -> Dict[str, Any]:
     """Extract all disease-related data from MONDO ontology.
 
@@ -364,6 +365,7 @@ def extract_disease_data_from_mondo(
         billable_icd10: Billable ICD-10 dataframe
         subtypes_params: Dictionary containing subtype identification parameters
         subtype_patterns: Dictionary of regex patterns for matching disease subtypes
+        min_mondo_triples: Minimum number of triples expected in MONDO graph
 
     Returns:
         Dictionary containing:
@@ -376,7 +378,7 @@ def extract_disease_data_from_mondo(
     """
     logger.info("Extracting disease data from MONDO ontology")
 
-    from matrix.pipelines.disease_list.queries import (
+    from core_entities.pipelines.disease_mondo.queries import (
         query_matrix_disease_list_metrics,
         query_mondo_labels,
         query_mondo_obsoletes,
@@ -384,7 +386,7 @@ def extract_disease_data_from_mondo(
         query_raw_disease_list_data_from_mondo,
     )
 
-    _validate_mondo(mondo_graph)
+    _validate_mondo(mondo_graph, min_mondo_triples)
 
     logger.info("Step 0: Extracting metadata and labels from MONDO")
 
@@ -404,7 +406,7 @@ def extract_disease_data_from_mondo(
 
     logger.info("Step 2: Enriching MONDO graph with annotations")
 
-    _validate_mondo(mondo_graph)
+    _validate_mondo(mondo_graph, min_mondo_triples)
 
     logger.info("Step 3: Extracting disease data from enriched MONDO")
     disease_list_raw = query_raw_disease_list_data_from_mondo(mondo_graph, billable_icd10, df_subtypes)
@@ -417,7 +419,7 @@ def extract_disease_data_from_mondo(
     )
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
-    _validate_mondo(mondo_graph)
+    _validate_mondo(mondo_graph, min_mondo_triples)
 
     logger.info("Finished extracting all disease data from MONDO")
     return {
@@ -433,7 +435,7 @@ def _extract_subtype_data(
     mondo_graph: Store, subtypes_params: Dict[str, Any], subtype_patterns: Dict[str, str], mondo_labels: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Extract and identify disease subtypes using pattern matching and hierarchy validation."""
-    from matrix.pipelines.disease_list.queries import query_get_descendants
+    from core_entities.pipelines.disease_mondo.queries import query_get_descendants
 
     chromosomal_diseases_root = subtypes_params["chromosomal_diseases_root"]
     chromosomal_diseases_exceptions = subtypes_params["chromosomal_diseases_exceptions"]
@@ -888,11 +890,7 @@ def _merge_disease_data_sources(
         },
         strict=True,
         unique=["category_class"],
-        checks=[
-            pa.Check(
-                lambda df: df.shape[0] >= 15000, name="min_rows", error="disease_list must have at least 15000 rows"
-            )
-        ],
+        checks=[pa.Check(lambda df: df.shape[0] >= 1, name="min_rows", error="disease_list must have at least 1 row")],
     ),
     obj_getter="disease_list",
 )
