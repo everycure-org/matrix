@@ -5,7 +5,7 @@ from typing import Any
 import tenacity
 from pydantic import BaseModel
 from pydantic_ai import Agent, NativeOutput
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIResponsesModel
 from pydantic_ai.providers.litellm import LiteLLMProvider
 from pydantic_ai.settings import ModelSettings
 from tenacity import stop_after_attempt, wait_exponential
@@ -51,7 +51,7 @@ async def get_llm_response(
     messages: list[Any] | None = None,
     retries: int = 2,
 ):
-    openai_model = OpenAIModel(
+    openai_model = OpenAIResponsesModel(
         model_name=f"openai/{model_config['model']}",
         provider=LiteLLMProvider(
             api_base=os.environ["LITELLM_BASE_URL"],

@@ -2,11 +2,14 @@ import logging
 import re
 from urllib.parse import quote
 
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from core_entities.utils.llm_utils import LLMConfig, get_llm_response
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 WHOCC_URL = "https://www.whocc.no/atc_ddd_index/?name={search_term}"
@@ -30,60 +33,60 @@ choose_atm_main_llm_config = LLMConfig(
 )
 
 
-def get_atc_from_whocc(search_term):
+async def get_atc_from_whocc(search_term, session: aiohttp.ClientSession):
     """Get ATC code from WHO Collaborating Centre for Drug Statistics Methodology"""
     try:
         encoded_search_term = quote(search_term)
         url = WHOCC_URL.format(search_term=encoded_search_term)
-        response = requests.get(url)
+        async with session.get(url) as response:
+            if response.status == 200:
+                content = await response.read()
+                soup = BeautifulSoup(content, "html.parser")
 
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, "html.parser")
-
-            # Search results are returned in a table, if no table can be found, there are no search results, return empty list
-            table = soup.find("table")
-            if not table:
-                raise Exception(
-                    f"The search page for {search_term} does not contain a table, unable to find ATC code. This happened because there was no search results for {search_term}"
-                )
-
-            # Find all rows in the table
-            rows = table.find_all("tr")
-            atc_codes = []
-            search_term_lower = search_term.lower().strip()
-
-            # check that the table has 2 columns
-            for row in rows:
-                if len(row.find_all("td")) != 2:
+                # Search results are returned in a table, if no table can be found, there are no search results, return empty list
+                table = soup.find("table")
+                if not table:
                     raise Exception(
-                        f"The search page for {search_term} returned a table with {len(row.find_all('td'))} columns, expected 2. This happened because there was no search results for {search_term}"
+                        f"The search page for {search_term} does not contain a table, unable to find ATC code. This happened because there was no search results for {search_term}"
                     )
 
-            # Go through the table row by row, and only pull codes if it's an exact match to the search term
-            # and if the ATC code is in the correct format
-            for row in rows:
-                # Get all cells in the row
-                cells = row.find_all("td")
-                # first column: ATC code
-                atc_code = cells[0].get_text(strip=True)
+                # Find all rows in the table
+                rows = table.find_all("tr")
+                atc_codes = []
+                search_term_lower = search_term.lower().strip()
 
-                # second column: drug name (inside a link)
-                drug_name_cell = cells[1]
-                link = drug_name_cell.find("a")
-                drug_name_found = link.get_text(strip=True).lower()
+                # check that the table has 2 columns
+                for row in rows:
+                    if len(row.find_all("td")) != 2:
+                        raise Exception(
+                            f"The search page for {search_term} returned a table with {len(row.find_all('td'))} columns, expected 2. This happened because there was no search results for {search_term}"
+                        )
 
-                # Check for exact match (case-insensitive)
-                if drug_name_found == search_term_lower:
-                    # Validate ATC code format before adding
-                    # All ATC codes start with a letter followed by 2 letters and 2 digits
-                    if re.match(r"^[A-Z]\d{2}[A-Z]{2}\d{2}$", atc_code):
-                        atc_codes.append(atc_code)
+                # Go through the table row by row, and only pull codes if it's an exact match to the search term
+                # and if the ATC code is in the correct format
+                for row in rows:
+                    # Get all cells in the row
+                    cells = row.find_all("td")
+                    # first column: ATC code
+                    atc_code = cells[0].get_text(strip=True)
 
-            return list(set(atc_codes)) if atc_codes else []
-        else:
-            raise Exception(
-                f"The search page for {search_term} returned a status code {response.status_code}, unable to find ATC code"
-            )
+                    # second column: drug name (inside a link)
+                    drug_name_cell = cells[1]
+                    link = drug_name_cell.find("a")
+                    drug_name_found = link.get_text(strip=True).lower()
+
+                    # Check for exact match (case-insensitive)
+                    if drug_name_found == search_term_lower:
+                        # Validate ATC code format before adding
+                        # All ATC codes start with a letter followed by 2 letters and 2 digits
+                        if re.match(r"^[A-Z]\d{2}[A-Z]{2}\d{2}$", atc_code):
+                            atc_codes.append(atc_code)
+
+                return list(set(atc_codes)) if atc_codes else []
+            else:
+                raise Exception(
+                    f"The search page for {search_term} returned a status code {response.status}, unable to find ATC code"
+                )
 
     except Exception as e:
         logger.error(f"Error getting ATC from WHO for {search_term}: {str(e)}")
@@ -105,13 +108,17 @@ async def get_atc_main_llm(drug_name, atc_codes):
     return result.output.atc_main
 
 
-async def get_drug_atc_codes(drug_name, synonyms):
-    atc_name = get_atc_from_whocc(drug_name)
+async def get_drug_atc_codes(drug_name, synonyms, session):
+    atc_name = await get_atc_from_whocc(drug_name, session)
+    atc_name = [] if atc_name is None else atc_name
 
-    # TODO: Loop over atc_synonyms to find ATC codes for all items
-    atc_synonym = get_atc_from_whocc(synonyms) if synonyms else []
+    if atc_name is None and synonyms is not None:
+        atc_synonyms_results = [await get_atc_from_whocc(synonym, session) for synonym in synonyms]
+        atc_synonyms = [atc for result in atc_synonyms_results if result is not None for atc in result]
+    else:
+        atc_synonyms = []
 
-    all_atc = set(atc_name + atc_synonym)
+    all_atc = set([atc for atc in atc_name + atc_synonyms])
 
     if len(all_atc) > 1:
         # choose the most suitable with an LLM
@@ -120,10 +127,11 @@ async def get_drug_atc_codes(drug_name, synonyms):
         atc_main = all_atc.pop()
     else:
         atc_main = None
+        logger.warning(f"No ATC code found for {[drug_name] + atc_synonyms}")
 
     return {
         "atc_name": None if not atc_name else atc_name,
-        "atc_synonym": None if not atc_synonym else atc_synonym,
+        "atc_synonym": None if not atc_synonyms else atc_synonyms,
         "atc_main": None if not atc_main else atc_main,
     }
 
@@ -132,10 +140,13 @@ if __name__ == "__main__":
     import asyncio
 
     async def main():
-        drug_name = "epinephrine"
-        synonyms = "adrenaline"
+        drug_name = "pyridoxine"
+        synonyms = ["vitamin b6", "pyridoxine hydrochloride"]
 
-        result = await get_drug_atc_codes(drug_name, synonyms)
+        conn = aiohttp.TCPConnector(limit=1, force_close=True)
+        timeout = aiohttp.ClientTimeout(total=300, connect=60, sock_read=60)
+        async with aiohttp.ClientSession(connector=conn, timeout=timeout) as session:
+            result = await get_drug_atc_codes(drug_name, synonyms, session)
         return result
 
     logger.info(asyncio.run(main()))

@@ -31,18 +31,6 @@ raw.drugbank_salt_list:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw_drugbank}/salts.csv
 
-raw.drugbank_drug_atc:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/atc_drugs.csv
-
-raw.drugbank_salt_atc:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/atc_salts.csv
-
-raw.drugbank_pure_atc:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/atc.csv
-
 # -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
@@ -58,18 +46,6 @@ primary.drugbank_drug_list:
 primary.drugbank_salt_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/drugbank-salt-list.parquet
-
-primary.drugbank_drug_atc:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-drug-atc.parquet
-
-primary.drugbank_salt_atc:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-salt-atc.parquet
-
-primary.drugbank_pure_atc:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-pure-atc.parquet
 
 primary.drug_curies:
   <<: [*_pandas_parquet]

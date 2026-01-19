@@ -24,24 +24,6 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.drugbank_salt_list",
                 name="ingest_drugbank_salt_list",
             ),
-            node(
-                func=nodes.ingest_drugbank_drug_atc,
-                inputs="raw.drugbank_drug_atc",
-                outputs="primary.drugbank_drug_atc",
-                name="ingest_drugbank_drug_atc",
-            ),
-            node(
-                func=nodes.ingest_drugbank_salt_atc,
-                inputs="raw.drugbank_salt_atc",
-                outputs="primary.drugbank_salt_atc",
-                name="ingest_drugbank_salt_atc",
-            ),
-            node(
-                func=nodes.ingest_drugbank_pure_atc,
-                inputs="raw.drugbank_pure_atc",
-                outputs="primary.drugbank_pure_atc",
-                name="ingest_drugbank_pure_atc",
-            ),
         ]
     )
 
@@ -98,10 +80,7 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
             node(
                 func=nodes.resolve_atc_codes,
                 inputs={
-                    "drug_list_with_drugbank_id": "primary.drug_list_with_drugbank_id",
-                    "drugbank_drug_atc": "primary.drugbank_drug_atc",
-                    "drugbank_salt_atc": "primary.drugbank_salt_atc",
-                    "drugbank_pure_atc": "primary.drugbank_pure_atc",
+                    "curated_drug_list": "primary.curated_drug_list",
                 },
                 outputs="primary.drug_list_with_atc_codes",
                 name="resolve_atc_codes",
