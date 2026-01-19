@@ -29,29 +29,14 @@ input.manual_disease_remapping:
 # Raw
 # -------------------------------------------------------------------------
 
+# Read from disease_mondo pipeline output instead of GitHub releases
 raw.disease_list:
-  type: matrix_gcp_datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
-  release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: ${globals:github_token}
-  load_args:
-    sep: "\t"
-    keep_default_na: False
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease_mondo/disease_list.parquet
 
 raw.disease_obsolete:
-  type: matrix_gcp_datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
-  release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: mondo-obsoletes.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: ${globals:github_token}
-  load_args:
-    sep: "\t"
-    keep_default_na: False
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletes.parquet
 
 raw.curated_disease_list:
   type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
