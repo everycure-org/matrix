@@ -1,0 +1,9 @@
+paths:
+  input: data/00_input
+
+  raw: data/test/01_raw
+  raw_drugbank: data/test/01_raw/drugbank
+  raw_llm: data/test/01_raw
+  primary: data/test/03_primary
+  release: data/test/03_primary/release
+  published: data/test/03_primary/published

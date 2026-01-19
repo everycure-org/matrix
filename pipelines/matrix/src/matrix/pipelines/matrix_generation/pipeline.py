@@ -55,6 +55,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "node_embeddings": "matrix_generation.feat.nodes@spark",
                             "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@spark",
                             "off_label": "integration.int.off_label.edges.norm@spark",
+                            "ec_indications_list": "integration.int.ec_indications_list.edges.norm@spark",
                             **(
                                 {"orchard": "integration.int.orchard.edges.norm@spark"}
                                 if "orchard" in private_sources

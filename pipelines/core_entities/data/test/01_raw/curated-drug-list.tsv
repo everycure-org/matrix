@@ -1,0 +1,21 @@
+id	name	drug_class	synonyms	aggregated_with	approved_usa	is_antipsychotic	is_sedative	is_antimicrobial	is_glucose_regulator	is_chemotherapy	is_steroid	is_analgesic	is_cardiovascular	is_cell_therapy	deleted	deleted_reason	new_id	therapeutic_area	drug_function	drug_target
+EC:00001	Abacavir	Antimuscarinic			APPROVED	False	False	True	False	False	False	False	False	False	False			Infectious Disease	Antiviral	Reverse transcriptase
+EC:00002	Abaloparatide	Beta-3 agonist			APPROVED	False	False	False	False	False	False	False	False	False	False			Endocrinology	Bone formation agent	Parathyroid hormone receptor
+EC:00003	Abatacept	Imidazole derivative			APPROVED	False	False	False	False	False	False	False	False	False	False			Rheumatology	Immunosuppressant	CTLA-4
+EC:00004	Abemaciclib	5 Alpha-Reductase inhibitor			APPROVED	False	False	False	False	False	False	False	False	False	False			Oncology	Antineoplastic	CDK4/6
+EC:00005	Abiraterone	Androgen-anabolic steroid	Abiraterone acetate		APPROVED	False	False	False	False	False	False	False	False	False	False			Oncology	Antineoplastic	CYP17A1
+EC:00006	Abrocitinib	Quinoline derivative			APPROVED	False	False	False	False	False	False	False	False	False	False			Dermatology	Anti-inflammatory	JAK1
+EC:00007	Acalabrutinib	Imidazole derivative			APPROVED	False	False	False	False	False	False	False	False	False	False			Oncology	Antineoplastic	BTK
+EC:00008	Acamprosate	Antimuscarinic	Acamprosate calcium		APPROVED	False	False	False	False	False	False	False	False	False	False			Psychiatry	Anti-addiction	NMDA receptor
+EC:00009	Acarbose	DHEA analog			APPROVED	False	False	False	True	False	False	False	False	False	False			Endocrinology	Antidiabetic	Alpha-glucosidase
+EC:01516	Sotatercept	Topical cytotoxic			APPROVED	False	False	False	False	False	False	False	True	False	False			Cardiology	Vasodilator	Activin receptor
+EC:00011	Aceclofenac	Botox			NOT_APPROVED	False	False	False	False	False	False	True	False	False	False			Pain Management	Analgesic	COX-2
+EC:00012	Acenocoumarol	5 Alpha-Reductase inhibitor			NOT_APPROVED	False	False	False	False	False	False	False	False	False	False			Hematology	Anticoagulant	Vitamin K epoxide reductase
+EC:00013	Acetaminophen	Antimuscarinic	paracetamol		APPROVED	False	False	False	False	False	False	True	False	False	False			Pain Management	Analgesic	COX
+EC:00014	Acetazolamide	Imidazole derivative			APPROVED	False	False	False	False	False	False	False	False	False	False			Ophthalmology	Diuretic	Carbonic anhydrase
+EC:00015	Acetylcysteine	Beta-3 agonist	N-acetylcysteine		APPROVED	False	False	False	False	False	False	False	False	False	False			Respiratory	Mucolytic	Glutathione
+EC:00020	Acoramidis	Quinoline derivative			APPROVED	False	False	False	False	False	False	False	True	False	False			Cardiology	Stabilizer	Transthyretin
+EC:00017	Acitretin	Topical cytotoxic			APPROVED	False	False	False	False	False	False	False	False	False	False			Dermatology	Antipsoriatic	Retinoic acid receptor
+EC:00018	Aclidinium	Antimuscarinic	Aclidinium bromide		APPROVED	False	False	False	False	False	False	False	False	False	False			Respiratory	Bronchodilator	Muscarinic receptor
+EC:00019	Acoltremon	DHEA analog			APPROVED	False	False	False	False	False	False	False	False	False	False			Endocrinology	Hormone replacement	DHEA receptor
+EC:01466	Sebetralstat	Botox			APPROVED	False	False	False	False	False	False	False	True	False	False			Immunology	Inhibitor	Plasma kallikrein
