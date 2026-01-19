@@ -1,0 +1,90 @@
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+  save_args:
+    sep: "\t"
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+  load_args:
+    engine: pyarrow
+  save_args:
+    engine: pyarrow
+
+# -------------------------------------------------------------------------
+# Raw Input Data - Using local test files
+# -------------------------------------------------------------------------
+
+disease_mondo.raw.mondo_graph:
+  type: core_entities.datasets.rdf.PyOxiGraphDataset
+  filepath: ${globals:paths.raw}/disease_mondo/mondo-test.owl
+  load_args:
+    format: xml
+
+disease_mondo.raw.mondo_sssom:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease_mondo/mondo-sssom-test.tsv
+  load_args:
+    sep: "\t"
+    comment: "#"
+    keep_default_na: False
+
+disease_mondo.raw.disease_list_llm_tags:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease_mondo/disease-llm-tags-test.tsv
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+    dtype: str
+
+disease_mondo.raw.mondo_obsoletion_candidates:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease_mondo/obsoletion-candidates-test.tsv
+
+disease_mondo.raw.icd10_cm_codes:
+  type: pandas.ExcelDataset
+  filepath: ${globals:paths.raw}/disease_mondo/icd10-test.xlsx
+  load_args:
+    sheet_name: 0
+
+# -------------------------------------------------------------------------
+# Intermediate Outputs - Use TSV for easier debugging
+# -------------------------------------------------------------------------
+
+disease_mondo.int.billable_icd10_codes:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/icd10_cm_billable.tsv
+
+disease_mondo.int.subtype_counts:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/subtype_counts.tsv
+
+disease_mondo.int.mondo_metrics:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/mondo_metrics.tsv
+
+disease_mondo.int.disease_list_raw:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/disease_list_raw.tsv
+
+# -------------------------------------------------------------------------
+# Final Outputs - TSV for easier debugging and downstream use
+# -------------------------------------------------------------------------
+
+disease_mondo.prm.disease_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/disease-list.tsv
+
+disease_mondo.prm.mondo_metadata:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/mondo-metadata.tsv
+
+disease_mondo.prm.mondo_obsoletes:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletes.tsv
+
+disease_mondo.prm.mondo_obsoletion_candidates:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletion_candidates.tsv
