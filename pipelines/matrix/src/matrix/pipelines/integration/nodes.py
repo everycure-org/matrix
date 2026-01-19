@@ -46,7 +46,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=get_unioned_edge_schema(validate_enumeration_values=False),
+    schema=get_unioned_edge_schema(),
     pass_columns=True,
 )
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
@@ -97,7 +97,7 @@ def unify_ground_truth(*edges) -> ps.DataFrame:
 
 
 @check_output(
-    schema=get_matrix_node_schema(validate_enumeration_values=False),
+    schema=get_matrix_node_schema(),
     pass_columns=True,
 )
 def union_and_deduplicate_nodes(

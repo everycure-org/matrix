@@ -1,11 +1,5 @@
 """Matrix Pandera - Cross datatype validation for Matrix platform."""
 
-from matrix_pandera.enums import (
-    AgentTypeEnum,
-    KnowledgeLevelEnum,
-    NodeCategoryEnum,
-    PredicateEnum,
-)
 from matrix_pandera.schemas import (
     get_matrix_edge_schema,
     get_matrix_node_schema,
@@ -23,8 +17,4 @@ __all__ = [
     "get_matrix_edge_schema",
     "get_unioned_node_schema",
     "get_unioned_edge_schema",
-    "PredicateEnum",
-    "NodeCategoryEnum",
-    "KnowledgeLevelEnum",
-    "AgentTypeEnum",
 ]
