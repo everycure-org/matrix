@@ -33,7 +33,7 @@ def register_pipelines() -> dict[str, Pipeline]:
     """
     pipelines = {
         "disease_mondo": create_disease_mondo_pipeline(),
-        "disease_list": create_disease_list_pipeline(),
+        "disease_list": create_disease_mondo_pipeline() + create_disease_list_pipeline(),
         "publish_disease_list": create_disease_list_publish_pipeline(),
         "drug_list": create_drug_list_pipeline(),
         "disease_categories": create_disease_categories_pipeline(),
