@@ -31,6 +31,11 @@ raw.drugbank_salt_list:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw_drugbank}/salts.csv
 
+# File downloaded here: https://bioportal.bioontology.org/ontologies/ATC
+raw.atc:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.input}/ATC.csv
+
 # -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
@@ -46,6 +51,10 @@ primary.drugbank_drug_list:
 primary.drugbank_salt_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/drugbank-salt-list.parquet
+
+primary.atc:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/atc.parquet
 
 primary.drug_curies:
   <<: [*_pandas_parquet]

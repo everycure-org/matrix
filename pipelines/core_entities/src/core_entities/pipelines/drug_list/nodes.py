@@ -358,6 +358,33 @@ def ingest_drugbank_salt_list(drugbank_salt_list: pd.DataFrame) -> pd.DataFrame:
     return drugbank_salt_list
 
 
+@pa.check_input(
+    pa.DataFrameSchema(
+        parsers=pa.Parser(lambda df: df[["Class ID", "Preferred Label"]]),
+        columns={
+            "Class ID": pa.Column(nullable=False),
+            "Preferred Label": pa.Column(nullable=False),
+        },
+    )
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        columns={
+            "atc_code": pa.Column(nullable=False),
+            "atc_label": pa.Column(nullable=False),
+        },
+        strict=True,
+    )
+)
+def ingest_atc(atc: pd.DataFrame) -> pd.DataFrame:
+    atc["atc_code"] = atc["Class ID"].apply(
+        lambda x: x.replace("http://purl.bioontology.org/ontology/ATC/", "").upper()
+    )
+    atc["atc_label"] = atc["Preferred Label"].apply(lambda x: x.lower().capitalize())
+    atc = atc.drop(columns=["Class ID", "Preferred Label"])
+    return atc
+
+
 # ------------------------------------------------------------
 # RESOLUTION NODES
 # ------------------------------------------------------------

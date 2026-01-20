@@ -24,6 +24,12 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.drugbank_salt_list",
                 name="ingest_drugbank_salt_list",
             ),
+            node(
+                func=nodes.ingest_atc,
+                inputs="raw.atc",
+                outputs="primary.atc",
+                name="ingest_atc",
+            ),
         ]
     )
 
