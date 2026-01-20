@@ -20,17 +20,7 @@ export VITE_release_version := $(RELEASE_VERSION)
 # Build time to show when dashboard was last updated
 export VITE_build_time := $(shell date -u '+%B %d, %Y at %H:%M:%S UTC')
 
-# TODO: refactor BQ ingested tables to remove versions
-# Source KG versions, extracted from globals.yml
-KEDRO_BASE_GLOBALS_PATH = "../../pipelines/matrix/conf/base/globals.yml"
-ROBOKOP_VERSION = $(shell grep -A1 "robokop:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //')
-RTX_KG2_VERSION = $(shell grep -A1 "rtx_kg2:" $(KEDRO_BASE_GLOBALS_PATH) | grep "version:" | sed 's/.*version: //' | sed 's/^&_rtx_kg_version //' | sed -E 's/\./_/g')
-
-export EVIDENCE_VAR__robokop_version := $(ROBOKOP_VERSION)
-export EVIDENCE_VAR__rtx_kg2_version := $(RTX_KG2_VERSION)
 export EVIDENCE_VAR__benchmark_version := $(BENCHMARK_VERSION)
-export VITE_robokop_version := $(ROBOKOP_VERSION)
-export VITE_rtx_kg2_version := $(RTX_KG2_VERSION)
 export VITE_benchmark_version := $(BENCHMARK_VERSION)
 
 MAX_CORE_ENTITIES_NORMALIZATION_ERRORS = 1000
@@ -53,7 +43,7 @@ export EVIDENCE_VAR__key_drug_ids := $(KEY_DRUG_IDS)
 bump_basepath:
 	node ./scripts/update-basepath.cjs $(RELEASE_VERSION)
 
-build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql
+build: bump_basepath sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql sources/bq/kg_versions.sql
 	@echo "Building with EVIDENCE_VAR__release_version=$(EVIDENCE_VAR__release_version)"
 	npm run build:strict
 
@@ -76,10 +66,10 @@ populate-valid-edge-types-source:
 	rm -f scripts/temp_valid_edge_types.tsv
 
 # Generate release SQL files dynamically based on available BigQuery datasets
-sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql:
+sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql sources/bq/kg_versions.sql:
 	node ./scripts/generate-release-sql.cjs
 
-run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql
+run-sources: populate-infores-source populate-valid-edge-types-source sources/bq/release_trends.sql sources/bq/key_nodes_release_trends.sql sources/bq/key_nodes_release_aggregate.sql sources/bq/kg_pipeline_metrics.sql sources/bq/kg_versions.sql
 	npm run sources 
 
 run-dev:
@@ -93,3 +83,4 @@ clean:
 	rm -f sources/bq/key_nodes_release_trends.sql
 	rm -f sources/bq/key_nodes_release_aggregate.sql
 	rm -f sources/bq/kg_pipeline_metrics.sql
+	rm -f sources/bq/kg_versions.sql

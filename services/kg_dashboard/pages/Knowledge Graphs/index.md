@@ -6,17 +6,19 @@ This page provides an overview of the upstream knowledge graphs integrated into 
 
 ```sql kg_summary
 select
-  knowledge_graph,
-  display_name,
-  '/Knowledge Graphs/' || knowledge_graph as link,
-  node_count,
-  edge_count,
-  normalization_success_rate,
-  provenance_rate,
-  knowledge_assertion_rate,
-  manual_curation_rate
-from bq.kg_summary
-order by edge_count desc
+  s.knowledge_graph,
+  s.display_name,
+  '/Knowledge Graphs/' || s.knowledge_graph as link,
+  v.version,
+  s.node_count,
+  s.edge_count,
+  s.normalization_success_rate,
+  s.provenance_rate,
+  s.knowledge_assertion_rate,
+  s.manual_curation_rate
+from bq.kg_summary s
+left join bq.kg_versions v on s.knowledge_graph = v.knowledge_graph
+order by s.edge_count desc
 ```
 
 ```sql totals
@@ -41,6 +43,7 @@ Click on a knowledge graph name to view detailed metrics including normalization
 
 <DataTable data={kg_summary} link=link search=true>
   <Column id="display_name" title="Knowledge Graph" />
+  <Column id="version" title="Version" />
   <Column id="node_count" title="Nodes" fmt="num0" contentType="bar" barColor="#93c5fd" backgroundColor="#e5e7eb" />
   <Column id="edge_count" title="Edges" fmt="num0" contentType="bar" barColor="#86efac" backgroundColor="#e5e7eb" />
   <Column id="normalization_success_rate" title="Normalization Rate" fmt="pct1" contentType="bar" barColor="#fcd34d" backgroundColor="#e5e7eb" />

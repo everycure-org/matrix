@@ -14,6 +14,7 @@ sources/bq/release_trends.sql
 sources/bq/key_nodes_release_trends.sql
 sources/bq/key_nodes_release_aggregate.sql
 sources/bq/kg_pipeline_metrics.sql
+sources/bq/kg_versions.sql
 
 sources/bq/connection.options.yaml
 *.duckdb

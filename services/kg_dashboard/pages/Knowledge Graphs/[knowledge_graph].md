@@ -28,7 +28,15 @@
 select * from bq.kg_list where knowledge_graph = '${params.knowledge_graph}'
 ```
 
+```sql kg_version
+select version from bq.kg_versions where knowledge_graph = '${params.knowledge_graph}'
+```
+
 # {kg_info.length > 0 ? kg_info[0].display_name : params.knowledge_graph}
+
+{#if kg_version.length > 0 && kg_version[0].version}
+<p class="text-gray-500 text-sm -mt-4 mb-4">Version: <span class="font-mono">{kg_version[0].version}</span></p>
+{/if}
 
 {#if kg_info.length === 0}
 <div class="text-center text-lg text-red-500 mt-10">
