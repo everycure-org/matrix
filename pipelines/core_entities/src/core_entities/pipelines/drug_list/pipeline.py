@@ -25,10 +25,10 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 name="ingest_drugbank_salt_list",
             ),
             node(
-                func=nodes.ingest_atc,
-                inputs="raw.atc",
-                outputs="primary.atc",
-                name="ingest_atc",
+                func=nodes.ingest_atc_labels,
+                inputs="raw.atc_labels",
+                outputs="primary.atc_labels",
+                name="ingest_atc_labels",
             ),
         ]
     )
@@ -85,9 +85,7 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.resolve_atc_codes,
-                inputs={
-                    "curated_drug_list": "primary.curated_drug_list",
-                },
+                inputs={"curated_drug_list": "primary.curated_drug_list", "atc_labels": "primary.atc_labels"},
                 outputs="primary.drug_list_with_atc_codes",
                 name="resolve_atc_codes",
             ),
