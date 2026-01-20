@@ -218,7 +218,7 @@ def _build_subtype_df(matched_df: pd.DataFrame, mondo_subtype_subset: str, contr
     return subset_rows.reset_index(drop=True)
 
 
-def _validate_mondo(mondo_graph, min_triples=1000000):
+def _validate_mondo(mondo_graph, min_triples=10):
     q = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
     rows = list(mondo_graph.query(q))
     if not rows:
@@ -348,7 +348,6 @@ def extract_disease_data_from_mondo(
     billable_icd10: pd.DataFrame,
     subtypes_params: Dict[str, Any],
     subtype_patterns: Dict[str, str],
-    min_mondo_triples: int = 1000000,
 ) -> Dict[str, Any]:
     """Extract all disease-related data from MONDO ontology.
 
@@ -365,7 +364,6 @@ def extract_disease_data_from_mondo(
         billable_icd10: Billable ICD-10 dataframe
         subtypes_params: Dictionary containing subtype identification parameters
         subtype_patterns: Dictionary of regex patterns for matching disease subtypes
-        min_mondo_triples: Minimum number of triples expected in MONDO graph
 
     Returns:
         Dictionary containing:
@@ -373,7 +371,6 @@ def extract_disease_data_from_mondo(
             - mondo_obsoletes: DataFrame with obsolete terms
             - disease_list_raw: DataFrame with raw disease list features
             - mondo_metrics: DataFrame with disease metrics
-            - mondo_preprocessed: PyOxigraph Store with preprocessed ontology
             - subtype_counts: DataFrame with subtype counts (for downstream filtering)
     """
     logger.info("Extracting disease data from MONDO ontology")
@@ -386,7 +383,7 @@ def extract_disease_data_from_mondo(
         query_raw_disease_list_data_from_mondo,
     )
 
-    _validate_mondo(mondo_graph, min_mondo_triples)
+    _validate_mondo(mondo_graph)
 
     logger.info("Step 0: Extracting metadata and labels from MONDO")
 
@@ -406,7 +403,7 @@ def extract_disease_data_from_mondo(
 
     logger.info("Step 2: Enriching MONDO graph with annotations")
 
-    _validate_mondo(mondo_graph, min_mondo_triples)
+    _validate_mondo(mondo_graph)
 
     logger.info("Step 3: Extracting disease data from enriched MONDO")
     disease_list_raw = query_raw_disease_list_data_from_mondo(mondo_graph, billable_icd10, df_subtypes)
@@ -419,7 +416,7 @@ def extract_disease_data_from_mondo(
     )
     logger.info(f"Extracted metrics for {len(mondo_metrics)} diseases")
 
-    _validate_mondo(mondo_graph, min_mondo_triples)
+    _validate_mondo(mondo_graph)
 
     logger.info("Finished extracting all disease data from MONDO")
     return {

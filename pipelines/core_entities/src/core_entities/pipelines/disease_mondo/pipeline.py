@@ -58,7 +58,6 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                     "billable_icd10": "disease_mondo.int.billable_icd10_codes",
                     "subtypes_params": "params:disease_mondo.subtypes_params",
                     "subtype_patterns": "params:disease_mondo.subtype_patterns",
-                    "min_mondo_triples": "params:disease_mondo.min_mondo_triples",
                 },
                 outputs={
                     "mondo_metadata": "disease_mondo.prm.mondo_metadata",
