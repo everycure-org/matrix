@@ -40,6 +40,8 @@ function compareVersions(a, b) {
 
 /**
  * Check if a version is a major release (patch version is 0)
+ * Used by filterToKeyReleases to reduce query costs by limiting version scans
+ * Note: This is for release filtering, not KG source filtering
  */
 function isMajorRelease(semanticVersion) {
   const parts = parseVersion(semanticVersion);
@@ -841,7 +843,7 @@ async function main() {
     const keyNodeAggregatePath = path.join(__dirname, '..', 'sources', 'bq', 'key_nodes_release_aggregate.sql');
     fs.writeFileSync(keyNodeAggregatePath, keyNodeAggregateSQL);
 
-    // Step 5: Discover KG sources and generate kg_pipeline_metrics.sql
+    // Step 6: Discover KG sources and generate kg_pipeline_metrics.sql
     const kgSources = await discoverKGSources(bigquery, projectId, currentDatasetId);
     const kgPipelineMetricsSQL = generateKGPipelineMetricsSQL(kgSources, projectId, currentDatasetId);
     const kgPipelineMetricsPath = path.join(__dirname, '..', 'sources', 'bq', 'kg_pipeline_metrics.sql');

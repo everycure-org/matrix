@@ -379,7 +379,7 @@ WITH edge_validation AS (
     ON edges.subject_category = valid_types.subject_category
     AND edges.predicate = valid_types.predicate
     AND edges.object_category = valid_types.object_category
-  WHERE edges.upstream_data_source LIKE '%${params.knowledge_graph}%'
+  WHERE '${params.knowledge_graph}' IN (SELECT TRIM(s) FROM UNNEST(SPLIT(edges.upstream_data_source, ',')) AS s)
 ),
 totals AS (
   SELECT
@@ -452,7 +452,7 @@ WITH kg_edges AS (
     object_category,
     SUM(count) as edge_count
   FROM bq.merged_kg_edges
-  WHERE upstream_data_source LIKE '%${params.knowledge_graph}%'
+  WHERE '${params.knowledge_graph}' IN (SELECT TRIM(s) FROM UNNEST(SPLIT(upstream_data_source, ',')) AS s)
   GROUP BY subject_category, object_category
 ),
 classified AS (
