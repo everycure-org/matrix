@@ -1000,7 +1000,9 @@ def merge_drug_lists(
 
     df = df[~df["name"].isin(drug_exception_list)]
     df.loc[:, "name"] = df.loc[:, "name"].apply(lambda x: x.capitalize())
-    df.loc[:, "synonyms"] = df.loc[:, "synonyms"].apply(lambda x: [xx.strip().capitalize() for xx in x])
+    df.loc[:, "synonyms"] = df.loc[:, "synonyms"].apply(
+        lambda x: None if x is None else [xx.strip().capitalize() for xx in x]
+    )
     df = df[release_columns]
 
     return df, df
