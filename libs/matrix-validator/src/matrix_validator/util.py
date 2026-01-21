@@ -5,7 +5,7 @@ from importlib import resources as il_resources
 import polars as pl
 import yaml
 from biolink_model import schema
-from matrix_schema import schema as matrix_schema
+from . import resources as bl_resources
 from yaml import SafeLoader
 
 
@@ -37,7 +37,7 @@ def get_biolink_model_agent_type_keys():
 def get_valid_edge_types() -> list[dict[str, str]]:
     """Get valid edge types from the matrix schema."""
     # Use files() instead of read_text as per deprecation warning
-    with il_resources.files(matrix_schema).joinpath("valid_biolink_edge_types.tsv").open("r") as f:
+    with il_resources.files(bl_resources).joinpath("valid_biolink_edge_types.tsv").open("r") as f:
         valid_edge_string = f.read()
 
     # get the keys from the first line
