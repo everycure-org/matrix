@@ -7,6 +7,7 @@ filtering:
         - rtxkg2
         - ec_medical
         - robokop
+        - primekg
         
     # filter_node_labels:
     #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumnOverlap
