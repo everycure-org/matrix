@@ -7,8 +7,8 @@ import pyspark.sql.types as T
 from bmt import toolkit
 from joblib import Memory
 from matrix_inject.inject import inject_object
+from matrix_pandera.schemas import get_matrix_node_schema, get_unioned_edge_schema
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
-from matrix_schema.datamodel.pandera import get_matrix_node_schema, get_unioned_edge_schema
 from pyspark.sql.window import Window
 
 from matrix.pipelines.integration.filters import determine_most_specific_category
@@ -46,7 +46,7 @@ def transform(transformer, **kwargs) -> dict[str, ps.DataFrame]:
 
 
 @check_output(
-    schema=get_unioned_edge_schema(validate_enumeration_values=False),
+    schema=get_unioned_edge_schema(),
     pass_columns=True,
 )
 def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.DataFrame:
@@ -97,7 +97,7 @@ def unify_ground_truth(*edges) -> ps.DataFrame:
 
 
 @check_output(
-    schema=get_matrix_node_schema(validate_enumeration_values=False),
+    schema=get_matrix_node_schema(),
     pass_columns=True,
 )
 def union_and_deduplicate_nodes(
