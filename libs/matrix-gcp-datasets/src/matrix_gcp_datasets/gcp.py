@@ -252,6 +252,13 @@ class GoogleSheetsDataset(CSVDataset):
             worksheet_gid: The id of a worksheet. it can be seen in the url as the value of the parameter ‘gid’
             service_account_file_path: Path to the service account file. The Google Sheet must be shared with this service account's email.
         """
+
+        self._service_account_file_path = service_account_file_path
+        self._spreadsheet_url = spreadsheet_url
+        self._worksheet_gid = worksheet_gid
+        super().__init__(filepath=None)
+
+    def _init_worksheet(self, service_account_file_path, spreadsheet_url, worksheet_gid):
         self._gc = gspread.service_account(filename=service_account_file_path)
         spreadsheet = self._gc.open_by_url(spreadsheet_url)
 
@@ -262,13 +269,13 @@ class GoogleSheetsDataset(CSVDataset):
                 f"Could not find worksheet with gid {worksheet_gid} in spreadsheet {spreadsheet_url}.\nAvailable worksheets: {spreadsheet.worksheets()}"
             )
 
-        super().__init__(filepath=None)
-
     def load(self) -> pd.DataFrame:
+        self._init_worksheet(self._service_account_file_path, self._spreadsheet_url, self._worksheet_gid)
         df = pd.DataFrame(self._worksheet.get_all_records())
         return df
 
     def save(self, df: pd.DataFrame) -> None:
+        self._init_worksheet(self._service_account_file_path, self._spreadsheet_url, self._worksheet_gid)
         self._worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 

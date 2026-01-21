@@ -1,7 +1,5 @@
 import asyncio
 import logging
-from collections.abc import Callable
-from typing import Any
 
 import aiohttp
 import nest_asyncio
@@ -9,6 +7,8 @@ import pandas as pd
 import pandera.pandas as pa
 from tenacity import retry, stop_after_attempt, wait_exponential
 from tqdm.asyncio import tqdm
+
+from core_entities.pipelines.drug_llm_tags.drug_atc_codes import get_drug_atc_codes
 
 logger = logging.getLogger(__name__)
 
@@ -268,16 +268,14 @@ def ingest_curated_drug_list(curated_drug_list: pd.DataFrame) -> pd.DataFrame:
     curated_drug_list.loc[:, "drug_function"] = curated_drug_list.loc[:, "drug_function"].apply(parse_string_column)
     curated_drug_list.loc[:, "drug_target"] = curated_drug_list.loc[:, "drug_target"].apply(parse_string_column)
 
-    curated_drug_list["synonyms"] = (
+    curated_drug_list.loc[:, "synonyms"] = (
         curated_drug_list["synonyms"]
-        .astype(str)
-        .apply(lambda x: [xx.lower().strip() for xx in x.split(";")])
+        .apply(lambda x: [] if pd.isna(x) else [xx.lower().strip() for xx in x.split(";")])
         .apply(lambda x: None if len(x) == 0 else x)
     )
-    curated_drug_list["aggregated_with"] = (
-        curated_drug_list["aggregated_with"]
-        .astype(str)
-        .apply(lambda x: [xx.strip().capitalize() for xx in x.split(";")])
+    curated_drug_list.loc[:, "aggregated_with"] = (
+        curated_drug_list.loc[:, "aggregated_with"]
+        .apply(lambda x: [] if pd.isna(x) else [xx.strip().capitalize() for xx in x.split(";")])
         .apply(lambda x: None if len(x) == 0 else x)
     )
 
@@ -362,88 +360,29 @@ def ingest_drugbank_salt_list(drugbank_salt_list: pd.DataFrame) -> pd.DataFrame:
 
 @pa.check_input(
     pa.DataFrameSchema(
-        parsers=pa.Parser(lambda df: df[["drugbank_id", "atc_code", "atc_level"]]),
+        parsers=pa.Parser(lambda df: df[["Class ID", "Preferred Label"]]),
         columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "atc_code": pa.Column(nullable=False),
-            "atc_level": pa.Column(nullable=False),
+            "Class ID": pa.Column(nullable=False),
+            "Preferred Label": pa.Column(nullable=False),
         },
     )
 )
 @pa.check_output(
     pa.DataFrameSchema(
         columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "atc_code": pa.Column(
-                nullable=False,
-            ),
-        },
-        unique=["drugbank_id"],
-    )
-)
-def ingest_drugbank_drug_atc(drugbank_drug_atc: pd.DataFrame) -> pd.DataFrame:
-    return (
-        drugbank_drug_atc.sort_values(by=["atc_level"], ascending=False)
-        .drop(columns=["atc_level"])
-        .groupby("drugbank_id")
-        .agg(lambda x: x.dropna().tolist())
-        .reset_index()
-    )
-
-
-@pa.check_input(
-    pa.DataFrameSchema(
-        parsers=pa.Parser(lambda df: df[["drugbank_id", "atc_code", "atc_level"]]),
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
             "atc_code": pa.Column(nullable=False),
-            "atc_level": pa.Column(nullable=False),
+            "atc_label": pa.Column(nullable=False),
         },
+        strict=True,
     )
 )
-@pa.check_output(
-    pa.DataFrameSchema(
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "atc_code": pa.Column(nullable=False),
-        },
-        unique=["drugbank_id"],
+def ingest_atc_labels(atc: pd.DataFrame) -> pd.DataFrame:
+    atc["atc_code"] = atc["Class ID"].apply(
+        lambda x: x.replace("http://purl.bioontology.org/ontology/ATC/", "").upper()
     )
-)
-def ingest_drugbank_salt_atc(drugbank_salt_atc: pd.DataFrame) -> pd.DataFrame:
-    return (
-        drugbank_salt_atc.sort_values(by=["atc_level"], ascending=False)
-        .drop(columns=["atc_level"])
-        .groupby("drugbank_id")
-        .agg(lambda x: x.dropna().tolist())
-        .reset_index()
-    )
-
-
-@pa.check_input(
-    pa.DataFrameSchema(
-        parsers=pa.Parser(lambda df: df[["code", "title", "vocabulary"]]),
-        columns={
-            "code": pa.Column(nullable=False),
-            "title": pa.Column(nullable=False),
-            "vocabulary": pa.Column(nullable=False),
-        },
-        unique=["code"],
-    )
-)
-@pa.check_output(
-    pa.DataFrameSchema(
-        columns={
-            "code": pa.Column(nullable=False),
-            "title": pa.Column(nullable=False),
-        },
-        unique=["code"],
-    )
-)
-def ingest_drugbank_pure_atc(drugbank_pure_atc: pd.DataFrame) -> pd.DataFrame:
-    drugbank_pure_atc = drugbank_pure_atc[drugbank_pure_atc["vocabulary"] == "ATC"][["code", "title"]]
-    drugbank_pure_atc["title"] = drugbank_pure_atc["title"].apply(lambda x: x.lower().strip())
-    return drugbank_pure_atc
+    atc["atc_label"] = atc["Preferred Label"].apply(lambda x: x.lower().capitalize())
+    atc = atc.drop(columns=["Class ID", "Preferred Label"])
+    return atc
 
 
 # ------------------------------------------------------------
@@ -759,7 +698,6 @@ def union_drugbank_lists(drugbank_drug_list: pd.DataFrame, drugbank_salt_list: p
     pa.DataFrameSchema(
         columns={
             "id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
             "drugbank_id": pa.Column(
                 nullable=True,
                 checks=pa.Check(
@@ -801,7 +739,7 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
         how="left",
     )
     merged_df = merged_df.drop_duplicates(subset=["name"], keep="first")
-    merged_df = merged_df.drop(columns=["synonyms"])
+    merged_df = merged_df.drop(columns=["name", "synonyms"])
 
     return merged_df
 
@@ -811,8 +749,6 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
         columns={
             "id": pa.Column(nullable=False),
             "name": pa.Column(nullable=False),
-            "drugbank_id": pa.Column(nullable=True),
-            "smiles": pa.Column(nullable=True),
             "atc_main": pa.Column(nullable=True),
             "atc_level_1": pa.Column(nullable=True),
             "atc_level_2": pa.Column(nullable=True),
@@ -829,75 +765,76 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
     )
 )
 def resolve_atc_codes(
-    drug_list_with_drugbank_id: pd.DataFrame,
-    drugbank_drug_atc: pd.DataFrame,
-    drugbank_salt_atc: pd.DataFrame,
-    drugbank_pure_atc: pd.DataFrame,
+    curated_drug_list: pd.DataFrame, atc_labels: pd.DataFrame, whocc_parallelism: int = 50
 ) -> pd.DataFrame:
-    def apply_func_if_not_na(func: Callable) -> Callable:
-        def safe_func(value: Any) -> Any:
-            if isinstance(pd.isna(value), bool) and pd.isna(value):
-                return pd.NA
-            else:
-                return func(value)
+    async def resolve_all_atc_codes(curated_drug_list: pd.DataFrame, parallelism: int) -> pd.DataFrame:
+        semaphore = asyncio.Semaphore(parallelism)
 
-        return safe_func
+        async def resolve_atc_code_with_semaphore(id: str, name: str, synonyms: list[str]) -> dict:
+            async with semaphore:
+                atc_codes = await get_drug_atc_codes(name, synonyms, session)
+                atc_codes["id"] = id
+                return atc_codes
 
-    df = pd.merge(
-        pd.merge(drug_list_with_drugbank_id, drugbank_drug_atc, on="drugbank_id", how="left"),
-        drugbank_salt_atc,
-        on="drugbank_id",
-        how="left",
-    )
+        conn = aiohttp.TCPConnector(limit=parallelism, force_close=True)
+        timeout = aiohttp.ClientTimeout(total=300, connect=60, sock_read=60)
+        async with aiohttp.ClientSession(connector=conn, timeout=timeout) as session:
+            tasks = [
+                resolve_atc_code_with_semaphore(row["id"], row["name"], row["synonyms"])
+                for _, row in curated_drug_list.iterrows()
+            ]
+            return await tqdm.gather(*tasks)
 
-    df["atc_main"] = df["atc_code_x"].combine_first(df["atc_code_y"]).apply(apply_func_if_not_na(lambda x: x[0]))
-    df = df.drop(columns=["atc_code_x", "atc_code_y"])
+    def break_down_atc_code(atc_codes: pd.DataFrame):
+        # Level 1: Anatomical main group (first character)
+        atc_codes["atc_level_1"] = atc_codes.atc_main.apply(lambda x: x[0] if x is not None and len(x) >= 1 else None)
+        # Level 2: Therapeutic subgroup (first 3 characters)
+        atc_codes["atc_level_2"] = atc_codes.atc_main.apply(lambda x: x[:3] if x is not None and len(x) >= 3 else None)
+        # Level 3: Pharmacological subgroup (first 4 characters)
+        atc_codes["atc_level_3"] = atc_codes.atc_main.apply(lambda x: x[:4] if x is not None and len(x) >= 4 else None)
+        # Level 4: Chemical subgroup (first 5 characters)
+        atc_codes["atc_level_4"] = atc_codes.atc_main.apply(lambda x: x[:5] if x is not None and len(x) >= 5 else None)
+        # Level 5: Chemical substance (all 7 characters)
+        atc_codes["atc_level_5"] = atc_codes.atc_main.apply(lambda x: x if x is not None and len(x) == 7 else None)
 
-    df["atc_level_1"] = df["atc_main"].apply(apply_func_if_not_na(lambda x: x[:1]))
-    df["atc_level_2"] = df["atc_main"].apply(apply_func_if_not_na(lambda x: pd.NA if len(x) < 3 else x[:3]))
-    df["atc_level_3"] = df["atc_main"].apply(apply_func_if_not_na(lambda x: pd.NA if len(x) < 4 else x[:4]))
-    df["atc_level_4"] = df["atc_main"].apply(apply_func_if_not_na(lambda x: pd.NA if len(x) < 5 else x[:5]))
-    df["atc_level_5"] = df["atc_main"].apply(apply_func_if_not_na(lambda x: pd.NA if len(x) < 7 else x))
+        return atc_codes
 
-    df = (
-        df.merge(
-            drugbank_pure_atc.rename(columns={"title": "l1_label"}),
-            left_on="atc_level_1",
-            right_on="code",
-            how="left",
+    def add_atc_labels(atc_codes: pd.DataFrame, atc_labels: pd.DataFrame):
+        return (
+            atc_codes.merge(
+                atc_labels.rename(columns={"atc_code": "atc_level_1", "atc_label": "l1_label"}),
+                how="left",
+                on="atc_level_1",
+            )
+            .merge(
+                atc_labels.rename(columns={"atc_code": "atc_level_2", "atc_label": "l2_label"}),
+                how="left",
+                on="atc_level_2",
+            )
+            .merge(
+                atc_labels.rename(columns={"atc_code": "atc_level_3", "atc_label": "l3_label"}),
+                how="left",
+                on="atc_level_3",
+            )
+            .merge(
+                atc_labels.rename(columns={"atc_code": "atc_level_4", "atc_label": "l4_label"}),
+                how="left",
+                on="atc_level_4",
+            )
+            .merge(
+                atc_labels.rename(columns={"atc_code": "atc_level_5", "atc_label": "l5_label"}),
+                how="left",
+                on="atc_level_5",
+            )
         )
-        .drop(columns=["code"])
-        .merge(
-            drugbank_pure_atc.rename(columns={"title": "l2_label"}),
-            left_on="atc_level_2",
-            right_on="code",
-            how="left",
-        )
-        .drop(columns=["code"])
-        .merge(
-            drugbank_pure_atc.rename(columns={"title": "l3_label"}),
-            left_on="atc_level_3",
-            right_on="code",
-            how="left",
-        )
-        .drop(columns=["code"])
-        .merge(
-            drugbank_pure_atc.rename(columns={"title": "l4_label"}),
-            left_on="atc_level_4",
-            right_on="code",
-            how="left",
-        )
-        .drop(columns=["code"])
-        .merge(
-            drugbank_pure_atc.rename(columns={"title": "l5_label"}),
-            left_on="atc_level_5",
-            right_on="code",
-            how="left",
-        )
-        .drop(columns=["code"])
-    )
 
-    return df
+    atc_codes = pd.DataFrame(asyncio.run(resolve_all_atc_codes(curated_drug_list, parallelism=whocc_parallelism)))
+    atc_codes_broken_down = break_down_atc_code(atc_codes)
+
+    atc_codes_and_labels = add_atc_labels(atc_codes_broken_down, atc_labels).drop(columns=["atc_name", "atc_synonym"])
+
+    result = pd.merge(curated_drug_list[["id", "name"]], atc_codes_and_labels, on="id", how="left")
+    return result
 
 
 def get_log_nan_check(column_name: str):
@@ -1049,18 +986,23 @@ def merge_drug_lists(
     curated_drug_list: pd.DataFrame,
     normalized_drug_curies: pd.DataFrame,
     drug_list_with_atc_codes: pd.DataFrame,
+    drug_list_with_drugbank_id: pd.DataFrame,
     release_columns: list[str],
     drug_exception_list: list[str],
 ) -> pd.DataFrame:
     normalized_drug_curies = normalized_drug_curies.rename(columns={"curie": "translator_id"})
 
-    df = curated_drug_list.merge(normalized_drug_curies, on="id", how="left").merge(
-        drug_list_with_atc_codes, on="id", how="left"
+    df = (
+        curated_drug_list.merge(normalized_drug_curies, on="id", how="left")
+        .merge(drug_list_with_atc_codes, on="id", how="left")
+        .merge(drug_list_with_drugbank_id, on="id", how="left")
     )
 
     df = df[~df["name"].isin(drug_exception_list)]
     df.loc[:, "name"] = df.loc[:, "name"].apply(lambda x: x.capitalize())
-    df.loc[:, "synonyms"] = df.loc[:, "synonyms"].apply(lambda x: [xx.strip().capitalize() for xx in x])
+    df.loc[:, "synonyms"] = df.loc[:, "synonyms"].apply(
+        lambda x: None if x is None else [xx.strip().capitalize() for xx in x]
+    )
     df = df[release_columns]
 
     return df, df
