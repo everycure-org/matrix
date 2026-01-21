@@ -219,7 +219,15 @@ def invoke_graph(
             logger.error(f"Error in move_tokens_from_tuple_to_dict with input ({llm_calls}) and error ({str(e)})")
             return None
 
-    llm_output["request_token_counter"] = llm_output["request_token_counter"].apply(move_tokens_from_tuple_to_dict)
-    llm_output["response_token_counter"] = llm_output["response_token_counter"].apply(move_tokens_from_tuple_to_dict)
+    try:
+        llm_output["request_token_counter"] = llm_output["request_token_counter"].apply(move_tokens_from_tuple_to_dict)
+        llm_output["response_token_counter"] = llm_output["response_token_counter"].apply(
+            move_tokens_from_tuple_to_dict
+        )
+    except Exception as e:
+        logger.error(
+            f"Error in move_tokens_from_tuple_to_dict with input ({llm_output['request_token_counter']}) and error ({str(e)})"
+        )
+        return llm_output
 
     return llm_output
