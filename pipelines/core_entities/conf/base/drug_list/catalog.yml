@@ -34,7 +34,7 @@ raw.drugbank_salt_list:
 # File downloaded here: https://bioportal.bioontology.org/ontologies/ATC
 raw.atc_labels:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.input}/atc_labels.csv
+  filepath: ${globals:dev_gcs_bucket}/kedro/data/core-entities/raw/atc_labels.csv
 
 # -------------------------------------------------------------------------
 # Primary
