@@ -56,9 +56,12 @@ def test_git_tag_exists(mock_subprocess, tag, mock_return_val, expected_result):
 @pytest.mark.parametrize(
     "releases_list, expected_result",
     [
-        (["v0.1", "v0.2", "v0.2.5"], "v0.2"),
-        (["v2.1.2", "v1.2.3", "v1.3.2", "v1.1.2", "v1.1.1"], "v2.1.2"),
-        (["v2.1.5", "v2.1.2", "v1.2.3", "v1.3.2", "v1.1.2", "v1.1.1"], "v2.1.2"),
+        (["v0.1.0-matrix", "v0.2.0-matrix", "v0.2.5-matrix"], "0.2.0"),
+        (["v2.1.2-matrix", "v1.2.3-matrix", "v1.3.2-matrix", "v1.1.2-matrix", "v1.1.1-matrix"], "2.1.2"),
+        (
+            ["v2.1.5-matrix", "v2.1.2-matrix", "v1.2.3-matrix", "v1.3.2-matrix", "v1.1.2-matrix", "1.1.1"],
+            "2.1.2",
+        ),
     ],
 )
 def test_get_latest_minor_release(releases_list, expected_result):

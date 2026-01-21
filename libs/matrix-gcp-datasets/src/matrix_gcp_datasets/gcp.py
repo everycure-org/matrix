@@ -508,6 +508,7 @@ class GBQTableDataset(KedroGBQTableDataset):
             label_key: Key for the table label to set after saving (optional)
             label_value: Value for the table label to set after saving (optional)
         """
+        dataset = SparkDatasetWithBQExternalTable._sanitize_name(dataset)
         super().__init__(
             project=project,
             dataset=dataset,
