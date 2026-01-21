@@ -3,7 +3,7 @@ WITH kg_list AS (
   SELECT DISTINCT
     upstream_data_source as knowledge_graph,
     CASE upstream_data_source
-      WHEN 'rtx_kg2' THEN 'RTX-KG2'
+      WHEN 'rtx-kg2' THEN 'RTX-KG2'
       WHEN 'robokop' THEN 'ROBOKOP'
       WHEN 'primekg' THEN 'PrimeKG'
       ELSE INITCAP(REPLACE(upstream_data_source, '_', ' '))
