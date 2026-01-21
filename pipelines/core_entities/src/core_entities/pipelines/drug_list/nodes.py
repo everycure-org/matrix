@@ -698,7 +698,6 @@ def union_drugbank_lists(drugbank_drug_list: pd.DataFrame, drugbank_salt_list: p
     pa.DataFrameSchema(
         columns={
             "id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
             "drugbank_id": pa.Column(
                 nullable=True,
                 checks=pa.Check(
@@ -740,7 +739,7 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
         how="left",
     )
     merged_df = merged_df.drop_duplicates(subset=["name"], keep="first")
-    merged_df = merged_df.drop(columns=["synonyms"])
+    merged_df = merged_df.drop(columns=["name", "synonyms"])
 
     return merged_df
 
@@ -987,13 +986,16 @@ def merge_drug_lists(
     curated_drug_list: pd.DataFrame,
     normalized_drug_curies: pd.DataFrame,
     drug_list_with_atc_codes: pd.DataFrame,
+    drug_list_with_drugbank_id: pd.DataFrame,
     release_columns: list[str],
     drug_exception_list: list[str],
 ) -> pd.DataFrame:
     normalized_drug_curies = normalized_drug_curies.rename(columns={"curie": "translator_id"})
 
-    df = curated_drug_list.merge(normalized_drug_curies, on="id", how="left").merge(
-        drug_list_with_atc_codes, on="id", how="left"
+    df = (
+        curated_drug_list.merge(normalized_drug_curies, on="id", how="left")
+        .merge(drug_list_with_atc_codes, on="id", how="left")
+        .merge(drug_list_with_drugbank_id, on="id", how="left")
     )
 
     df = df[~df["name"].isin(drug_exception_list)]

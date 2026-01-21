@@ -104,6 +104,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "curated_drug_list": "primary.curated_drug_list",
                     "normalized_drug_curies": "primary.normalized_drug_curies",
                     "drug_list_with_atc_codes": "primary.drug_list_with_atc_codes",
+                    "drug_list_with_drugbank_id": "primary.drug_list_with_drugbank_id",
                     "release_columns": "params:drug_list.release_columns",
                     "drug_exception_list": "params:drug_list.drug_exception_list",
                 },
