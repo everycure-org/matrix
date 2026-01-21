@@ -216,7 +216,7 @@ def invoke_graph(
             else:
                 return {f"{name}": tokens for name, tokens in llm_calls}
         except Exception as e:
-            logger.error(f"Error in move_tokens_from_tuple_to_dict with input ({llm_calls}) and error ({str(e)})")
+            logger.error(f"Error in move_tokens_from_tuple_to_dict: {str(e)}")
             return None
 
     llm_output["request_token_counter"] = llm_output["request_token_counter"].apply(move_tokens_from_tuple_to_dict)
