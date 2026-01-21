@@ -42,6 +42,10 @@ class DataFrameSchema:
             return str
         elif isinstance(spark_type, pyspark_types.IntegerType):
             return int
+        elif isinstance(spark_type, pyspark_types.LongType):
+            return int
+        elif isinstance(spark_type, pyspark_types.FloatType):
+            return float
         elif isinstance(spark_type, pyspark_types.DoubleType):
             return float
         elif isinstance(spark_type, pyspark_types.BooleanType):
