@@ -765,7 +765,9 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
         strict=True,
     )
 )
-def resolve_atc_codes(curated_drug_list: pd.DataFrame, atc_labels: pd.DataFrame) -> pd.DataFrame:
+def resolve_atc_codes(
+    curated_drug_list: pd.DataFrame, atc_labels: pd.DataFrame, whocc_parallelism: int = 50
+) -> pd.DataFrame:
     async def resolve_all_atc_codes(curated_drug_list: pd.DataFrame, parallelism: int) -> pd.DataFrame:
         semaphore = asyncio.Semaphore(parallelism)
 
@@ -786,45 +788,53 @@ def resolve_atc_codes(curated_drug_list: pd.DataFrame, atc_labels: pd.DataFrame)
 
     def break_down_atc_code(atc_codes: pd.DataFrame):
         # Level 1: Anatomical main group (first character)
-        atc_codes["atc_level_1"] = atc_codes.atc_main.apply(lambda x: x[0] if len(x) >= 1 else None)
+        atc_codes["atc_level_1"] = atc_codes.atc_main.apply(lambda x: x[0] if x is not None and len(x) >= 1 else None)
         # Level 2: Therapeutic subgroup (first 3 characters)
-        atc_codes["atc_level_2"] = atc_codes.atc_main.apply(lambda x: x[:3] if len(x) >= 3 else None)
+        atc_codes["atc_level_2"] = atc_codes.atc_main.apply(lambda x: x[:3] if x is not None and len(x) >= 3 else None)
         # Level 3: Pharmacological subgroup (first 4 characters)
-        atc_codes["atc_level_3"] = atc_codes.atc_main.apply(lambda x: x[:4] if len(x) >= 4 else None)
+        atc_codes["atc_level_3"] = atc_codes.atc_main.apply(lambda x: x[:4] if x is not None and len(x) >= 4 else None)
         # Level 4: Chemical subgroup (first 5 characters)
-        atc_codes["atc_level_4"] = atc_codes.atc_main.apply(lambda x: x[:5] if len(x) >= 5 else None)
+        atc_codes["atc_level_4"] = atc_codes.atc_main.apply(lambda x: x[:5] if x is not None and len(x) >= 5 else None)
         # Level 5: Chemical substance (all 7 characters)
-        atc_codes["atc_level_5"] = atc_codes.atc_main.apply(lambda x: x if len(x) == 7 else None)
+        atc_codes["atc_level_5"] = atc_codes.atc_main.apply(lambda x: x if x is not None and len(x) == 7 else None)
 
         return atc_codes
 
     def add_atc_labels(atc_codes: pd.DataFrame, atc_labels: pd.DataFrame):
         return (
             atc_codes.merge(
-                atc_labels.rename({"atc_code": "atc_level_1", "atc_label": "l1_label"}), how="left", on="atc_level_1"
+                atc_labels.rename(columns={"atc_code": "atc_level_1", "atc_label": "l1_label"}),
+                how="left",
+                on="atc_level_1",
             )
             .merge(
-                atc_labels.rename({"atc_code": "atc_level_2", "atc_label": "l2_label"}), how="left", on="atc_level_2"
+                atc_labels.rename(columns={"atc_code": "atc_level_2", "atc_label": "l2_label"}),
+                how="left",
+                on="atc_level_2",
             )
             .merge(
-                atc_labels.rename({"atc_code": "atc_level_3", "atc_label": "l3_label"}), how="left", on="atc_level_3"
+                atc_labels.rename(columns={"atc_code": "atc_level_3", "atc_label": "l3_label"}),
+                how="left",
+                on="atc_level_3",
             )
             .merge(
-                atc_labels.rename({"atc_code": "atc_level_4", "atc_label": "l4_label"}), how="left", on="atc_level_4"
+                atc_labels.rename(columns={"atc_code": "atc_level_4", "atc_label": "l4_label"}),
+                how="left",
+                on="atc_level_4",
             )
             .merge(
-                atc_labels.rename({"atc_code": "atc_level_5", "atc_label": "l5_label"}), how="left", on="atc_level_5"
+                atc_labels.rename(columns={"atc_code": "atc_level_5", "atc_label": "l5_label"}),
+                how="left",
+                on="atc_level_5",
             )
         )
 
-    atc_codes = pd.DataFrame(asyncio.run(resolve_all_atc_codes(curated_drug_list, parallelism=50)))
-
+    atc_codes = pd.DataFrame(asyncio.run(resolve_all_atc_codes(curated_drug_list, parallelism=whocc_parallelism)))
     atc_codes_broken_down = break_down_atc_code(atc_codes)
 
-    atc_codes_and_labels = add_atc_labels(atc_codes_broken_down, atc_labels)
+    atc_codes_and_labels = add_atc_labels(atc_codes_broken_down, atc_labels).drop(columns=["atc_name", "atc_synonym"])
 
-    result = pd.merge(curated_drug_list, atc_codes_and_labels, on="id", how="left")
-
+    result = pd.merge(curated_drug_list[["id", "name"]], atc_codes_and_labels, on="id", how="left")
     return result
 
 

@@ -89,7 +89,7 @@ async def get_atc_from_whocc(search_term, session: aiohttp.ClientSession):
                 )
 
     except Exception as e:
-        logger.error(f"Error getting ATC from WHO for {search_term}: {str(e)}")
+        # logger.error(f"Error getting ATC from WHO for {search_term}: {str(e)}")
         return None
 
 
@@ -127,7 +127,7 @@ async def get_drug_atc_codes(drug_name, synonyms, session):
         atc_main = all_atc.pop()
     else:
         atc_main = None
-        logger.warning(f"No ATC code found for {[drug_name] + atc_synonyms}")
+        # logger.warning(f"No ATC code found for {[drug_name] + atc_synonyms}")
 
     return {
         "atc_name": None if not atc_name else atc_name,
