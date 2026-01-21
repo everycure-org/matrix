@@ -17,12 +17,14 @@ dependencies = [
     "google-api-core",
     "importlib-metadata>=8.2.0",
     "tqdm==4.67.1",
+    "linkml-runtime>=1.8.0",
     "biolink-model==4.2.6rc4",
     "patito==0.8.3"
 ]
 
 [dependency-groups]
 dev = [
+    "linkml>=1.3.5",
     "pytest",
     "pytest-mock",
     "ruff",
