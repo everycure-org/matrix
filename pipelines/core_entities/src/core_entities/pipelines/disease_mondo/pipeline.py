@@ -76,7 +76,6 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                     "disease_list_raw": "disease_mondo.int.disease_list_raw",
                     "mondo_metrics": "disease_mondo.int.mondo_metrics",
                     "subtype_counts": "disease_mondo.int.subtype_counts",
-                    "disease_list_llm_tags": "disease_mondo.raw.disease_list_llm_tags",
                     "parameters": "params:disease_mondo.disease_list_params",
                 },
                 outputs={

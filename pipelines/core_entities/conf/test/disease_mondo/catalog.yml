@@ -31,14 +31,6 @@ disease_mondo.raw.mondo_sssom:
     comment: "#"
     keep_default_na: False
 
-disease_mondo.raw.disease_list_llm_tags:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/disease_mondo/disease-llm-tags-test.tsv
-  load_args:
-    sep: "\t"
-    keep_default_na: False
-    dtype: str
-
 disease_mondo.raw.mondo_obsoletion_candidates:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease_mondo/obsoletion-candidates-test.tsv
