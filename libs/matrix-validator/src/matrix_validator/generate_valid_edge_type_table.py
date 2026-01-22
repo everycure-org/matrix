@@ -1,4 +1,3 @@
-from linkml_runtime.utils.schemaview import SchemaView
 import pandas as pd
 from generate_biolink_imports import get_biolink_model_schemaview
 

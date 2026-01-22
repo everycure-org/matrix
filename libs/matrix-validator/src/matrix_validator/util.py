@@ -5,8 +5,9 @@ from importlib import resources as il_resources
 import polars as pl
 import yaml
 from biolink_model import schema
-from . import resources as bl_resources
 from yaml import SafeLoader
+
+from . import resources as bl_resources
 
 
 def read_tsv_as_strings(file_path):

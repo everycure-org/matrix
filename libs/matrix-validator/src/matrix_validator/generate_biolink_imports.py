@@ -1,11 +1,11 @@
-from typing import List, Dict
-from linkml_runtime import SchemaView
-from linkml.utils.schema_builder import SchemaBuilder
-from linkml_runtime.utils.formatutils import camelcase, underscore
-from linkml_runtime.dumpers import yaml_dumper
 import importlib.resources
-from linkml_runtime.linkml_model import EnumDefinition, PermissibleValue
+from typing import Dict
 
+from linkml.utils.schema_builder import SchemaBuilder
+from linkml_runtime import SchemaView
+from linkml_runtime.dumpers import yaml_dumper
+from linkml_runtime.linkml_model import EnumDefinition, PermissibleValue
+from linkml_runtime.utils.formatutils import camelcase, underscore
 
 PREDICATE_ROOT = "related to"
 NODE_CATEGORY_ROOT = "named thing"
