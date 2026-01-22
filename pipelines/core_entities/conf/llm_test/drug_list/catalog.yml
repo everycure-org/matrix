@@ -1,6 +1,6 @@
-raw.drug_list:
+raw.curated_drug_list:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw}/drug-list.tsv
+  filepath: ${globals:paths.raw}/curated-drug-list.tsv
   load_args:
     sep: "\t"
     nrows: 5
