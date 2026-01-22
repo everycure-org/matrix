@@ -26,10 +26,6 @@ raw.disease_prevalence:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-prevalence.tsv
 
-raw.disease_obsolete:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletes.tsv
-
 raw.orchard_reviews:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/orchard-reviews.tsv

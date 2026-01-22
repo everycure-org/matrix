@@ -29,10 +29,6 @@ input.manual_disease_remapping:
 # Raw
 # -------------------------------------------------------------------------
 
-raw.disease_obsolete:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletes.parquet
-
 raw.curated_disease_list:
   type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
   spreadsheet_url: https://docs.google.com/spreadsheets/d/1l29b-2MNfNf0EBtjLq7tFEZmZwxTZz1rfezx5RevuaA/edit?gid=632653766#gid=632653766

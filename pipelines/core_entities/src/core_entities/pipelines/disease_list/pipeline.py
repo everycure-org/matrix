@@ -38,7 +38,7 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.ingest_disease_obsolete,
-                inputs="raw.disease_obsolete",
+                inputs="disease_mondo.prm.mondo_obsoletes",
                 outputs="primary.disease_obsolete",
                 name="ingest_disease_obsolete",
             ),
