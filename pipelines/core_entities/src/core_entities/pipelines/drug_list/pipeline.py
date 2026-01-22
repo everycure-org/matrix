@@ -25,22 +25,10 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 name="ingest_drugbank_salt_list",
             ),
             node(
-                func=nodes.ingest_drugbank_drug_atc,
-                inputs="raw.drugbank_drug_atc",
-                outputs="primary.drugbank_drug_atc",
-                name="ingest_drugbank_drug_atc",
-            ),
-            node(
-                func=nodes.ingest_drugbank_salt_atc,
-                inputs="raw.drugbank_salt_atc",
-                outputs="primary.drugbank_salt_atc",
-                name="ingest_drugbank_salt_atc",
-            ),
-            node(
-                func=nodes.ingest_drugbank_pure_atc,
-                inputs="raw.drugbank_pure_atc",
-                outputs="primary.drugbank_pure_atc",
-                name="ingest_drugbank_pure_atc",
+                func=nodes.ingest_atc_labels,
+                inputs="raw.atc_labels",
+                outputs="primary.atc_labels",
+                name="ingest_atc_labels",
             ),
         ]
     )
@@ -97,12 +85,7 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.resolve_atc_codes,
-                inputs={
-                    "drug_list_with_drugbank_id": "primary.drug_list_with_drugbank_id",
-                    "drugbank_drug_atc": "primary.drugbank_drug_atc",
-                    "drugbank_salt_atc": "primary.drugbank_salt_atc",
-                    "drugbank_pure_atc": "primary.drugbank_pure_atc",
-                },
+                inputs={"curated_drug_list": "primary.curated_drug_list", "atc_labels": "primary.atc_labels"},
                 outputs="primary.drug_list_with_atc_codes",
                 name="resolve_atc_codes",
             ),
@@ -121,6 +104,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "curated_drug_list": "primary.curated_drug_list",
                     "normalized_drug_curies": "primary.normalized_drug_curies",
                     "drug_list_with_atc_codes": "primary.drug_list_with_atc_codes",
+                    "drug_list_with_drugbank_id": "primary.drug_list_with_drugbank_id",
                     "release_columns": "params:drug_list.release_columns",
                     "drug_exception_list": "params:drug_list.drug_exception_list",
                 },

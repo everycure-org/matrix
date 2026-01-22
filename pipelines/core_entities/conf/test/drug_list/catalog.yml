@@ -16,15 +16,3 @@ raw.drugbank_drug_list:
 raw.drugbank_salt_list:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/drugbank-salt-list.tsv
-
-raw.drugbank_drug_atc:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/drugbank-drug-atc.tsv
-
-raw.drugbank_salt_atc:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/drugbank-salt-atc.tsv
-
-raw.drugbank_pure_atc:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/drugbank-pure-atc.tsv

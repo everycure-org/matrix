@@ -31,17 +31,10 @@ raw.drugbank_salt_list:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw_drugbank}/salts.csv
 
-raw.drugbank_drug_atc:
+# File downloaded here: https://bioportal.bioontology.org/ontologies/ATC
+raw.atc_labels:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/atc_drugs.csv
-
-raw.drugbank_salt_atc:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/atc_salts.csv
-
-raw.drugbank_pure_atc:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/atc.csv
+  filepath: ${globals:public_gcs_bucket}/kedro/data/core-entities/raw/atc_labels.csv
 
 # -------------------------------------------------------------------------
 # Primary
@@ -59,17 +52,9 @@ primary.drugbank_salt_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/drugbank-salt-list.parquet
 
-primary.drugbank_drug_atc:
+primary.atc_labels:
   <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-drug-atc.parquet
-
-primary.drugbank_salt_atc:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-salt-atc.parquet
-
-primary.drugbank_pure_atc:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-pure-atc.parquet
+  filepath: ${globals:paths.primary}/drug/atc.parquet
 
 primary.drug_curies:
   <<: [*_pandas_parquet]
