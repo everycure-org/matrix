@@ -6,7 +6,8 @@ readme = "README.md"
 version = "0.1.0"
 dependencies = [
     "typer",
-    "polars-lts-cpu==1.30.0",
+    "matrix-io-utils",
+    "matrix-validator",
 ]
 
 [dependency-groups]
@@ -19,6 +20,7 @@ dev = [
 fabricator = "matrix_cli.io.fabricator:main"
 primekg = "matrix_cli.io.primekg:main"
 robokop = "matrix_cli.io.robokop:main"
+validator = "matrix_cli.io.validator:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
