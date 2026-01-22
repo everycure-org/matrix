@@ -6,6 +6,19 @@
 make install
 ```
 
+## Validator
+
+
+### Run the Matrix Validator
+This script will produce an output in json-lines format listing all the validator violations.
+
+```shell
+uv run validator --validator polars --edges abc_edges.tsv --nodes abc_nodes.tsv
+```
+
+Currently available options for "--validator" are "pandera", "python" and "polars" and are reflective of the underlying implementation.
+
+
 ## Fabricator
 
 ### Create a Knowledge Graph schema snapshot in JSON
