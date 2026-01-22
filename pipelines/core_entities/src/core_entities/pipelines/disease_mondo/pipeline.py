@@ -71,7 +71,7 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
             ),
             # Stage 3: Compute the final disease list
             node(
-                func=nodes.create_disease_list,
+                func=nodes.create_mondo_disease_list,
                 inputs={
                     "disease_list_raw": "disease_mondo.int.disease_list_raw",
                     "mondo_metrics": "disease_mondo.int.mondo_metrics",
@@ -81,7 +81,7 @@ def create_pipeline(**kwargs: Any) -> Pipeline:
                 outputs={
                     "disease_list": "disease_mondo.prm.disease_list",
                 },
-                name="create_disease_list",
+                name="create_mondo_disease_list",
                 tags=["disease_mondo"],
             ),
         ]

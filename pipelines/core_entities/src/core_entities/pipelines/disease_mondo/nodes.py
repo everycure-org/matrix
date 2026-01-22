@@ -800,7 +800,7 @@ def _merge_disease_data_sources(
     ),
     obj_getter="disease_list",
 )
-def create_disease_list(
+def create_mondo_disease_list(
     disease_list_raw: pd.DataFrame,
     mondo_metrics: pd.DataFrame,
     subtype_counts: pd.DataFrame,

@@ -29,11 +29,6 @@ input.manual_disease_remapping:
 # Raw
 # -------------------------------------------------------------------------
 
-# Read from disease_mondo pipeline output instead of GitHub releases
-raw.disease_list:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/disease_mondo/disease_list.parquet
-
 raw.disease_obsolete:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletes.parquet

@@ -45,5 +45,4 @@ disease_list:
     - harrisons_view
     - mondo_txgnn
     - mondo_top_grouping
-    - txgnn
     - is_glucose_dysfunction

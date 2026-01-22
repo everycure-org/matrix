@@ -53,7 +53,6 @@ curated_list_speciality_columns = [
                     "harrisons_view",
                     "mondo_txgnn",
                     "mondo_top_grouping",
-                    "txgnn",
                 ]
             ]
         ),
@@ -64,7 +63,6 @@ curated_list_speciality_columns = [
             "harrisons_view": pa.Column(nullable=True),
             "mondo_txgnn": pa.Column(nullable=True),
             "mondo_top_grouping": pa.Column(nullable=True),
-            "txgnn": pa.Column(nullable=False),
         },
         unique=["category_class"],
     )
@@ -78,7 +76,6 @@ curated_list_speciality_columns = [
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
         unique=["id"],
@@ -629,7 +626,6 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
         unique=["id"],
@@ -680,7 +676,6 @@ def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) 
             "is_infectious_disease": pa.Column(nullable=True),
             "mondo_txgnn": pa.Column(nullable=True),
             "mondo_top_grouping": pa.Column(nullable=True),
-            "txgnn": pa.Column(nullable=True),
             "is_glucose_dysfunction": pa.Column(nullable=True),
             "new_id": pa.Column(nullable=True),
             "deleted": pa.Column(nullable=True),

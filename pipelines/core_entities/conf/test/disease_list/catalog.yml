@@ -26,15 +26,6 @@ raw.disease_prevalence:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-prevalence.tsv
 
-# Read from disease_mondo pipeline output
-raw.disease_list:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.primary}/disease_mondo/disease-list.tsv
-  load_args:
-    sep: "\t"
-    keep_default_na: False
-    dtype: str
-
 raw.disease_obsolete:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.primary}/disease_mondo/mondo-obsoletes.tsv
