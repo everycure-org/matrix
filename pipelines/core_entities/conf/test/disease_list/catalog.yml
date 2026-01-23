@@ -29,3 +29,7 @@ raw.disease_prevalence:
 raw.orchard_reviews:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/orchard-reviews.tsv
+
+raw.disease_txgnn:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease-txgnn.tsv
