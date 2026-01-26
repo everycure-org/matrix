@@ -58,9 +58,8 @@ async def get_atc_from_whocc(search_term, session: aiohttp.ClientSession):
                 # check that the table has 2 columns
                 for row in rows:
                     if len(row.find_all("td")) != 2:
-                        raise Exception(
-                            f"The search page for {search_term} returned a table with {len(row.find_all('td'))} columns, expected 2. This happened because there was no search results for {search_term}"
-                        )
+                        # If the table has not two columns, this means there were no search results
+                        return None
 
                 # Go through the table row by row, and only pull codes if it's an exact match to the search term
                 # and if the ATC code is in the correct format
@@ -89,7 +88,7 @@ async def get_atc_from_whocc(search_term, session: aiohttp.ClientSession):
                 )
 
     except Exception as e:
-        # logger.error(f"Error getting ATC from WHO for {search_term}: {str(e)}")
+        logger.error(f"Error getting ATC from WHO for {search_term}: {str(e)}")
         return None
 
 
