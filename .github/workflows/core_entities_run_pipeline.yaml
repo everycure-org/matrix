@@ -17,6 +17,7 @@ on:
           - disease_labels
           - disease_umn
           - disease_prevalence
+          - disease_txgnn
       version_bump_type:
         description: 'Type of version bump'
         required: true
