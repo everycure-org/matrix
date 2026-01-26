@@ -1,8 +1,8 @@
 name: Scheduled Sampling Pipeline
 
 on:
-  schedule:
-    - cron: '0 0 * * 1-5'  # every weekday (Monday to Friday) at midnight GMT
+  # schedule:
+  #  - cron: '0 0 * * 1-5'  # every weekday (Monday to Friday) at midnight GMT
   workflow_dispatch: 
     inputs:
       release_version:

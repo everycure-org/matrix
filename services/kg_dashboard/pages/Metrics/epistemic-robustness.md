@@ -58,9 +58,9 @@ GROUP BY agent_type_label, upstream_data_source
 <div class="text-left text-md max-w-3xl mx-auto mb-6">
   This page provides a deeper look at the provenance quality of the knowledge graph, breaking it down into detailed 
   distributions of 
-  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/docs/KnowledgeLevel/" target="_blank">Knowledge Level</a> 
-  and 
-  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/docs/AgentType/" target="_blank">Agent Type</a> 
+  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/KnowledgeLevelEnum/" target="_blank">Knowledge Level</a>
+  and
+  <a class="underline text-blue-600" href="https://biolink.github.io/biolink-model/AgentTypeEnum/" target="_blank">Agent Type</a> 
   scores are distributed across all edges. 
 </div>
 <div class="text-left text-md max-w-3xl mx-auto mb-6">
