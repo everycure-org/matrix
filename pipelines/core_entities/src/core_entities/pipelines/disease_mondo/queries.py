@@ -1,11 +1,7 @@
 """SPARQL query functions for disease list pipeline.
 
-This module breaks down the complex matrix-disease-list-filters.sparql query
-into smaller, focused queries that execute faster in PyOxigraph.
-
-Instead of one massive query with 30+ OPTIONAL blocks, we run multiple simple queries
-and assemble the results in Python/Pandas. This leverages PyOxigraph's strength
-(fast simple queries) while avoiding its weakness (complex query optimization).
+This module breaks down all Mondo features into focused queries
+that execute faster in PyOxigraph.
 """
 
 import logging
@@ -36,6 +32,9 @@ def _run_sparql_select(store: Store, query: str) -> pd.DataFrame:
     """Execute a SPARQL SELECT query using PyOxigraph for fast performance."""
     results = store.query(query)
 
+    # Get variable names (column names) from the query result
+    variables = [str(v).replace("?", "") for v in results.variables]
+
     rows = []
 
     for solution in results:
@@ -52,7 +51,12 @@ def _run_sparql_select(store: Store, query: str) -> pd.DataFrame:
 
         rows.append(row)
 
-    results_df = pd.DataFrame(rows)
+    # Create DataFrame with explicit columns to handle empty results
+    if rows:
+        results_df = pd.DataFrame(rows)
+    else:
+        # Empty result - create DataFrame with expected columns from query variables
+        results_df = pd.DataFrame(columns=variables)
     return _clean_sparql_results(results_df)
 
 
@@ -200,32 +204,6 @@ ORDER BY ?sorted_malacardslinkouts
 # =============================================================================
 
 
-def _query_filter_matrix_manually_included(store: Store) -> Set[str]:
-    """Get diseases manually included in the matrix."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_included> .
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
-def _query_filter_matrix_manually_excluded(store: Store) -> Set[str]:
-    """Get diseases manually excluded from the matrix."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#matrix_excluded> .
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
 def _query_filter_clingen(store: Store) -> Set[str]:
     """Get diseases curated by ClinGen."""
     query = (
@@ -259,19 +237,6 @@ def _query_filter_mondo_subtype(store: Store) -> Set[str]:
         + """
 SELECT ?category_class WHERE {
   ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#mondo_subtype> .
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
-def _query_filter_pathway_defect(store: Store) -> Set[str]:
-    """Get diseases that are pathway defects."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class oboInOwl:inSubset <http://purl.obolibrary.org/obo/mondo#pathway_defect> .
 }
 """
     )
@@ -355,19 +320,6 @@ SELECT ?category_class WHERE {
 # =============================================================================
 
 
-def _query_filter_paraphilic(store: Store) -> Set[str]:
-    """Get paraphilic disorders (descendants of MONDO:0000596)."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class rdfs:subClassOf* MONDO:0000596 .
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
 def _query_filter_cardiovascular(store: Store) -> Set[str]:
     """Get cardiovascular disorders (descendants of MONDO:0004995)."""
     query = (
@@ -434,85 +386,8 @@ SELECT ?category_class WHERE {
 
 
 # =============================================================================
-# FILTER QUERIES - Label-based
-# =============================================================================
-
-
-def _query_filter_withorwithout(store: Store) -> Set[str]:
-    """Get diseases with 'with or without' in the label."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class rdfs:label ?label .
-  FILTER(CONTAINS(?label, "with or without"))
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
-def _query_filter_andor(store: Store) -> Set[str]:
-    """Get diseases with 'and/or' in the label."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class rdfs:label ?label .
-  FILTER(CONTAINS(?label, "and/or"))
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
-def _query_filter_acquired(store: Store) -> Set[str]:
-    """Get diseases starting with 'acquired' in the label."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?category_class WHERE {
-  ?category_class rdfs:label ?label .
-  FILTER(STRSTARTS(?label, "acquired "))
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query)
-
-
-# =============================================================================
 # FILTER QUERIES - Complex
 # =============================================================================
-
-
-def _query_filter_unclassified_hereditary(store: Store) -> Set[str]:
-    """Get unclassified hereditary diseases (leaf nodes under hereditary disease with no other parents)."""
-    query = (
-        _get_sparql_prefixes()
-        + """
-SELECT ?entity WHERE {
-  ?entity rdfs:subClassOf+ MONDO:0003847 .
-
-  FILTER NOT EXISTS {
-    # is a leaf (does not have children)
-    ?x rdfs:subClassOf ?entity .
-    FILTER(?x != ?entity)
-  }
-
-  FILTER NOT EXISTS {
-    # does not have any other parent other than hereditary disease
-    ?entity rdfs:subClassOf ?y .
-    FILTER(
-      (?y != MONDO:0003847)
-      && (?y != MONDO:0000001)
-      && (?y != MONDO:0700096)
-      && (?y != MONDO:0008577)
-      && (?entity != ?y))
-  }
-}
-"""
-    )
-    return _query_and_extract_ids_from_column(store, query, column_name="entity")
 
 
 def _query_filter_grouping_subset_ancestor(store: Store) -> Set[str]:
@@ -746,14 +621,6 @@ def query_raw_disease_list_data_from_mondo(
     # 3. Add filter flags
     logger.info("Adding filter flags...")
 
-    df["f_matrix_manually_included"] = (
-        df["category_class"].isin(_query_filter_matrix_manually_included(store)).apply(lambda x: True if x else False)
-    )
-
-    df["f_matrix_manually_excluded"] = (
-        df["category_class"].isin(_query_filter_matrix_manually_excluded(store)).apply(lambda x: True if x else False)
-    )
-
     df["f_clingen"] = df["category_class"].isin(_query_filter_clingen(store)).apply(lambda x: True if x else False)
 
     df["f_susceptibility"] = (
@@ -762,10 +629,6 @@ def query_raw_disease_list_data_from_mondo(
 
     df["f_mondo_subtype"] = (
         df["category_class"].isin(_query_filter_mondo_subtype(store)).apply(lambda x: True if x else False)
-    )
-
-    df["f_pathway_defect"] = (
-        df["category_class"].isin(_query_filter_pathway_defect(store)).apply(lambda x: True if x else False)
     )
 
     df["f_grouping_subset"] = (
@@ -788,10 +651,6 @@ def query_raw_disease_list_data_from_mondo(
         df["category_class"].isin(_query_filter_icd_billable(store)).apply(lambda x: True if x else False)
     )
 
-    df["f_paraphilic"] = (
-        df["category_class"].isin(_query_filter_paraphilic(store)).apply(lambda x: True if x else False)
-    )
-
     df["f_cardiovascular"] = (
         df["category_class"].isin(_query_filter_cardiovascular(store)).apply(lambda x: True if x else False)
     )
@@ -810,18 +669,6 @@ def query_raw_disease_list_data_from_mondo(
 
     df["f_cancer_or_benign_tumor"] = (
         df["category_class"].isin(_query_filter_cancer_or_benign_tumor(store)).apply(lambda x: True if x else False)
-    )
-
-    df["f_withorwithout"] = (
-        df["category_class"].isin(_query_filter_withorwithout(store)).apply(lambda x: True if x else False)
-    )
-
-    df["f_andor"] = df["category_class"].isin(_query_filter_andor(store)).apply(lambda x: True if x else False)
-
-    df["f_acquired"] = df["category_class"].isin(_query_filter_acquired(store)).apply(lambda x: True if x else False)
-
-    df["f_unclassified_hereditary"] = (
-        df["category_class"].isin(_query_filter_unclassified_hereditary(store)).apply(lambda x: True if x else False)
     )
 
     df["f_grouping_subset_ancestor"] = (
@@ -1204,14 +1051,6 @@ WHERE {
     <http://purl.obolibrary.org/obo/mondo#mondo_txgnn>
     <http://purl.obolibrary.org/obo/mondo#harrisons_view>
     <http://purl.obolibrary.org/obo/mondo#mondo_top_grouping>
-    <http://purl.obolibrary.org/obo/mondo#txgnn>
-    <http://purl.obolibrary.org/obo/mondo#anatomical>
-    <http://purl.obolibrary.org/obo/mondo#medical_specialization>
-    <http://purl.obolibrary.org/obo/mondo#is_pathogen_caused>
-    <http://purl.obolibrary.org/obo/mondo#is_cancer>
-    <http://purl.obolibrary.org/obo/mondo#is_glucose_dysfunction>
-    <http://purl.obolibrary.org/obo/mondo#tag_existing_treatment>
-    <http://purl.obolibrary.org/obo/mondo#tag_qualy_lost>
   }
   ?subject rdfs:subClassOf+ <http://purl.obolibrary.org/obo/MONDO_0700096> .
 

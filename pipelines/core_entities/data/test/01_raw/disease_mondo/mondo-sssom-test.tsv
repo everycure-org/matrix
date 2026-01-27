@@ -1,0 +1,8 @@
+# SSSOM mappings for MONDO test ontology
+subject_id	predicate_id	object_id	mapping_justification
+MONDO:9999001	skos:exactMatch	OMIM:100001	semapv:LexicalMatching
+MONDO:9999002	skos:exactMatch	ICD10CM:Z99.9	semapv:LexicalMatching
+MONDO:9999003	skos:exactMatch	ICD10CM:Z99.1	semapv:LexicalMatching
+MONDO:9999004	skos:exactMatch	ICD10CM:Z99.2	semapv:LexicalMatching
+MONDO:9999005	skos:exactMatch	ICD10CM:I25.10	semapv:LexicalMatching
+MONDO:9999006	skos:exactMatch	ICD10CM:F99	semapv:LexicalMatching
