@@ -51,6 +51,10 @@ raw.disease_prevalence:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.raw_llm}/disease_prevalence/${globals:data_sources.disease_prevalence.version}/03_primary/release/disease_prevalence.parquet
 
+raw.disease_txgnn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.raw_llm}/disease_txgnn/${globals:data_sources.disease_txgnn.version}/03_primary/release/disease_txgnn.parquet
+
 # -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
@@ -78,6 +82,10 @@ primary.disease_umn:
 primary.disease_prevalence:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease/disease-prevalence.parquet
+
+primary.disease_txgnn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-txgnn.parquet
 
 primary.disease_obsolete:
   <<: [*_pandas_parquet]

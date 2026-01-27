@@ -520,3 +520,41 @@ disease_prevalence:
           denominator: 10000
 
           Perform both tasks on the input string "{disease_world_prevalence}". Explain your reasoning.
+
+
+disease_txgnn:
+  parallelism: 10
+  invoke_parameters:
+    disease_name: name
+    synonyms: synonyms
+  graph:
+    _object: core_entities.pipelines.disease_llm_tags.disease_txgnn.DiseaseTxGNNGraph
+    config:
+      categories:
+        - adrenal_gland_disease
+        - neurodegenerative_disease
+        - metabolic_disorder
+        - cardiovascular_disorder
+        - autoimmune_diseases
+        - mental_health_disorder
+        - anemia
+        - cancer
+        - inflammatory_disease
+        - allergy
+        - other
+      system_prompt: |
+        You are a medical expert with comprehensive knowledge of disease classification and therapeutics.
+        Your task is to classify diseases into clinically relevant categories for drug repurposing analysis.
+      model_config: *default_model_config
+      prompt: |
+        Classify the disease "{disease}" into the most appropriate category or categories from the following list:
+        {categories_list}
+
+        {synonym_prompt}
+
+        Guidelines:
+        - Select the single best-fitting category, or multiple categories if the disease clearly spans multiple therapeutic areas
+        - Use "other" only if the disease does not fit any of the specific categories
+        - Be conservative - only select multiple categories if there is clear clinical justification
+
+        Return the category name(s) exactly as listed above.

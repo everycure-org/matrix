@@ -12,6 +12,7 @@ from core_entities.pipelines.disease_llm_tags import (
     create_disease_categories_pipeline,
     create_disease_labels_pipeline,
     create_disease_prevalence_pipeline,
+    create_disease_txgnn_pipeline,
     create_disease_umn_pipeline,
 )
 from core_entities.pipelines.disease_mondo import (
@@ -41,6 +42,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "disease_labels": create_disease_labels_pipeline(),
         "disease_umn": create_disease_umn_pipeline(),
         "disease_prevalence": create_disease_prevalence_pipeline(),
+        "disease_txgnn": create_disease_txgnn_pipeline(),
     }
 
     pipelines["__default__"] = pipelines["disease_list"] + pipelines["drug_list"]

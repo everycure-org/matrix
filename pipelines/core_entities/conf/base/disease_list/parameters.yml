@@ -41,6 +41,7 @@ disease_list:
     - is_malignant_cancer
     - is_benign_tumour
     - is_infectious_disease
+    - txgnn
     # Deprecated MONDO columns
     - harrisons_view
     - mondo_txgnn

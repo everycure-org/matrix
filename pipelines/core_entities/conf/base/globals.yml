@@ -30,3 +30,6 @@ data_sources:
   disease_prevalence:
     # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_prevalence
     version: v0.0.3
+  disease_txgnn:
+    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_txgnn
+    version: v0.0.1

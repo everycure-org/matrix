@@ -24,3 +24,7 @@ primary.release.disease_umn:
 primary.release.disease_prevalence:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.release}/disease_prevalence.parquet
+
+primary.release.disease_txgnn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.release}/disease_txgnn.parquet
