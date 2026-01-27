@@ -395,17 +395,17 @@ def ingest_disease_prevalence(disease_prevalence: pd.DataFrame) -> pd.DataFrame:
         parsers=pa.Parser(
             lambda df: df[
                 [
-                    "id",
+                    "category_class",
                     "txgnn",
                 ]
             ]
         ),
         columns={
-            "id": pa.Column(nullable=False),
+            "category_class": pa.Column(nullable=False),
             "txgnn": pa.Column(nullable=False),
         },
         strict=True,
-        unique=["id"],
+        unique=["category_class"],
     )
 )
 @pa.check_output(
@@ -419,7 +419,7 @@ def ingest_disease_prevalence(disease_prevalence: pd.DataFrame) -> pd.DataFrame:
     )
 )
 def ingest_disease_txgnn(disease_txgnn: pd.DataFrame) -> pd.DataFrame:
-    return disease_txgnn
+    return disease_txgnn.rename(columns={"category_class": "id"})
 
 
 @pa.check_input(
