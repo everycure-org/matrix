@@ -31,7 +31,7 @@ SELECT
   SUM(edge_count) AS total_edges
 FROM edge_validation
 GROUP BY validation_status
-ORDER BY validation_status
+ORDER BY validation_status  -- Alphabetical order ensures "Recognized" gets green, "Unrecognized" gets blue in chart
 ```
 
 ## Overview
@@ -131,6 +131,7 @@ with validation_status AS (
 SELECT validation_status, count(*) as count
 from validation_status
 group by validation_status
+ORDER BY validation_status  -- Alphabetical order ensures "Recognized" gets green, "Unrecognized" gets blue in chart
 ```
 
 <Grid col=2 class="max-w-4xl mx-auto mb-8">
