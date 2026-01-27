@@ -804,12 +804,7 @@ class CommonalityAtN(ComparisonEvaluation):
 
 
 class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
-    """Disease-specific Recall@N evaluation that outputs a table.
-
-    For each disease, computes recall@n at specific n values (10, 20, 50, 100)
-    and outputs a table with disease ID, number of true drugs, number of predictions,
-    and recall values at each n.
-    """
+    """Disease-specific hits@n and recall@n table. One row per (model, fold, disease)."""
 
     def __init__(
         self,
@@ -818,178 +813,72 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
         title: str,
         n_values: list[int] = [10, 20, 50, 100],
     ):
-        """Initialize an instance of DiseaseSpecificRecallAtNTable.
-
-        Args:
-            ground_truth_col: Boolean column in the matrix indicating the known positive test set.
-            perform_sort: Whether to sort the matrix or expect the dataframe to be sorted already.
-            title: Title for the evaluation (used for identification).
-            n_values: List of n values to compute recall@n for. Defaults to [10, 20, 50, 100].
-        """
         self.ground_truth_col = ground_truth_col
         self.perform_sort = perform_sort
         self.title = title
         self.n_values = sorted(n_values)
-
-    def _compute_recall_at_n_for_disease(
-        self, disease_predictions: pl.DataFrame, n: int, score_col_name: str = "score"
-    ) -> float:
-        """Compute recall@n for a single disease.
-
-        Reuses the rank-based approach from FullMatrixRecallAtN for efficiency.
-
-        Args:
-            disease_predictions: DataFrame containing predictions for a single disease.
-            n: The n value for recall@n.
-            score_col_name: Name of the score column.
-
-        Returns:
-            Recall@n value for the disease.
-        """
-        # Sort by score if needed
-        if self.perform_sort:
-            disease_predictions = disease_predictions.sort(by=score_col_name, descending=True)
-
-        # Use rank-based approach similar to FullMatrixRecallAtN._give_ranks_series
-        ranks_series = (
-            disease_predictions.with_row_index("index")
-            .filter(pl.col(self.ground_truth_col))
-            .select(pl.col("index"))
-            .to_series()
-            + 1
-        )
-
-        # Total number of true positives for this disease
-        N = len(ranks_series)
-        if N == 0:
-            return 0.0
-
-        # Count how many true positives are in top n
-        num_in_top_n = (ranks_series <= n).sum()
-
-        return num_in_top_n / N
 
     def evaluate(
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> pl.DataFrame:
-        """Compute disease-specific recall@n table for all models and folds (no aggregation).
-
-        Args:
-            combined_predictions: Dictionary of PartitionedDataset load fn's returning predictions for all folds and models
-            predictions_info: Dictionary containing model names and number of folds.
-
-        Returns:
-            Polars DataFrame with one row per (model, fold, disease) and columns:
-              - "mondo_id" (disease ID from target column)
-              - "model"
-              - "fold"
-              - "num_true_drugs" (number of test positives for the disease, i.e., drugs with ground_truth_col=True)
-              - "num_predictions" (total number of predictions for the disease)
-              - "hits@{n}" (number of true drugs predicted in top n)
-              - "recall@{n}" (hits@{n} / num_true_drugs)
-
-        Note:
-            num_true_drugs counts test positives (drugs in the test set that are known positives).
-            If training drug counts are needed, they would need to be computed separately since
-            training pairs are filtered out from the predictions dataframe.
-        """
-        # Aggregate results across all models and folds
+        """Compute disease-specific hits@n and recall@n for all models and folds."""
         all_results = []
 
         for model_name in predictions_info["model_names"]:
             for fold in range(predictions_info["num_folds"]):
-                matrix = combined_predictions[model_name + "_fold_" + str(fold)]().collect()
+                matrix = combined_predictions[f"{model_name}_fold_{fold}"]().collect()
 
-                # Get score column name from the first model (assuming all models have same structure)
-                score_col_name = "score"
-
-                # Sort by score if needed (do this once for the whole matrix)
                 if self.perform_sort:
-                    matrix = matrix.sort(by=score_col_name, descending=True)
+                    matrix = matrix.sort(by="score", descending=True)
 
-                # Filter to diseases with test positives (similar to SpecificHitAtK._give_ranks_for_test_set)
-                test_diseases = (
-                    matrix.group_by("target", maintain_order=False)
-                    .agg(pl.col(self.ground_truth_col).sum().alias("num_known_positives"))
-                    .filter(pl.col("num_known_positives") > 0)
-                    .select("target")
-                    .to_series()
-                    .to_list()
-                )
-                matrix = matrix.filter(pl.col("target").is_in(test_diseases))
-
-                # Group by disease and compute metrics efficiently
+                # Filter to diseases with test positives
                 disease_stats = (
-                    matrix.group_by("target", maintain_order=False)
+                    matrix.group_by("target")
                     .agg(
-                        [
-                            pl.col(self.ground_truth_col).sum().alias("num_true_drugs"),
-                            pl.len().alias("num_predictions"),
-                        ]
+                        pl.col(self.ground_truth_col).sum().alias("num_true_drugs"),
+                        pl.len().alias("num_predictions"),
                     )
+                    .filter(pl.col("num_true_drugs") > 0)
+                )
+                matrix = matrix.filter(pl.col("target").is_in(disease_stats["target"]))
+
+                # Compute disease-specific ranks for test positives
+                ranks_df = (
+                    matrix.with_columns(
+                        pl.col("score").rank(descending=True, method="random").over("target").alias("rank")
+                    )
+                    .filter(pl.col(self.ground_truth_col))
                 )
 
-                # For each disease, compute hits@n and recall@n values using rank-based approach
-                # Reuses logic from FullMatrixRecallAtN._give_ranks_series
-                for row in disease_stats.iter_rows(named=True):
-                    disease_id = row["target"]
-                    num_true_drugs = row["num_true_drugs"]
-                    num_predictions = row["num_predictions"]
-
-                    # Filter predictions for this disease (already sorted if perform_sort was True)
-                    disease_df = matrix.filter(pl.col("target") == disease_id)
-
-                    # Compute ranks of true positives once (reusing FullMatrixRecallAtN approach)
-                    ranks_series = (
-                        disease_df.with_row_index("index")
-                        .filter(pl.col(self.ground_truth_col))
-                        .select(pl.col("index"))
-                        .to_series()
-                        + 1
+                # Compute hits@n and recall@n for each n
+                results = disease_stats
+                for n in self.n_values:
+                    hits = (
+                        ranks_df.filter(pl.col("rank") <= n)
+                        .group_by("target")
+                        .len()
+                        .rename({"len": f"hits@{n}"})
+                    )
+                    results = results.join(hits, on="target", how="left").fill_null(0)
+                    results = results.with_columns(
+                        (pl.col(f"hits@{n}") / pl.col("num_true_drugs")).alias(f"recall@{n}")
                     )
 
-                    # Compute all recall@n values at once using the ranks
-                    recall_values = {}
-                    hits_values = {}
-                    for n in self.n_values:
-                        num_in_top_n = (ranks_series <= n).sum()
-                        recall = num_in_top_n / num_true_drugs if num_true_drugs > 0 else 0.0
-                        hits_values[f"hits@{n}"] = int(num_in_top_n)
-                        recall_values[f"recall@{n}"] = recall
+                # Add metadata columns
+                results = (
+                    results.with_columns(pl.lit(model_name).alias("model"), pl.lit(fold).alias("fold"))
+                    .rename({"target": "disease_id"})
+                )
+                all_results.append(results)
 
-                    # Store results
-                    result_row = {
-                        "mondo_id": disease_id,
-                        "model": model_name,
-                        "fold": fold,
-                        "num_true_drugs": num_true_drugs,
-                        "num_predictions": num_predictions,
-                        **hits_values,
-                        **recall_values,
-                    }
-                    all_results.append(result_row)
-
-        # If there are no results, return an empty DataFrame with the expected schema
-        if not all_results:
-            metric_cols: dict[str, pl.DataType] = {}
-            for n in self.n_values:
-                metric_cols[f"hits@{n}"] = pl.Int64
-                metric_cols[f"recall@{n}"] = pl.Float64
-            return pl.DataFrame(
-                schema={
-                    "mondo_id": pl.Utf8,
-                    "model": pl.Utf8,
-                    "fold": pl.Int64,
-                    "num_true_drugs": pl.Int64,
-                    "num_predictions": pl.Int64,
-                    **metric_cols,
-                }
-            )
-
-        # Return per-fold, per-disease metrics without cross-fold aggregation
-        return pl.DataFrame(all_results)
+        # Reorder columns
+        final = pl.concat(all_results)
+        cols = ["disease_id", "model", "fold", "num_true_drugs", "num_predictions"]
+        for n in self.n_values:
+            cols += [f"hits@{n}", f"recall@{n}"]
+        return final.select(cols)
 
     def plot_results(
         self,
@@ -997,13 +886,7 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
         combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
     ) -> plt.Figure:
-        """Return an empty figure.
-
-        This evaluation is table-only; the primary output is the CSV of results.
-        A minimal empty Matplotlib Figure is returned solely to satisfy the
-        run_comparison pipeline's expectation that a plot object is produced.
-        """
-        fig, ax = plt.subplots(1, 1, figsize=(4, 3))
+        """Return empty figure (table-only evaluation)."""
+        fig, ax = plt.subplots(figsize=(4, 3))
         ax.axis("off")
-        ax.set_title(self.title)
         return fig
