@@ -52,3 +52,11 @@ module "cloudbuild" {
 #   project_id = var.project_id
 #   host       = "localhost"
 # }
+
+resource "google_logging_project_exclusion" "exclude_default_and_notice" {
+  name        = "exclude-default-and-notice"
+  description = "Exclude logs with severity DEFAULT or NOTICE from ingestion"
+  project     = var.project_id
+  filter      = "severity=(DEFAULT OR NOTICE)"
+  disabled    = false
+}
