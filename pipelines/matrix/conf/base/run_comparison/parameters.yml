@@ -80,6 +80,7 @@ run_comparison:
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtNBootstrap
       N_bootstraps: 100
 
+    EC indications list evaluations are commented out because these columns are not available in the current dataset
     ec_indications_list_on_label_recall_at_n:
       &ec_indications_list_on_label_recall_at_n
       _object: matrix.pipelines.run_comparison.evaluations.FullMatrixRecallAtN
@@ -150,6 +151,14 @@ run_comparison:
       <<: *disease_specific_hit_at_k_off_label
       _object: matrix.pipelines.run_comparison.evaluations.SpecificHitAtKBootstrap ## TODO: Implement 
       N_bootstraps: 100
+
+    
+    disease_specific_recall_at_n:
+      _object: matrix.pipelines.run_comparison.evaluations.DiseaseSpecificRecallAtNTable
+      ground_truth_col: *is_known_positive_col
+      perform_sort: True
+      title: "Disease-specific Recall@n Table"
+      n_values: [10, 20, 50, 100, 1000]
 
     drug_entropy_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.EntropyAtN

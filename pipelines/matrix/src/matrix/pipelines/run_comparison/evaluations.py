@@ -801,3 +801,92 @@ class CommonalityAtN(ComparisonEvaluation):
         ax.legend()
         ax.set_title(self.title)
         return fig
+
+
+class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
+    """Disease-specific hits@n and recall@n table. One row per (model, fold, disease)."""
+
+    def __init__(
+        self,
+        ground_truth_col: str,
+        perform_sort: bool,
+        title: str,
+        n_values: list[int] = [10, 20, 50, 100],
+    ):
+        self.ground_truth_col = ground_truth_col
+        self.perform_sort = perform_sort
+        self.title = title
+        self.n_values = sorted(n_values)
+
+    def evaluate(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Compute disease-specific hits@n and recall@n for all models and folds."""
+        all_results = []
+
+        for model_name in predictions_info["model_names"]:
+            for fold in range(predictions_info["num_folds"]):
+                matrix = combined_predictions[f"{model_name}_fold_{fold}"]().collect()
+
+                if self.perform_sort:
+                    matrix = matrix.sort(by="score", descending=True)
+
+                # Filter to diseases with test positives
+                disease_stats = (
+                    matrix.group_by("target")
+                    .agg(
+                        pl.col(self.ground_truth_col).sum().alias("num_true_drugs"),
+                        pl.len().alias("num_predictions"),
+                    )
+                    .filter(pl.col("num_true_drugs") > 0)
+                )
+                matrix = matrix.filter(pl.col("target").is_in(disease_stats["target"]))
+
+                # Compute disease-specific ranks for test positives
+                ranks_df = (
+                    matrix.with_columns(
+                        pl.col("score").rank(descending=True, method="random").over("target").alias("rank")
+                    )
+                    .filter(pl.col(self.ground_truth_col))
+                )
+
+                # Compute hits@n and recall@n for each n
+                results = disease_stats
+                for n in self.n_values:
+                    hits = (
+                        ranks_df.filter(pl.col("rank") <= n)
+                        .group_by("target")
+                        .len()
+                        .rename({"len": f"hits@{n}"})
+                    )
+                    results = results.join(hits, on="target", how="left").fill_null(0)
+                    results = results.with_columns(
+                        (pl.col(f"hits@{n}") / pl.col("num_true_drugs")).alias(f"recall@{n}")
+                    )
+
+                # Add metadata columns
+                results = (
+                    results.with_columns(pl.lit(model_name).alias("model"), pl.lit(fold).alias("fold"))
+                    .rename({"target": "disease_id"})
+                )
+                all_results.append(results)
+
+        # Reorder columns
+        final = pl.concat(all_results)
+        cols = ["disease_id", "model", "fold", "num_true_drugs", "num_predictions"]
+        for n in self.n_values:
+            cols += [f"hits@{n}", f"recall@{n}"]
+        return final.select(cols)
+
+    def plot_results(
+        self,
+        results: pl.DataFrame,
+        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> plt.Figure:
+        """Return empty figure (table-only evaluation)."""
+        fig, ax = plt.subplots(figsize=(4, 3))
+        ax.axis("off")
+        return fig
