@@ -1,0 +1,117 @@
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+  save_args:
+    sep: "\t"
+
+_pandas_parquet: &_pandas_parquet
+  type: pandas.ParquetDataset
+  load_args:
+    engine: pyarrow
+  save_args:
+    engine: pyarrow
+
+# -------------------------------------------------------------------------
+# Raw
+# -------------------------------------------------------------------------
+
+raw.curated_drug_list:
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
+  spreadsheet_url: https://docs.google.com/spreadsheets/d/1LjUOaq1ARiQCFj7eN9KIOaBgixBedoyjkIjbLP5lExI
+  worksheet_gid: 1299365445
+  service_account_file_path: ${globals:service_account_file_path}
+
+raw.drugbank_drug_list:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_drugbank}/drugs.csv
+
+raw.drugbank_salt_list:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw_drugbank}/salts.csv
+
+# File downloaded here: https://bioportal.bioontology.org/ontologies/ATC
+raw.atc_labels:
+  type: pandas.CSVDataset
+  filepath: ${globals:public_gcs_bucket}/kedro/data/core-entities/raw/atc_labels.csv
+
+# -------------------------------------------------------------------------
+# Primary
+# -------------------------------------------------------------------------
+
+primary.curated_drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/curated-drug-list.parquet
+
+primary.drugbank_drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/drugbank-drug-list.parquet
+
+primary.drugbank_salt_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/drugbank-salt-list.parquet
+
+primary.atc_labels:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/atc.parquet
+
+primary.drug_curies:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/drug-curies.parquet
+
+primary.normalized_drug_curies:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/normalized-drug-curies.parquet
+
+primary.drugbank_union_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/drugbank-union-list.parquet
+
+primary.drug_list_with_drugbank_id:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/drug-list-with-drugbank-id.parquet
+
+primary.drug_list_with_atc_codes:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/drug-list-with-atc-codes.parquet
+
+primary.name_resolver_version:
+  type: text.TextDataset
+  filepath: ${globals:paths.primary}/drug/name-resolver-version.txt
+
+primary.nodenorm_version:
+  type: text.TextDataset
+  filepath: ${globals:paths.primary}/drug/nodenorm-version.txt
+
+# -------------------------------------------------------------------------
+# Release
+# -------------------------------------------------------------------------
+
+primary.release.drug_list_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/release/ec-drug-list.parquet
+  
+primary.release.drug_list_tsv:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.primary}/release/ec-drug-list.tsv
+
+# -------------------------------------------------------------------------
+# Published
+# -------------------------------------------------------------------------
+
+primary.published.drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.published}/ec-drug-list.parquet
+
+primary.published.drug_list_tsv:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.published}/ec-drug-list.tsv
+
+primary.published.drug_list_bq:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.published}/ec-drug-list-bq.parquet
+
+primary.published.drug_list_bq_latest:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.published}/ec-drug-list-bq-latest.parquet

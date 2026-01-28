@@ -1,0 +1,13 @@
+category_class	txgnn
+MONDO:9999001	neurodegenerative_disease
+MONDO:9999002	cardiovascular_disease
+MONDO:9999003	cardiovascular_disease
+MONDO:9999004	cardiovascular_disease
+MONDO:9999005	cardiovascular_disease
+MONDO:9999006	mental_health_disorder
+MONDO:9999007	inflammatory_disease|autoimmune_diseases
+MONDO:9999008	cancer
+MONDO:9999009	metabolic_disorder
+MONDO:9999010	inflammatory_disease
+MONDO:9999011	neurodegenerative_disease|metabolic_disorder
+MONDO:9999012	other

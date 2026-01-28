@@ -1,0 +1,560 @@
+ignore_llm_pipeline_errors: True
+
+disease_categories:
+  invoke_parameters:
+    disease_name: name
+    synonyms: synonyms
+  parallelism: 20
+  graph:
+    _object: core_entities.pipelines.disease_llm_tags.disease_categories.DiseaseCategoriesGraphWithConsensus
+    config:
+      N: 3 # Number of repetitions to find consensus
+      disease_categories: ["psychiatric_disease", "malignant_cancer", "benign_tumour", "pathogen_caused", "glucose_dysfunction"]
+      disease_category_default_system_prompt: &disease_category_default_system_prompt
+        "You are a helpful assistant that has complete knowledge of diseases, their mechanism of actions and their presentations."
+      disease_category_default_model_config: &disease_category_default_model_config
+        model: gpt-4o-mini
+        max_output_tokens: 1000
+        temperature: 0.0
+      psychiatric_disease:
+        system_prompt: *disease_category_default_system_prompt
+        model_config: *disease_category_default_model_config
+        prompt:
+          "Does \"{disease}\" have a psychiatric presentation? \"{synonym_prompt}\"
+          A psychiatric presentations are conditions where a patient could be treated by a psychiatrist, as a primary course of action to improve quality of life and patient outlook. 
+
+          Respond with 'True' or 'False', and explain your reasoning."
+      malignant_cancer:
+        system_prompt: *disease_category_default_system_prompt
+        model_config: *disease_category_default_model_config
+        prompt:
+          "Is \"{disease}\" a malignant cancer? {synonym_prompt}
+          A malignant cancer is a cancer that results from invasive/spreading abnormal cell growth. 
+
+          Respond with 'True' or 'False', and explain your reasoning."
+      benign_tumour:
+        system_prompt: *disease_category_default_system_prompt
+        model_config: *disease_category_default_model_config
+        prompt:
+          "Is \"{disease}\" a benign tumour (non-cancerous growth)? {synonym_prompt}
+          A benign tumour is a non-cancerous growth that is not invasive or spreading.
+
+          Respond with 'True' or 'False', and explain your reasoning."
+      pathogen_caused:
+        system_prompt: *disease_category_default_system_prompt
+        model_config: *disease_category_default_model_config
+        prompt:
+          "Is \"{disease}\" usually caused by pathogenic organisms? {synonym_prompt}
+          Diseases caused by pathogens are those usually caused by pathogenic organisms such as bacteria, viruses, parasites, or fungi. This includes infectious diseases where the primary etiology is microbial infection.
+
+          Respond with 'True' or 'False', and explain your reasoning."
+      glucose_dysfunction:
+        system_prompt: *disease_category_default_system_prompt
+        model_config: *disease_category_default_model_config
+        prompt:
+          "Is \"{disease}\" primarily characterized by glucose dysregulation? {synonym_prompt}
+          Diseases with glucose dysfunction are primarily characterized by glucose dysregulation or metabolic dysfunction related to glucose homeostasis, such as diabetes mellitus and other conditions where impaired glucose metabolism is the core pathophysiological mechanism.
+
+          Respond with 'True' or 'False', and explain your reasoning."
+
+
+disease_labels:
+  invoke_parameters:
+    disease_name: name
+    synonyms: synonyms
+  parallelism: 20
+
+  graph:
+    _object: core_entities.pipelines.disease_llm_tags.disease_labels.DiseaseLabelsGraph
+    config:
+      entity_label:
+        system_prompt:
+          "You are medical expert with a deep understanding of medical terminology and clinical practice. 
+          Your job is to categorise entities to provide meaningful information to physicians and medical researchers."
+
+        prompt:
+          "Categorise the following entity: \"{entity}\". {synonym_prompt} It may belong to multiple categories.
+
+          1. drug_amenable: An entity is considered drug_amenable if it can be treated, managed, or controlled with medications — this includes chemotherapy, targeted therapy, immunotherapy, antiretrovirals, and other disease-modifying agents. Diseases in which drugs can slow progression, control symptoms, or are essential for improving quality of life (even if not curative) should also be considered amenable. This also includes conditions that do not currently have a cure, but have biological pathways that can be targeted by drugs.
+          2. gene_therapy_candidate: Conditions that where gene replacement, editing, or silencing is the only therapeutic strategy. Do not include conditions that can be managed with medications.
+          3. structural: Conditions characterized by congenital malformations, structural abnormalities, or irreversible developmental defects.
+          4. behavioral_phychosocial_nutritional: Conditions primarily managed by psychological, educational, dietary, or supportive interventions, including behavioral disorders and nutritional/metabolic imbalances, where drug therapy may be adjunctive but not primary.
+          5. umbrella_non_specific: Broad or descriptive terms that lack specificity to assess drug targetability without further clinical or mechanistic details. Not specific enough to be clinically actionable. This includes descriptions of presentiations such as \"neoplasm\".
+          6. clinical_findings: Signs, symptoms, pathological findings, diagnostic descriptors, or vague terms that describe a clinical state or physical/pathological finding rather than a specific underlying disease, requiring further diagnostic context or information to form a treatment plan.
+          7. non_life_threatening: Generally benign or cosmetic conditions that do not affect patient survival or major morbidity.
+
+          For each category, provide evidence based reasoning for why the entity does or does not belong to the category. If your reason is related to a biological pathway, specify what it is"
+
+        model_config:
+          model: gpt-4o-mini
+          max_output_tokens: 2000
+          temperature: 0.0
+
+      ## Categorise Disease Assets ##
+      disease_label:
+        system_prompt:
+          "You are medical expert with a deep understanding of medical terminology and clinical practice. 
+          Your job is to categorise entities to provide meaningful information to physicians and medical researchers."
+
+        prompt:
+          "Classify the entity: \"{entity}\" into \"disease-primary\", \"disease-subtype\" or \"disease-iatrogenic/drug-induced\". The defintion of a primary, subtype or iatrogenic/drug-induced disease is as follows:
+          disease-primary: A disease that is not a subtype of another disease.
+          disease-subtype: A specific, defined variation of a broader disease. It will have a named parent disease.
+          disease-iatrogenic/drug-induced: A condition that arises as a direct result of medical treatment or intervention, including drug therapy or procedures.
+
+          Provide evidence based reasoning for why the entity does or does not belong to the category."
+
+        model_config:
+          model: gpt-4o-mini
+          max_output_tokens: 2000
+          temperature: 0.0
+
+      metadata:
+        version: 0.1.1
+
+
+disease_umn:
+  invoke_parameters:
+    disease_name: name
+    synonyms: synonyms
+  parallelism: 20
+
+  default_model_config: &default_model_config
+    model: gpt-4o-mini
+    max_output_tokens: 1000
+    temperature: 0.0
+
+  default_system_prompt: &default_system_prompt |
+    You are a medical doctor and Professor of Epidemiology trying to determine the unmet medical need for a disease. You wish to do this to determine the priority of diseases for research and development. Provide detailed medical reasoning in your explanations and concise conclusions. Another professor will be judging your results, and your explanation and assessment should convince them of your assessment. Use up to 3 sentences in your response, don't use first person pronouns.
+
+  graph:
+    _object: core_entities.pipelines.disease_llm_tags.disease_umn.DiseaseUMNGraph
+    config:
+      unmet_medical_need_weights:
+        commonality: 0.25
+        duration: 0.5
+        QALY: 0.75
+        mortality: 1
+        disease_modification: 1
+        adverse_effects: 0.75
+        route_of_administration: 0.5
+        frequency_of_administration: 0.25
+        cost_to_patients: 0.25
+        robust_supply: 0.25
+        regulation_barriers: 0.25
+        
+      commonality:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the commonality of "{entity}" {synonym_prompt} into the one of the following ordinal categories:
+          - 1 = very common
+          - 2 = common
+          - 3 = intermediate
+          - 4 = rare
+          - 5 = very rare
+
+          Utilize prevalence for chronic diseases and incidence for acute diseases. 
+          Very common diseases should affect more than 1%% of the global population. 
+          Very rare diseases should have an incidence of less than 1 in 100,000. 
+          Where multiple diseases are listed, use only the first.
+
+          Provide a brief explanation of your reasoning.
+          "
+        
+      duration:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the duration of "{entity}" {synonym_prompt} post-accurate diagnosis into the one of the following ordinal categories:
+          - 1 = acute (days)
+          - 2 = sub-acute (weeks)
+          - 3 = intermediate (months)
+          - 4 = chronic (years)
+          - 5 = lifelong
+          
+          Deduct points for diseases with a treatment or standard of care that can quickly resolve the condition.
+
+          Provide a brief explanation of your reasoning.
+          "
+      
+      QALY:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the quality of life adjusted years (QALYs) lost of "{entity}" {synonym_prompt} into one of the following ordinal categories based on the impact that the disease has on activities of daily living (ADLs):
+          - 1 = very low morbidity
+          - 2 = low morbidity
+          - 3 = moderate morbidity
+          - 4 = high morbidity
+          - 5 = very high morbidity
+          If the disease only has impact on ADLs in vulnerable populations, score 1.
+
+          Provide a brief explanation of your reasoning.
+          "
+
+      mortality:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: | 
+          "Categorize the mortality of "{entity}" {synonym_prompt} into one of the following ordinal categories based on the 5-year survival rate:
+          - 1 = no mortality
+          - 2 = low mortality
+          - 3 = moderate mortality
+          - 4 = high mortality
+          - 5 = very high mortality
+          For diseases with no appreciable mortality, score 1. For diseases that result in death in 80%% of cases, score 5. Add a point if the disease has no curative treatment. Utilize the WHO mortality database and similar resources.
+
+          Provide a brief explanation of your reasoning.
+          "
+      
+      disease_modification:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the modification of "{entity}" {synonym_prompt} that the current standard of care provides into one of the following ordinal categories:
+          - 1 = curative/fully preventative
+          - 2 = high disease modification
+          - 3 = moderate disease modification
+          - 4 = low disease modification
+          - 5 = symptom relief only
+
+          Utilize sources such as PubMed and clinical guidelines to determine the current standard of care.
+
+          Provide a brief explanation of your reasoning.
+          "
+
+      adverse_effects:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the level of side effects most commonly resulting from the administration of the current standard of care for "{entity}" {synonym_prompt} into one of the following ordinal categories:
+          - 1 = mild symptoms, no intervention required
+          - 2 = moderate symptoms, intervention required
+          - 3 = serious symptoms, intervention required
+          - 4 = very serious symptoms, intervention required
+          - 5 = serious adverse events often resulting in death
+
+          Deduct a point if the disease can be managed and/or resolved with lifestyle adjustments.
+          Provide a brief explanation of your reasoning.
+          "
+      
+      route_of_administration:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the route of administration of the current standard of care for "{entity}" {synonym_prompt} into one of the following ordinal categories:
+          - 1 = over the counter oral
+          - 2 = prescription oral
+          - 3 = injection/intravenous
+          - 4 = surgical procedure
+          - 5 = major surgical procedure
+
+          Provide a brief explanation of your reasoning.
+          "
+      
+      frequency_of_administration:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the frequency of administration of the current standard of care for "{entity}" {synonym_prompt} into one of the following ordinal categories:
+          - 1 = once only
+          - 2 = once per month (or less)
+          - 3 = once per week
+          - 4 = once per day
+          - 5 = multiple times per day
+
+          Degenerative diseases should score high. Utilize sources such as clinical guidelines and drug labels.
+          Provide a brief explanation of your reasoning.
+          "
+      
+      cost_to_patients:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the cost to patients for the current standard of care for "{entity}" {synonym_prompt} into one of the following ordinal categories:
+          - 1 = very low ($10-100 per month, e.g. aspirin)
+          - 2 = low ($100-1000 per month e.g. generic prescription medicine)
+          - 3 = moderate ($1000-10,000 per month, e.g. on patent small molecule)
+          - 4 = high ($10,000-100,000 per month, e.g. established biologics)
+          - 5 = very high (>$100,000 per month, e.g. gene therapy)
+
+          Provide a brief explanation of your reasoning.
+          "
+
+      robust_supply:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the robustness of the supply chain for the standard of care for "{entity}" {synonym_prompt} into one of the following ordinal categories:
+          - 1 = very high (available worldwide, long shelf-life)
+          - 2 = high (available worldwide, occasional availability issues)
+          - 3 = moderate (only available in some countries OR needs cold chain)
+          - 4 = low (only available in some countries, reliability issues)
+          - 5 = very low (only available in few countries, single manufacturer, frequent stock-outs)
+
+          Provide a brief explanation of your reasoning.
+          "
+      
+      regulation_barriers:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the difficulty to acquire the standard of care for "{entity}" {synonym_prompt} posed by regulatory barriers into one of the following categories:
+          - 1 = Low (licensed to treat disease in at least 3 stringent regulatory regions)
+          - 3 = Moderate (licensed to treat the disease in only 1 stringent regulatory authority region)
+          - 5 = High (not licensed in any stringent authority region and only used off-label)
+
+          Utilize sources such as global clinical guidelines, FDA and other similar authorities. Disease treated with generic drugs should score low.
+          Provide a brief explanation of your reasoning, stating the regulatory authority region(s) that the standard of care is licensed in.
+          "
+
+      generic_patent_1:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the most widely used therapeutic treatment as the standard of care for "{entity}" {synonym_prompt} into one of the following categories:
+          - 1 = generic drug
+          - 3 = not a drug
+          - 5 = on patent drug
+
+          Utilize clinical guidelines to source this information. If a pharmacological treatment for the disease is utilized, score a 1 or 5.
+          Provide a brief explanation of your reasoning.
+          "
+      
+      generic_patent_2:
+        system_prompt:
+          *default_system_prompt
+
+        model_config:
+          *default_model_config
+
+        prompt: |
+          "Categorize the most widely used therapeutic treatment as the standard of care for "{entity}" {synonym_prompt} into one of the following categories:
+          - 1 = most widely used treatment in standard of care is a generic drug
+          - 3 = most widely used treatment in standard of care is not a drug
+          - 5 = most widely used treatment in standard of care is a drug on patent
+
+          Utilize clinical guidelines to source this information. If a pharmacological treatment for the disease is utilized, score a 1 or 5.
+          Provide a brief explanation of your reasoning.
+          "
+
+disease_prevalence:
+  parallelism: 10
+  default_system_prompt: &default_prevalence_system_prompt
+    You are a medical doctor and Professor of Epidemiology trying to find the prevalence of a disease in the world. Provide detailed medical reasoning in your explanations and concise conclusions. Another professor will be judging your results, and your explanation and assessment should convince them of your assessment. Use a single sentence in your explanations, don't use first person pronouns.
+  invoke_parameters:
+    disease_name: name
+    synonyms: synonyms
+    disease_label: disease_label
+  graph:
+    _object: core_entities.pipelines.disease_llm_tags.disease_prevalence.DiseasePrevalenceConsensusGraph
+    config: 
+      primary_prevalence: 
+        system_prompt: *default_prevalence_system_prompt
+        model_config: *default_model_config
+        prompt: |
+          What is the prevalence of "{disease_name}" in the world? {synonyms_prompt}
+          Where there is more than one potential response or a range, provide the most rare option. 
+          Respond succintly.
+          Provide brief explanation of your sources. 
+          The final response should match exactly with the explanation provided.
+
+          If there is uncertainty in your response because of extreme rarity of the disease, set unsure to True.
+      
+      subtype_prevalence:
+        system_prompt: *default_prevalence_system_prompt
+        model_config: *default_model_config
+        prompt: |
+          The disease "{disease_name}" is considered to be a subtype of a parent disease. {synonyms_prompt}
+          Find the parent disease of "{disease_name}". The parent disease should be a clinically recognisable disease, not grouping term. If none is found, you may use the disease name as the parent disease.
+          What is the prevalence of the parent disease and the percentage rate of occurrence of the subtype?
+          Respond succintly.
+          Provide brief explanation of your sources.
+          Where there is more than one potential response or a range, provide the most rare option. 
+          The final responses should match exactly with the explanations provided.
+
+          If there is uncertainty in your response because of extreme rarity of the disease, set unsure to True.
+
+      population_subgroup:
+        system_prompt: You are epidemiologist extracting information from a string of text. Your task is to determine if a provided statement is applicable to the entire global population, or if it specifies a population subgroup.
+        model_config: *default_model_config
+        prompt: |
+          "{primary_disease_explanation}"
+
+          Does the text specify a population subgroup for which the statement is applicable? Consider only demographic and geographical subgroups.
+
+          For reference, here's a list of potential population subgroups and their sizes: 
+          - women: 
+              size: 4090000000
+              description: "The global population of women"
+          - men: 
+              size: 4100000000
+              description: "The global population of men"
+          - neonates: 
+              size: 100000000
+              description: "0-28 days"
+          - pediatric: 
+              size: 2500000000
+              description: "28 days - 18 years"
+          - young_adult:
+              size: 2300000000
+              description: "18 years - 40 years"
+          - older_adult:
+              size: 1800000000
+              description: "40 years - 64 years"
+          - geriatric:
+              size: 800000000
+              description: "65+ years"
+
+          If a demographic or geographical subgroup exists but is not listed above, use your best non-zero estimate of this subgroup's population size.
+
+          Example 1: "Multiple sclerosis affects approximately 2.3 million people in the world.", your response is: 
+          subgroup_specified_explanation: "The text refers to the whole population of the world"
+          subgroup_specified: False
+          population_subgroup: None
+          population_subgroup_size: 8000000000
+
+          Example 2: "Diabetes affects about 1 in 15 individuals.", your response is: 
+          subgroup_specified_explanation: "The text does not specify a population subgroup, as such, it refers to the whole population"
+          subgroup_specified: False
+          population_subgroup: None
+          population_subgroup_size: 8000000000
+
+          Example 3: "Breast cancer affects about 1 in 8 women over their lifetime.", your response is: 
+          subgroup_specified_explanation: "The text refers to a ratio of a subgroup (women) who have this disease"
+          subgroup_specified: True
+          population_subgroup: "women"
+          population_subgroup_size: 4090000000
+
+          Example 4: "Neonatal sepsis affects roughly 2% of all live births."
+          subgroup_specified_explanation: "The text refers to a percentage of a subgroup (neonates) who have this condition"
+          subgroup_specified: True
+          population_subgroup: "neonates"
+          population_subgroup_size: 100000000
+
+      extract_prevalence_data:
+        system_prompt: You are a data expert, extracting information from a string of text. Be precise in your response, and use numerical reasoning.
+        model_config: *default_model_config
+        prompt: |
+          You have two tasks:
+          1. Categorise the prevalence type into "percentage" or "ratio" or "number".
+          2. Extract the numerator and denominator 
+
+          Example 1, if the input string is "10%", your response is:
+          categorisation_explanation: "The input string is a percentage"
+          category: "percentage"
+          numerator: 10
+          denominator: 100
+
+          Example 2, if the input string is "1 in 10,000", your response is:
+          categorisation_explanation: "The input string is a ratio"
+          category: "ratio"
+          numerator: 1
+          denominator: 10000
+
+          Example 3, if the input string is "1000 people", your response is:
+          categorisation_explanation: "The input string is a number"
+          category: "number"
+          numerator: 1000
+          denominator: 1
+
+          Example 4, if the input string is "0.5-200 per 180,000", your response is:
+          categorisation_explanation: "The input string is a ratio"
+          category: "ratio"
+          numerator: 0.5
+          denominator: 180000
+
+          Example 5, if the input string is "10 to 25 per 10,000", your response is:
+          categorisation_explanation: "The input string is a ratio"
+          category: "ratio"
+          numerator: 10
+          denominator: 10000
+
+          Perform both tasks on the input string "{disease_world_prevalence}". Explain your reasoning.
+
+
+disease_txgnn:
+  parallelism: 10
+  invoke_parameters:
+    disease_name: name
+    synonyms: synonyms
+  graph:
+    _object: core_entities.pipelines.disease_llm_tags.disease_txgnn.DiseaseTxGNNGraph
+    config:
+      categories:
+        - adrenal_gland_disease
+        - neurodegenerative_disease
+        - metabolic_disorder
+        - cardiovascular_disorder
+        - autoimmune_diseases
+        - mental_health_disorder
+        - anemia
+        - cancer
+        - inflammatory_disease
+        - allergy
+        - other
+      system_prompt: |
+        You are a medical expert with comprehensive knowledge of disease classification and therapeutics.
+        Your task is to classify diseases into clinically relevant categories for drug repurposing analysis.
+      model_config: *default_model_config
+      prompt: |
+        Classify the disease "{disease}" into the most appropriate category or categories from the following list:
+        {categories_list}
+
+        {synonym_prompt}
+
+        Guidelines:
+        - Select the single best-fitting category, or multiple categories if the disease clearly spans multiple therapeutic areas
+        - Use "other" only if the disease does not fit any of the specific categories
+        - Be conservative - only select multiple categories if there is clear clinical justification
+
+        Return the category name(s) exactly as listed above.

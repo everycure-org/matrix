@@ -1,0 +1,5 @@
+raw.orchard_reviews:
+  type: pandas.GBQTableDataset
+  project: ec-orchard-prod
+  dataset: dbt
+  table_name: orchard_reviews

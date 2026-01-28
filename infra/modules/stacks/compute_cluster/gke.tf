@@ -9,7 +9,7 @@ locals {
   # NOTE: Debugging node group scaling can be done using the GCP cluster logs, we create
   # node groups in 2 node locations, hence why the total amount of node groups.
   # https://console.cloud.google.com/kubernetes/clusters/details/us-central1/compute-cluster/logs/autoscaler_logs?chat=true&inv=1&invt=Abp5KQ&project=mtrx-hub-dev-3of
-  n2d_node_pools = [for size in [8, 16, 32, 48, 64] : {
+  n2d_node_pools = [for size in [8, 16, 32, 48, 64, 80] : {
     name               = "n2d-highmem-${size}-nodes"
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
@@ -63,7 +63,7 @@ locals {
   ]
 
   # Spot node pools for cost-effective compute workloads
-  n2d_spot_node_pools = [for size in [8, 16, 32, 48, 64] : {
+  n2d_spot_node_pools = [for size in [8, 16, 32, 48, 64, 80] : {
     name               = "n2d-highmem-${size}-spot-nodes"
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
@@ -163,9 +163,9 @@ locals {
 
   # Define node pools that should have the large memory taint
   large_memory_pools = concat(
-    [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-nodes"],
-    [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-spot-nodes"],
-    [for size in [16, 32, 48, 64] : "n2-standard-${size}-nodes"],
+    [for size in [8, 16, 32, 48, 64, 80] : "n2d-highmem-${size}-nodes"],
+    [for size in [8, 16, 32, 48, 64, 80] : "n2d-highmem-${size}-spot-nodes"],
+    [for size in [16, 32, 48, 64, 80] : "n2-standard-${size}-nodes"],
     ["g2-standard-16-l4-nodes"],
     ["g2-standard-16-l4-spot-nodes"],
     ["h3-standard-88-nodes"],
@@ -295,7 +295,7 @@ locals {
     {
       # Add spot taints for spot node pools
       for pool in concat(
-        [for size in [8, 16, 32, 48, 64] : "n2d-highmem-${size}-spot-nodes"]
+        [for size in [8, 16, 32, 48, 64, 80] : "n2d-highmem-${size}-spot-nodes"]
       ) :
       pool => [
         {

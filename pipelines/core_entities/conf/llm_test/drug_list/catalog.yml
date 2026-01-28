@@ -1,0 +1,8 @@
+raw.curated_drug_list:
+  type: pandas.CSVDataset
+  filepath: ${globals:paths.raw}/curated-drug-list.tsv
+  load_args:
+    sep: "\t"
+    nrows: 5
+  save_args:
+    sep: "\t"
