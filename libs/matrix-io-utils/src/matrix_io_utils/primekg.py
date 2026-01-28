@@ -97,12 +97,20 @@ def fix_curies(edges: pl.LazyFrame) -> pl.LazyFrame:
             )
             .with_columns(
                 [
-                    pl.when(pl.col(map_item["source"]).str.contains("CTD|GO|DrugBank"))
+                    pl.when(pl.col(map_item["source"]).str.contains("CTD|GO"))
                     .then(
                         pl.concat_str(
                             [pl.col(map_item["source"]), pl.col(map_item["id"])], separator=":", ignore_nulls=True
                         )
                     )
+                    .otherwise(pl.col(map_item["sub_or_obj_col"]))
+                    .alias(map_item["sub_or_obj_col"]),
+                ]
+            )
+            .with_columns(
+                [
+                    pl.when(pl.col(map_item["source"]).str.contains("DrugBank"))
+                    .then(pl.concat_str([pl.lit("DRUGBANK"), pl.col(map_item["id"])], separator=":", ignore_nulls=True))
                     .otherwise(pl.col(map_item["sub_or_obj_col"]))
                     .alias(map_item["sub_or_obj_col"]),
                 ]

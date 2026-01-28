@@ -15,6 +15,7 @@ import pandas as pd
 import pandera.pandas as pa
 import pandera.pyspark as pas
 import pyspark.sql as ps
+import pyspark.sql.types as pyspark_types
 from pandera.decorators import _handle_schema_error
 
 
@@ -35,12 +36,34 @@ class DataFrameSchema:
     unique: Optional[List] = None
     strict: bool = False
 
+    def _convert_spark_to_pandas_type(self, spark_type):
+        """Convert PySpark data type to pandas-compatible type for Pandera."""
+        if isinstance(spark_type, pyspark_types.StringType):
+            return str
+        elif isinstance(spark_type, pyspark_types.IntegerType):
+            return int
+        elif isinstance(spark_type, pyspark_types.LongType):
+            return int
+        elif isinstance(spark_type, pyspark_types.FloatType):
+            return float
+        elif isinstance(spark_type, pyspark_types.DoubleType):
+            return float
+        elif isinstance(spark_type, pyspark_types.BooleanType):
+            return bool
+        elif isinstance(spark_type, pyspark_types.ArrayType):
+            return list
+        else:
+            # Default fallback - return the type as-is
+            return spark_type
+
     def build_for_type(self, type_) -> typing.Union[pas.DataFrameSchema, pa.DataFrameSchema]:
         # Build pandas version
         if type_ is pd.DataFrame:
             return pa.DataFrameSchema(
                 columns={
-                    name: pa.Column(col.type_, checks=col.checks, nullable=col.nullable)
+                    name: pa.Column(
+                        self._convert_spark_to_pandas_type(col.type_), checks=col.checks, nullable=col.nullable
+                    )
                     for name, col in self.columns.items()
                 },
                 unique=self.unique,
@@ -119,7 +142,7 @@ def check_output(
                 raise TypeError("No output typehint specified!")
 
             if df_name:
-                if not typing.get_origin(typing.Dict) == dict:
+                if typing.get_origin(type_) is not dict:
                     raise TypeError("Specified df_name arg, but function output typehint is not dict.")
 
                 type_ = typing.get_args(type_)[1]

@@ -19,6 +19,7 @@ def sample_input_df(spark: ps.SparkSession) -> ps.DataFrame:
             "category": "TestCategory",
             "description": "Test Description",
             "upstream_data_source": ["source1", "source2"],
+            "publications": ["publication1", "publication2"],
         },
         {
             "id": "2",
@@ -26,6 +27,7 @@ def sample_input_df(spark: ps.SparkSession) -> ps.DataFrame:
             "category": "TestCategory2",
             "description": "Test Description 2",
             "upstream_data_source": ["source3"],
+            "publications": ["publication3"],
         },
     ]
     return spark.createDataFrame(data)
@@ -83,15 +85,15 @@ def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFram
             "label": "TestCategory",
             "property_keys": ["name", "category", "description"],
             "property_values": ["Test Node", "TestCategory", "Test Description"],
-            "array_property_keys": ["upstream_data_source"],
-            "array_property_values": [["source1", "source2"]],
+            "array_property_keys": ["upstream_data_source", "publications"],
+            "array_property_values": [["source1", "source2"], ["publication1", "publication2"]],
         },
         {
             "label": "TestCategory2",
             "property_keys": ["name", "category", "description"],
             "property_values": ["Test Node 2", "TestCategory2", "Test Description 2"],
-            "array_property_keys": ["upstream_data_source"],
-            "array_property_values": [["source3"]],
+            "array_property_keys": ["upstream_data_source", "publications"],
+            "array_property_values": [["source3"], ["publication3"]],
         },
     ]
 
@@ -105,7 +107,8 @@ def test_ingest_nodes_basic(spark: ps.SparkSession, sample_input_df: ps.DataFram
 def test_ingest_nodes_empty_df(spark: ps.SparkSession) -> None:
     """Test handling of empty dataframe."""
     empty_df = spark.createDataFrame(
-        [], "id string, name string, category string, description string, upstream_data_source array<string>"
+        [],
+        "id string, name string, category string, description string, upstream_data_source array<string>, publications array<string>",
     )
 
     result = ingest_nodes(empty_df)

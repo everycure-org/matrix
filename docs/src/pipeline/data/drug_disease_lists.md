@@ -256,7 +256,7 @@ This has various purposes:
 There are three major ways we add these groupings:
 
 1. Mondo subset tags. Mondo itself curates certain subsets, such as the "Harrisons view", which corresponds to the disease categories from a [popular medical textbook](https://accessmedicine.mhmedical.com/book.aspx?bookID=3095).
-2. LLM-generated subset tags. We have developed a [Kedro pipeline](https://github.com/everycure-org/matrix-disease-list/tree/main/llm-disease-categorization) which generates disease tags flexibly using LLMs.
+2. LLM-generated subset tags. We have developed a [Kedro pipeline](https://github.com/everycure-org/matrix/tree/main/pipelines/core_entities) which generates disease tags flexibly using LLMs.
 3. Manual curation of subset grouping classes. We have provided a way to manually curate subset groupings, so that new subsets can be defined as needed.
 
 
@@ -269,10 +269,6 @@ Mondo provides two majore subsets:
 1. Its manually curated class hierarchy. Everything under the [human disease](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0700096?lang=en) concept is considered a subset. The advantage of this subset is that it will always cover the entirety of all human diseases in Mondo.
 2. The Harrison subset. Corresponding to a [popular medical textbook](https://accessmedicine.mhmedical.com/book.aspx?bookID=3095), this subset contains most Mondo classes, using the groupings provided by the textbook.
 Note, at the time of this writing the Harrison view and the manually curated disease hierarchy are the same (this was not the case, for example last month, and might change again in the future.)
-
-### LLM-generated subset tags
-
-We have developed a [Kedro pipeline](https://github.com/everycure-org/matrix-disease-list/tree/main/llm-disease-categorization) which generates disease tags flexibly using LLMs.
 
 ### Manually curated subset tags
 

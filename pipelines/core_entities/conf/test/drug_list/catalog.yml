@@ -1,0 +1,18 @@
+_pandas_tsv: &_pandas_tsv
+  type: pandas.CSVDataset
+  load_args:
+    sep: "\t"
+  save_args:
+    sep: "\t"
+
+raw.curated_drug_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/curated-drug-list.tsv
+
+raw.drugbank_drug_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/drugbank-drug-list.tsv
+
+raw.drugbank_salt_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/drugbank-salt-list.tsv

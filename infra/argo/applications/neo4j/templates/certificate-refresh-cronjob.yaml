@@ -29,8 +29,17 @@ spec:
             - -c
             - |
               echo "Restarting Neo4j to refresh certificates at $(date)"
-              kubectl exec -n {{ .Release.Namespace }} {{ .Release.Name }}-0 -- neo4j restart
-              echo "Neo4j restart completed at $(date)"
+              kubectl rollout restart statefulset/{{ .Release.Name }} -n {{ .Release.Namespace }}
+              
+              # Wait for rollout to complete (timeout after 10 minutes)
+              kubectl rollout status statefulset/{{ .Release.Name }} -n {{ .Release.Namespace }} --timeout=10m
+              
+              if [ $? -eq 0 ]; then
+                echo "Neo4j StatefulSet restart completed successfully at $(date)"
+              else
+                echo "ERROR: Neo4j StatefulSet restart failed or timed out at $(date)"
+                exit 1
+              fi
           restartPolicy: OnFailure
 ---
 # Service account for the CronJob
@@ -40,16 +49,19 @@ metadata:
   name: {{ .Release.Name }}-sa
   namespace: {{ .Release.Namespace }}
 ---
-# Role with permissions to exec into pods
+# Role with permissions to restart StatefulSets
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ .Release.Name }}-pod-exec-role
   namespace: {{ .Release.Namespace }}
 rules:
-- apiGroups: [""]
-  resources: ["pods", "pods/exec"]
-  verbs: ["get", "list", "create"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets"]
+  verbs: ["get", "list", "patch"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets/status"]
+  verbs: ["get"]
 ---
 # RoleBinding to link the service account to the role
 apiVersion: rbac.authorization.k8s.io/v1

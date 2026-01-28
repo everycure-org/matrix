@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import re
+import subprocess
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Optional
@@ -13,7 +14,8 @@ import pandas as pd
 import pyspark.sql as ps
 from google.cloud import bigquery, storage
 from kedro.io.core import AbstractDataset, DatasetError, Version
-from kedro_datasets.pandas import CSVDataset, GBQTableDataset
+from kedro_datasets.pandas import CSVDataset
+from kedro_datasets.pandas import GBQTableDataset as KedroGBQTableDataset
 from kedro_datasets.partitions import PartitionedDataset
 from kedro_datasets.spark import SparkDataset, SparkJDBCDataset
 from tqdm import tqdm
@@ -102,7 +104,7 @@ class SparkBigQueryDataset(LazySparkDataset):
         raise NotImplementedError("Save not supported for BigQuerySparkQueryDataSet.")
 
 
-class PandasBigQueryDataset(GBQTableDataset):
+class PandasBigQueryDataset(KedroGBQTableDataset):
     """
     Pandas dataset that loads data from a BigQuery table and returns
     the result as a Pandas DataFrame.
@@ -195,8 +197,16 @@ class SparkDatasetWithBQExternalTable(LazySparkDataset):
         self._create_dataset()
 
         # Create external table, referencing the dataset in object storage
+        uri = self._path
+        if uri.endswith(f".{self._format}"):
+            # pointing at a single Parquet file – use it directly
+            source_uris = [uri]
+        else:
+            # pointing at a directory – match all parts in the folder
+            source_uris = [f"{uri}/*.{self._format}"]
+
         external_config = bigquery.ExternalConfig(self._format.upper())
-        external_config.source_uris = [f"{self._path}/*.{self._format}"]
+        external_config.source_uris = source_uris
 
         # Register the external table within BigQuery
         table = bigquery.Table(f"{self._dataset_id}.{self._table}")
@@ -250,6 +260,13 @@ class GoogleSheetsDataset(CSVDataset):
             worksheet_gid: The id of a worksheet. it can be seen in the url as the value of the parameter ‘gid’
             service_account_file_path: Path to the service account file. The Google Sheet must be shared with this service account's email.
         """
+
+        self._service_account_file_path = service_account_file_path
+        self._spreadsheet_url = spreadsheet_url
+        self._worksheet_gid = worksheet_gid
+        super().__init__(filepath=None)
+
+    def _init_worksheet(self, service_account_file_path, spreadsheet_url, worksheet_gid):
         self._gc = gspread.service_account(filename=service_account_file_path)
         spreadsheet = self._gc.open_by_url(spreadsheet_url)
 
@@ -260,13 +277,13 @@ class GoogleSheetsDataset(CSVDataset):
                 f"Could not find worksheet with gid {worksheet_gid} in spreadsheet {spreadsheet_url}.\nAvailable worksheets: {spreadsheet.worksheets()}"
             )
 
-        super().__init__(filepath=None)
-
     def load(self) -> pd.DataFrame:
+        self._init_worksheet(self._service_account_file_path, self._spreadsheet_url, self._worksheet_gid)
         df = pd.DataFrame(self._worksheet.get_all_records())
         return df
 
     def save(self, df: pd.DataFrame) -> None:
+        self._init_worksheet(self._service_account_file_path, self._spreadsheet_url, self._worksheet_gid)
         self._worksheet.update([df.columns.values.tolist()] + df.values.tolist())
 
 
@@ -471,3 +488,70 @@ class PartitionedAsyncParallelDataset(PartitionedDataset):
 
         run_async_tasks()
         self._invalidate_caches()
+
+
+class GBQTableDataset(KedroGBQTableDataset):
+    """
+    A Kedro dataset for loading and saving pandas DataFrames to/from Google BigQuery tables.
+
+    This dataset extends the base GBQTableDataset with the ability to add labels to tables
+    """
+
+    def __init__(
+        self,
+        project: str,
+        dataset: str,
+        table_name: str,
+        credentials: Any | None = None,
+        load_args: dict[str, Any] | None = None,
+        save_args: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        label_key: str | None = None,
+        label_value: str | None = None,
+    ) -> None:
+        """
+        Initialize the Custom GBQ Table Dataset.
+
+        Args:
+            project: Google Cloud project ID
+            dataset: BigQuery dataset name
+            table_name: BigQuery table name
+            credentials: Google Cloud credentials (optional)
+            load_args: Additional arguments passed to pandas.read_gbq()
+            save_args: Additional arguments passed to pandas.DataFrame.to_gbq()
+            metadata: Arbitrary metadata for the dataset
+            label_key: Key for the table label to set after saving (optional)
+            label_value: Value for the table label to set after saving (optional)
+        """
+        dataset = SparkDatasetWithBQExternalTable._sanitize_name(dataset)
+        super().__init__(
+            project=project,
+            dataset=dataset,
+            table_name=table_name,
+            credentials=credentials,
+            load_args=load_args,
+            save_args=save_args,
+            metadata=metadata,
+        )
+        self.project = project
+        self.dataset = dataset
+        self.table_name = table_name
+        self.label_key = label_key
+        self.label_value = label_value
+
+    def save(self, data: pd.DataFrame) -> None:
+        super().save(data)
+
+        # Set table label if both key and value are provided
+        if self.label_key and self.label_value:
+            table_ref = f"{self.project}:{self.dataset}.{self.table_name}"
+
+            command = [
+                "bq",
+                "update",
+                "--set_label",
+                f"{self.label_key}:{self.label_value}",
+                table_ref,
+            ]
+
+            subprocess.run(command, check=True)
