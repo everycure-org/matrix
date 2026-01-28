@@ -1,5 +1,6 @@
 nav:
     - index.md
+    - public_data_releases.md
     - release_history.md
     - attribution.md
     - knowledge_sources.md
