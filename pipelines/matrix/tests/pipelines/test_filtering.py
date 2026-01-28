@@ -380,14 +380,20 @@ def test_remove_rows_by_column_overlap_without_excluded_sources(spark, sample_no
     result = filter.apply(sample_nodes)
     expected = spark.createDataFrame(
         [
-            ("CHEBI:002", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["rtxkg2", "robokop"]),
-            ("CHEBI:003", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["robokop"]),
-            ("CHEBI:004", ["biolink:NamedThing", "biolink:ChemicalEntity"], ["rtxkg2"]),
+            (
+                "CHEBI:002",
+                ["biolink:NamedThing", "biolink:ChemicalEntity"],
+                "biolink:ChemicalEntity",
+                ["rtxkg2", "robokop"],
+            ),
+            ("CHEBI:003", ["biolink:NamedThing", "biolink:ChemicalEntity"], "biolink:ChemicalEntity", ["robokop"]),
+            ("CHEBI:004", ["biolink:NamedThing", "biolink:ChemicalEntity"], "biolink:ChemicalEntity", ["rtxkg2"]),
         ],
         schema=StructType(
             [
                 StructField("id", StringType(), False),
                 StructField("all_categories", ArrayType(StringType()), False),
+                StructField("category", StringType(), False),
                 StructField("upstream_data_source", ArrayType(StringType()), False),
             ]
         ),
