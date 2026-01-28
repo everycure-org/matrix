@@ -166,7 +166,8 @@ class RemoveRowsByColumnOverlap(Filter):
         """Initialize the filter with column and values to remove.
 
         Args:
-            column: Name of the column to check
+            column: Name of the column to check. Note the dtype of the column should be string;
+                    if array[string], everything will be removed
             remove_list: List of values that will be looked for in the column
             excluded_sources: List of sources that won't have the filter applied to them
         """
@@ -176,7 +177,8 @@ class RemoveRowsByColumnOverlap(Filter):
         self.upstream_data_source_column = upstream_data_source_column
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        filter_condition = ~sf.arrays_overlap(sf.col(self.column), sf.lit(self.remove_list))
+        col_type = dict(df.dtypes)[self.column]
+        filter_condition = ~sf.col(self.column).isin(self.remove_list)
         if self.excluded_sources:
             filter_condition = filter_condition | sf.arrays_overlap(
                 sf.col(self.upstream_data_source_column), sf.lit(self.excluded_sources)
@@ -192,7 +194,7 @@ class TriplePattern(Filter):
     specified triple patterns.
     """
 
-    def __init__(self, triples_to_exclude: Iterable[list[str]]):
+    def __init__(self, triples_to_exclude: Iterable[list[str]], excluded_sources: Optional[List[str]] = None):
         """Initialize the filter with triple patterns to exclude.
 
         Args:
@@ -200,6 +202,7 @@ class TriplePattern(Filter):
                 [subject_category, predicate, object_category]
         """
         self.triples_to_exclude = triples_to_exclude
+        self.excluded_sources = excluded_sources
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         filter_condition = sf.lit(True)
@@ -208,5 +211,9 @@ class TriplePattern(Filter):
                 (sf.col("subject_category") == subject_cat)
                 & (sf.col("predicate") == predicate)
                 & (sf.col("object_category") == object_cat)
+            )
+        if self.excluded_sources:
+            filter_condition = filter_condition | sf.arrays_overlap(
+                sf.col("upstream_data_source"), sf.lit(self.excluded_sources)
             )
         return df.filter(filter_condition)
