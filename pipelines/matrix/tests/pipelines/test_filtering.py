@@ -11,21 +11,25 @@ def sample_nodes(spark):
             (
                 "CHEBI:001",
                 ["biolink:NamedThing", "biolink:Drug"],
+                "biolink:Drug",
                 ["rtxkg2", "robokop"],
             ),
             (
                 "CHEBI:002",
                 ["biolink:NamedThing", "biolink:ChemicalEntity"],
+                "biolink:ChemicalEntity",
                 ["rtxkg2", "robokop"],
             ),
             (
                 "CHEBI:003",
                 ["biolink:NamedThing", "biolink:ChemicalEntity"],
+                "biolink:ChemicalEntity",
                 ["robokop"],
             ),
             (
                 "CHEBI:004",
                 ["biolink:NamedThing", "biolink:ChemicalEntity"],
+                "biolink:ChemicalEntity",
                 ["rtxkg2"],
             ),
         ],
@@ -33,6 +37,7 @@ def sample_nodes(spark):
             [
                 StructField("id", StringType(), False),
                 StructField("all_categories", ArrayType(StringType()), False),
+                StructField("category", StringType(), False),
                 StructField("upstream_data_source", ArrayType(StringType()), False),
             ]
         ),
@@ -93,16 +98,19 @@ def test_source_filter_nodes(spark, sample_nodes):
             (
                 "CHEBI:001",
                 ["biolink:NamedThing", "biolink:Drug"],
+                "biolink:Drug",
                 ["rtxkg2", "robokop"],
             ),
             (
                 "CHEBI:002",
                 ["biolink:NamedThing", "biolink:ChemicalEntity"],
+                "biolink:ChemicalEntity",
                 ["rtxkg2", "robokop"],
             ),
             (
                 "CHEBI:004",
                 ["biolink:NamedThing", "biolink:ChemicalEntity"],
+                "biolink:ChemicalEntity",
                 ["rtxkg2"],
             ),
         ],
@@ -110,6 +118,7 @@ def test_source_filter_nodes(spark, sample_nodes):
             [
                 StructField("id", StringType(), False),
                 StructField("all_categories", ArrayType(StringType()), False),
+                StructField("category", StringType(), False),
                 StructField("upstream_data_source", ArrayType(StringType()), False),
             ]
         ),
@@ -374,9 +383,7 @@ def test_triple_pattern_filter_multiple_patterns(spark):
 
 
 def test_remove_rows_by_column_overlap_without_excluded_sources(spark, sample_nodes):
-    filter = filters.RemoveRowsByColumnOverlap(
-        column="all_categories", remove_list=["biolink:Drug"], excluded_sources=[]
-    )
+    filter = filters.RemoveRowsByColumnOverlap(column="category", remove_list=["biolink:Drug"], excluded_sources=[])
     result = filter.apply(sample_nodes)
     expected = spark.createDataFrame(
         [
@@ -403,7 +410,7 @@ def test_remove_rows_by_column_overlap_without_excluded_sources(spark, sample_no
 
 def test_remove_rows_by_column_overlap_with_excluded_sources(spark, sample_nodes):
     filter = filters.RemoveRowsByColumnOverlap(
-        column="all_categories", remove_list=["biolink:ChemicalEntity"], excluded_sources=["robokop"]
+        column="category", remove_list=["biolink:ChemicalEntity"], excluded_sources=["robokop"]
     )
     result = filter.apply(sample_nodes)
     expected = spark.createDataFrame(
