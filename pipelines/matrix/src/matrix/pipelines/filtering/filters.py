@@ -194,7 +194,7 @@ class TriplePattern(Filter):
     specified triple patterns.
     """
 
-    def __init__(self, triples_to_exclude: Iterable[list[str]]):
+    def __init__(self, triples_to_exclude: Iterable[list[str]], excluded_sources: Optional[List[str]] = None):
         """Initialize the filter with triple patterns to exclude.
 
         Args:
@@ -202,6 +202,7 @@ class TriplePattern(Filter):
                 [subject_category, predicate, object_category]
         """
         self.triples_to_exclude = triples_to_exclude
+        self.excluded_sources = excluded_sources
 
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         filter_condition = sf.lit(True)
@@ -210,5 +211,9 @@ class TriplePattern(Filter):
                 (sf.col("subject_category") == subject_cat)
                 & (sf.col("predicate") == predicate)
                 & (sf.col("object_category") == object_cat)
+            )
+        if self.excluded_sources:
+            filter_condition = filter_condition | sf.arrays_overlap(
+                sf.col("upstream_data_source"), sf.lit(self.excluded_sources)
             )
         return df.filter(filter_condition)
