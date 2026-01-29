@@ -383,7 +383,9 @@ def test_triple_pattern_filter_multiple_patterns(spark):
 
 
 def test_remove_rows_by_column_overlap_without_excluded_sources(spark, sample_nodes):
-    filter = filters.RemoveRowsByColumnOverlap(column="category", remove_list=["biolink:Drug"], excluded_sources=[])
+    filter = filters.RemoveRowsByColumnOverlap(
+        column="all_categories", remove_list=["biolink:Drug"], excluded_sources=[]
+    )
     result = filter.apply(sample_nodes)
     expected = spark.createDataFrame(
         [
@@ -410,7 +412,7 @@ def test_remove_rows_by_column_overlap_without_excluded_sources(spark, sample_no
 
 def test_remove_rows_by_column_overlap_with_excluded_sources(spark, sample_nodes):
     filter = filters.RemoveRowsByColumnOverlap(
-        column="category", remove_list=["biolink:ChemicalEntity"], excluded_sources=["robokop"]
+        column="all_categories", remove_list=["biolink:ChemicalEntity"], excluded_sources=["robokop"]
     )
     result = filter.apply(sample_nodes)
     expected = spark.createDataFrame(
