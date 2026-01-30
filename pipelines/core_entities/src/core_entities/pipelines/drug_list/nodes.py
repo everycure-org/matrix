@@ -749,6 +749,8 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
         columns={
             "id": pa.Column(nullable=False),
             "name": pa.Column(nullable=False),
+            "atc_name": pa.Column(nullable=True),
+            "atc_synonym": pa.Column(nullable=True),
             "atc_main": pa.Column(nullable=True),
             "atc_level_1": pa.Column(nullable=True),
             "atc_level_2": pa.Column(nullable=True),
@@ -831,7 +833,7 @@ def resolve_atc_codes(
     atc_codes = pd.DataFrame(asyncio.run(resolve_all_atc_codes(curated_drug_list, parallelism=whocc_parallelism)))
     atc_codes_broken_down = break_down_atc_code(atc_codes)
 
-    atc_codes_and_labels = add_atc_labels(atc_codes_broken_down, atc_labels).drop(columns=["atc_name", "atc_synonym"])
+    atc_codes_and_labels = add_atc_labels(atc_codes_broken_down, atc_labels)
 
     result = pd.merge(curated_drug_list[["id", "name"]], atc_codes_and_labels, on="id", how="left")
     return result

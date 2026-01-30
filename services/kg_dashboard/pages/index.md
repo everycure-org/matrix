@@ -4,7 +4,7 @@ title: KG Dashboard
 
 <script context="module">
     import { getSourceColor } from './_lib/colors';
-    
+
     // Function to get colors for pie chart data
     export function getPieColors(data) {
         return data.map(item => getSourceColor(item.name));
@@ -12,8 +12,6 @@ title: KG Dashboard
 
     const release_version = import.meta.env.VITE_release_version;
     const build_time = import.meta.env.VITE_build_time;
-    const robokop_version = import.meta.env.VITE_robokop_version;
-    const rtx_kg2_version = import.meta.env.VITE_rtx_kg2_version;
     const benchmark_version = import.meta.env.VITE_benchmark_version;
 </script>
 
@@ -71,20 +69,33 @@ from
 ```
 
 ```sql upstream_data_sources_edges
-select 
+select
     upstream_data_source as name
     , n_edges as value
-from 
-    bq.upstream_data_sources   
+from
+    bq.upstream_data_sources
 ```
+
+```sql kg_versions
+select
+    kgl.knowledge_graph,
+    kgl.display_name,
+    kgv.version
+from bq.kg_list kgl
+left join bq.kg_versions kgv on kgl.knowledge_graph = kgv.knowledge_graph
+order by kgl.display_name
+```
+
 <Details title="Source details">
   <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mt-2">
-    This release integrates nodes and edges from multiple upstream sources, shown in the charts below. 
+    This release integrates nodes and edges from multiple upstream sources, shown in the charts below.
     The versions listed indicate the specific snapshots used for this build of the knowledge graph.<br/>
     <br><strong>Knowledge Graph Versions:</strong><br/>
-    • <strong>ROBOKOP:</strong> <span class="font-mono">{robokop_version}</span> <br/>
-    • <strong>RTX-KG2:</strong> <span class="font-mono">{rtx_kg2_version}</span> <br/>
-   
+    {#each kg_versions as kg}
+      {#if kg.version}
+        • <strong>{kg.display_name}:</strong> <span class="font-mono">{kg.version}</span><br/>
+      {/if}
+    {/each}
   </div>
 </Details>
 

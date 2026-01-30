@@ -205,8 +205,16 @@ def build_nodes(
         )
         .with_columns(
             [
-                pl.when(pl.col("node_source").str.contains("CTD|GO|DrugBank"))
+                pl.when(pl.col("node_source").str.contains("CTD|GO"))
                 .then(pl.concat_str([pl.col("node_source"), pl.col("node_id")], separator=":", ignore_nulls=True))
+                .otherwise(pl.col("node_source"))
+                .alias("node_source"),
+            ]
+        )
+        .with_columns(
+            [
+                pl.when(pl.col("node_source").str.contains("DrugBank"))
+                .then(pl.concat_str([pl.lit("DRUGBANK"), pl.col("node_id")], separator=":", ignore_nulls=True))
                 .otherwise(pl.col("node_source"))
                 .alias("node_source"),
             ]

@@ -2,8 +2,17 @@ _pandas_tsv: &_pandas_tsv
   type: pandas.CSVDataset
   load_args:
     sep: "\t"
+    keep_default_na: False
   save_args:
     sep: "\t"
+
+raw.curated_disease_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/curated-disease-list.tsv
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+    dtype: str
 
 raw.disease_categories:
   <<: [*_pandas_tsv]
@@ -17,10 +26,10 @@ raw.disease_prevalence:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-prevalence.tsv
 
-raw.disease_list:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/disease-list.tsv
-
 raw.orchard_reviews:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/orchard-reviews.tsv
+
+raw.disease_txgnn:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease-txgnn.tsv

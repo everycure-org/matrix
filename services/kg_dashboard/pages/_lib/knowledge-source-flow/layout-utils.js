@@ -2,9 +2,16 @@ import { LAYOUT_CONSTANTS, DEFAULT_LEVEL_CONFIG } from './constants.js';
 import { calculateAngleRangeForNodeCount, calculateLevelXPositions, calculateAdaptiveRadius, calculateAdaptiveSpread } from './utils.js';
 
 export function calculateLayout(processedData, levelConfig = DEFAULT_LEVEL_CONFIG) {
-  // Use semantic access for readability, with dynamic fallback
-  const { primaryNodes, aggregatorNodes, unifiedNodes } = processedData;
-  const totalNodes = primaryNodes.length + aggregatorNodes.length + unifiedNodes.length;
+  // Dynamically get node arrays based on levelConfig, defaulting to empty arrays
+  const primaryNodes = processedData.primaryNodes || [];
+  const aggregatorNodes = processedData.aggregatorNodes || [];
+  const unifiedNodes = processedData.unifiedNodes || [];
+
+  // Calculate total nodes from all configured levels
+  const totalNodes = levelConfig.reduce((sum, level) => {
+    const nodes = processedData[`${level.name}Nodes`] || [];
+    return sum + nodes.length;
+  }, 0);
   const nodeCount = primaryNodes.length;
 
   const radiusX = LAYOUT_CONSTANTS.OVAL_RADIUS_X;
