@@ -14,6 +14,12 @@ _bigquery_ds: &_bigquery_ds
 
 # Overwriting the base catalog to use the bigquery datasets
 
+# Normalization mapping
+integration.int.{source}.nodes.nodes_norm_mapping:
+  <<: *_bigquery_ds
+  filepath: ${globals:paths.integration}/int/{source}/nodes_norm_mapping
+  table: "{source}_nodes_norm_mapping"
+
 # Transformed nodes/edges
 integration.int.{source}.nodes:
   <<: *_bigquery_ds
