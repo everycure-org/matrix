@@ -53,7 +53,6 @@ filtering:
 
     filter_triples:
       _object: matrix.pipelines.filtering.filters.TriplePattern
-      excluded_sources: ["robokop"]
       triples_to_exclude:
        - ["biolink:Drug", "biolink:interacts_with", "biolink:Drug"]
        - ["biolink:Drug", "biolink:interacts_with", "biolink:SmallMolecule"]
