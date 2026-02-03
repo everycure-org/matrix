@@ -9,6 +9,11 @@ import polars as pl
 from scipy.stats import entropy
 
 
+def _compute_recall_at_n(ranks: pl.Series, n_values: np.ndarray, num_positives: int) -> np.ndarray:
+    """Compute recall@n values from a series of positive ranks."""
+    return np.array([(ranks <= n).sum() / num_positives for n in n_values])
+
+
 class ComparisonEvaluation(abc.ABC):
     """Abstract base class for run-comparison evaluations."""
 
@@ -297,16 +302,11 @@ class FullMatrixRecallAtN(ComparisonEvaluationModelSpecific):
 
     def give_y_values(self, matrix: pl.DataFrame, score_col_name: str = "score") -> np.ndarray:
         """Compute Recall@n values for a single set of predictions."""
-        n_lst = self.give_x_values()
-
-        # Number of known positives
-        N = len(matrix.filter(pl.col(self.ground_truth_col)))
-        if N == 0:
+        num_positives = len(matrix.filter(pl.col(self.ground_truth_col)))
+        if num_positives == 0:
             raise ValueError("No known positives in the matrix.")
-
-        # Return Recall@n values
-        ranks_series = self._give_ranks_series(matrix, score_col_name)
-        return np.array([(ranks_series <= n).sum() / N for n in n_lst])
+        ranks = self._give_ranks_series(matrix, score_col_name)
+        return _compute_recall_at_n(ranks, self.give_x_values(), num_positives)
 
     def give_y_values_baseline(self, combined_pairs: dict[str, Callable[[], pl.LazyFrame]]) -> np.ndarray:
         """Compute Recall@n values for a random classifier."""
@@ -845,31 +845,22 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
                 matrix = matrix.filter(pl.col("target").is_in(disease_stats["target"]))
 
                 # Compute disease-specific ranks for test positives
-                ranks_df = (
-                    matrix.with_columns(
-                        pl.col("score").rank(descending=True, method="random").over("target").alias("rank")
-                    )
-                    .filter(pl.col(self.ground_truth_col))
-                )
+                ranks_df = matrix.with_columns(
+                    pl.col("score").rank(descending=True, method="random").over("target").alias("rank")
+                ).filter(pl.col(self.ground_truth_col))
 
                 # Compute hits@n and recall@n for each n
                 results = disease_stats
                 for n in self.n_values:
-                    hits = (
-                        ranks_df.filter(pl.col("rank") <= n)
-                        .group_by("target")
-                        .len()
-                        .rename({"len": f"hits@{n}"})
-                    )
+                    hits = ranks_df.filter(pl.col("rank") <= n).group_by("target").len().rename({"len": f"hits@{n}"})
                     results = results.join(hits, on="target", how="left").fill_null(0)
                     results = results.with_columns(
                         (pl.col(f"hits@{n}") / pl.col("num_true_drugs")).alias(f"recall@{n}")
                     )
 
                 # Add metadata columns
-                results = (
-                    results.with_columns(pl.lit(model_name).alias("model"), pl.lit(fold).alias("fold"))
-                    .rename({"target": "disease_id"})
+                results = results.with_columns(pl.lit(model_name).alias("model"), pl.lit(fold).alias("fold")).rename(
+                    {"target": "disease_id"}
                 )
                 all_results.append(results)
 
@@ -889,4 +880,85 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
         """Return empty figure (table-only evaluation)."""
         fig, ax = plt.subplots(figsize=(4, 3))
         ax.axis("off")
+        return fig
+
+
+class FoldSpecificRecallAtN(ComparisonEvaluation):
+    """Fold-specific Recall@N evaluation. One row per (n, fold) for direct model comparison."""
+
+    def __init__(
+        self,
+        ground_truth_col: str,
+        n_max: int,
+        perform_sort: bool,
+        title: str,
+        num_n_values: int = 100,
+    ):
+        self.ground_truth_col = ground_truth_col
+        self.n_max = n_max
+        self.perform_sort = perform_sort
+        self.title = title
+        self.num_n_values = num_n_values
+
+    def _give_n_values(self) -> np.ndarray:
+        """Integer n values from 1 to n_max."""
+        return np.linspace(1, self.n_max, self.num_n_values).astype(int)
+
+    def _give_ranks_series(self, matrix: pl.DataFrame) -> pl.Series:
+        """Give the ranks of the known positives (reuses FullMatrixRecallAtN pattern)."""
+        if self.perform_sort:
+            matrix = matrix.sort(by="score", descending=True)
+        return (
+            matrix.with_row_index("index").filter(pl.col(self.ground_truth_col)).select(pl.col("index") + 1).to_series()
+        )
+
+    def _give_recall_values(self, matrix: pl.DataFrame) -> np.ndarray:
+        """Compute Recall@n values for a single matrix."""
+        num_positives = matrix.filter(pl.col(self.ground_truth_col)).height
+        ranks = self._give_ranks_series(matrix)
+        return _compute_recall_at_n(ranks, self._give_n_values(), num_positives)
+
+    def evaluate(
+        self,
+        combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> pl.DataFrame:
+        """Compute fold-specific recall@n for all models and folds."""
+        n_values = self._give_n_values()
+        all_results = []
+
+        for fold in range(predictions_info["num_folds"]):
+            fold_data = {"n": n_values, "fold": [fold] * len(n_values)}
+            for model_name in predictions_info["model_names"]:
+                matrix = combined_predictions[f"{model_name}_fold_{fold}"]().collect()
+                fold_data[f"recall_{model_name}"] = self._give_recall_values(matrix)
+            all_results.append(pl.DataFrame(fold_data))
+
+        return pl.concat(all_results)
+
+    def plot_results(
+        self,
+        results: pl.DataFrame,
+        combined_pairs: dict[str, Callable[[], pl.LazyFrame]],
+        predictions_info: dict[str, any],
+    ) -> plt.Figure:
+        """Plot fold-specific recall@n curves (one subplot per fold)."""
+        num_folds = predictions_info["num_folds"]
+        fig, axes = plt.subplots(1, num_folds, figsize=(5 * num_folds, 5), squeeze=False)
+
+        for fold in range(num_folds):
+            ax = axes[0, fold]
+            fold_results = results.filter(pl.col("fold") == fold)
+            n_values = fold_results["n"].to_numpy()
+            for model_name in predictions_info["model_names"]:
+                ax.plot(n_values, fold_results[f"recall_{model_name}"].to_numpy(), label=model_name)
+            ax.set_xlabel("n")
+            ax.set_ylabel("Recall@n")
+            ax.set_title(f"Fold {fold}")
+            ax.set_ylim(0, 1)
+            ax.legend()
+            ax.grid(True)
+
+        fig.suptitle(self.title)
+        fig.tight_layout()
         return fig
