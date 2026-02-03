@@ -124,6 +124,7 @@ dependencies = [
     "pydantic-graph",
     "pydantic_core",
     "pydantic_settings",
+    "pyoxigraph",
     "Pygments",
     "pyspark==3.5.1",
     "pytest",

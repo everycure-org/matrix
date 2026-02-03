@@ -139,3 +139,23 @@ def create_disease_prevalence_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
+
+
+def create_disease_txgnn_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
+            create_llm_preprocessing_pipeline(),
+            node(
+                func=nodes.invoke_graph,
+                inputs={
+                    "disease_list": "primary.disease_list_patched",
+                    "graph": "params:disease_txgnn.graph",
+                    "invoke_parameters": "params:disease_txgnn.invoke_parameters",
+                    "parallelism": "params:disease_txgnn.parallelism",
+                    "ignore_errors": "params:ignore_llm_pipeline_errors",
+                },
+                name="get_disease_txgnn",
+                outputs="primary.release.disease_txgnn",
+            ),
+        ]
+    )

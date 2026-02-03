@@ -29,30 +29,6 @@ input.manual_disease_remapping:
 # Raw
 # -------------------------------------------------------------------------
 
-raw.disease_list:
-  type: matrix_gcp_datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
-  release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: matrix-disease-list-unfiltered-processed.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: ${globals:github_token}
-  load_args:
-    sep: "\t"
-    keep_default_na: False
-
-raw.disease_obsolete:
-  type: matrix_gcp_datasets.github.GitHubReleaseCSVDataset
-  repository_url: https://github.com/everycure-org/matrix-disease-list
-  release_name: ${globals:data_sources.disease_list.version}
-  release_asset_name: mondo-obsoletes.tsv
-  fs_args:
-    Accept: application/octet-stream
-    Authorization: ${globals:github_token}
-  load_args:
-    sep: "\t"
-    keep_default_na: False
-
 raw.curated_disease_list:
   type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
   spreadsheet_url: https://docs.google.com/spreadsheets/d/1l29b-2MNfNf0EBtjLq7tFEZmZwxTZz1rfezx5RevuaA/edit?gid=632653766#gid=632653766
@@ -74,6 +50,10 @@ raw.disease_labels:
 raw.disease_prevalence:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.raw_llm}/disease_prevalence/${globals:data_sources.disease_prevalence.version}/03_primary/release/disease_prevalence.parquet
+
+raw.disease_txgnn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.raw_llm}/disease_txgnn/${globals:data_sources.disease_txgnn.version}/03_primary/release/disease_txgnn.parquet
 
 # -------------------------------------------------------------------------
 # Primary
@@ -102,6 +82,10 @@ primary.disease_umn:
 primary.disease_prevalence:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease/disease-prevalence.parquet
+
+primary.disease_txgnn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/disease-txgnn.parquet
 
 primary.disease_obsolete:
   <<: [*_pandas_parquet]
