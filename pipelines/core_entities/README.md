@@ -48,6 +48,17 @@ This token is used to access the disease list Github releases. You can access it
 
 ## Releases
 
+### How to make a drug or disease list release
+
+- (Optional) Run first locally in the `base`  environment to make sure everything is fine
+- Run the release pipeline using [the `run_pipeline` github action](https://github.com/everycure-org/matrix/actions/workflows/core_entities_run_pipeline.yaml)
+  - Pick which pipeline to run: `drug_list` or `disease_list`
+  - Pick the version bump type: `patch`, `minor` or `major` (see above for which one to use)
+- Upon completion, a pull request will be created with the release notes and a comparison of the new release with the base release. 
+    - Double check that you are happy with the changes, or investigate them further using notebooks in the `runbooks` folder.
+    - Rename the PR as the PR name will be used to describe the release in the datasets repository.
+- Merging the pull request will automatically trigger the release publication to the public GCS and BQ via [the `publish_release` github action](https://github.com/everycure-org/matrix/actions/workflows/core_entitities_publish_release.yaml)
+
 ### Artefacts 
 
 You can find published releases in our public GCS bucket and on BigQuery
@@ -109,12 +120,3 @@ We make a difference between release pipelines and LLM pipelines. Release pipeli
 - Update the version in the `globals.yml` file to point to the new LLM artefacts.
 
 ![LLM pipelines release process](./docs/images/readme/llm_release_process.png)
-
-### Release pipeline release
-
-- Run first locally in the `base`  environment to make sure everything is fine
-- Run release pipelines using [the `run_pipeline` github action](https://github.com/everycure-org/matrix/actions/workflows/core_entities_run_pipeline.yaml)
-- Upon completion, a pull request will be created with the release notes and a comparison of the new release with the base release. 
-    - Double check that you are happy with the changes, or investigate them further using notebooks in the `runbooks` folder.
-    - Rename the PR as the PR name will be used to describe the release in the datasets repository.
-- Merging the pull request will automatically trigger the release publication to the public GCS and BQ via [the `publish_release` github action](https://github.com/everycure-org/matrix/actions/workflows/core_entitities_publish_release.yaml)

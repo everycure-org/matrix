@@ -41,11 +41,11 @@
     "python.defaultInterpreterPath": ".venv/bin/python",
     "python.testing.pytestEnabled": true,
     "makefile.configureOnOpen": false,
-    "editor.acceptSuggestionOnEnter": false,
+    "editor.acceptSuggestionOnEnter": true,
     "editor.quickSuggestions": {
-        "other": true,
+        "other": false,
         "comments": false,
         "strings": false
     },
-    "editor.quickSuggestionsDelay": 0,
+    "editor.quickSuggestionsDelay": 300,
 }
