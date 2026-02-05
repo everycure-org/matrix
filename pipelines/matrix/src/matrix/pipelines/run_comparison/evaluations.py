@@ -893,12 +893,14 @@ class FoldSpecificRecallAtN(ComparisonEvaluation):
         perform_sort: bool,
         title: str,
         num_n_values: int = 100,
+        fold_names: dict[int, str] | None = None,
     ):
         self.ground_truth_col = ground_truth_col
         self.n_max = n_max
         self.perform_sort = perform_sort
         self.title = title
         self.num_n_values = num_n_values
+        self.fold_names = fold_names or {}
 
     def _give_n_values(self) -> np.ndarray:
         """Integer n values from 1 to n_max."""
@@ -954,7 +956,8 @@ class FoldSpecificRecallAtN(ComparisonEvaluation):
                 ax.plot(n_values, fold_results[f"recall_{model_name}"].to_numpy(), label=model_name)
             ax.set_xlabel("n")
             ax.set_ylabel("Recall@n")
-            ax.set_title(f"Fold {fold}")
+            fold_title = self.fold_names.get(fold, f"Fold {fold}")
+            ax.set_title(fold_title)
             ax.set_ylim(0, 1)
             ax.legend()
             ax.grid(True)

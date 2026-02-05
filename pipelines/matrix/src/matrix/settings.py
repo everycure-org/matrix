@@ -133,7 +133,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "drug_entropy_at_n",
                     "disease_entropy_at_n",
                     "commonality_at_n",
-                    "disease_specific_recall_at_n",
+                    "disease_specific_recall_at_n_table",
                     "fold_specific_recall_at_n",
                     # "ground_truth_recall_at_n",
                     # "negative_recall_at_n",

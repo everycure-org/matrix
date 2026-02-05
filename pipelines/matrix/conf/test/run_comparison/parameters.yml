@@ -45,7 +45,7 @@ run_comparison:
     disease_specific_hit_at_k_off_label_bootstrap:
       k_max: 10
       N_bootstraps: 10
-    disease_specific_recall_at_n:
+    disease_specific_recall_at_n_table:
       n_values: [10, 20, 50, 100]
     fold_specific_recall_at_n:
       n_max: 2500

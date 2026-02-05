@@ -153,7 +153,7 @@ run_comparison:
       N_bootstraps: 100
 
     
-    disease_specific_recall_at_n:
+    disease_specific_recall_at_n_table:
       _object: matrix.pipelines.run_comparison.evaluations.DiseaseSpecificRecallAtNTable
       ground_truth_col: *is_known_positive_col
       perform_sort: True
@@ -167,6 +167,10 @@ run_comparison:
       perform_sort: True
       title: "Fold-specific Recall@n"
       num_n_values: 100
+      # Optional custom subplot titles (defaults to "Fold 0", "Fold 1", etc.)
+      # fold_names:
+      #   0: "Cardiovascular"
+      #   1: "Cancer"
 
     drug_entropy_at_n:
       _object: matrix.pipelines.run_comparison.evaluations.EntropyAtN

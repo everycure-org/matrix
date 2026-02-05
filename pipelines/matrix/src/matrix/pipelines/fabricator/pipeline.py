@@ -107,17 +107,25 @@ def fabricate_run_comparison_matrices(
     """Generate fabricated matrix predictions data to test the run comparison pipeline."""
     np.random.seed(0)
 
+    # Ground truth columns to generate
+    gt_columns = [
+        "is_known_positive",
+        "is_known_negative",
+        "off_label",
+        "ec_indications_list_on_label",
+        "ec_indications_list_off_label",
+        "ec_indications_list",
+    ]
+
     # Generate base matrices of drug-disease pairs
     drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
     diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
     base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
-    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "is_known_positive")
-    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "is_known_negative")
-    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "off_label")
+    for col in gt_columns:
+        base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, col)
     base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
-    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "is_known_positive")
-    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "is_known_negative")
-    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "off_label")
+    for col in gt_columns:
+        base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, col)
 
     # Generate scores and return
     return {
