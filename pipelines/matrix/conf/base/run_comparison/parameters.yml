@@ -14,23 +14,28 @@ run_comparison:
       # Expected format:
       # ----------------
       # - name: <Name of model>
-      #   file_path_list: <List of filepaths for all folds>
+      #   fold_paths_list: <List of filepaths for all folds>
       #     -  e.g. "dir/fold_{0,1,2}/preds" or "dir/fold_{0..2}/preds"
       #   file_format: "parquet" or "csv"
       #   score_col_name: <Name of column containing drug-disease pair scores>
+      #   train_data:
+      #     filepath: <Path to training splits data>
 
-      # WIP
       - name: baseline_t3
         fold_paths_list: 
           - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.14.0/runs/auto-kg-release-v0-14-0-71d040c5/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
         file_format: "parquet"
         score_col_name: "transformed_treat_score"
+        train_data:
+          filepath: "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.14.0/runs/auto-kg-release-v0-14-0-71d040c5/datasets/modelling/model_input/splits"
 
       - name: filtered_xg_ensemble
         fold_paths_list:
           - "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.14.0/runs/xg-ensemble-filtering-3ccd1d69/datasets/matrix_transformations/fold_{0..4}/transformed_matrix"
         file_format: "parquet"
         score_col_name: "transformed_treat_score"
+        train_data:
+          filepath: "gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.14.0/runs/auto-kg-release-v0-14-0-71d040c5/datasets/modelling/model_input/splits"
 
   # Configuration for the evaluations to perform. Usually it is not necessary to modify these.
   available_ground_truth_cols: # These columns are expected to be present on the predictions dataframes for all models and folds.

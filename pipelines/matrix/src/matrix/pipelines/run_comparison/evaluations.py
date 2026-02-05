@@ -21,12 +21,14 @@ class ComparisonEvaluation(abc.ABC):
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
+        **kwargs,
     ) -> pl.DataFrame:
         """Evaluate the results.
 
         Args:
             combined_predictions: Dictionary of PartitionedDataset load fn's returning predictions for all folds and models
             predictions_info: Dictionary containing model names and number of folds.
+            **kwargs: Additional arguments (e.g. training_counts for disease-specific evaluations).
 
         Returns:
             Polars DataFrame with the schema expected by the plot_results method.
@@ -818,13 +820,44 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
         self.title = title
         self.n_values = sorted(n_values)
 
+    def _load_training_counts(self, input_paths: list[dict], num_folds: int) -> dict[str, pl.DataFrame] | None:
+        """Load training counts from train_data.filepath if defined in any model config."""
+        train_data_filepath = None
+        for model_config in input_paths:
+            if "train_data" in model_config and "filepath" in model_config["train_data"]:
+                train_data_filepath = model_config["train_data"]["filepath"]
+                break
+
+        if train_data_filepath is None:
+            return None
+
+        known_pairs = pl.scan_parquet(train_data_filepath)
+        result = {}
+        for fold in range(num_folds):
+            result[fold] = (
+                known_pairs.filter((pl.col("fold") == fold) & (pl.col("split") == "TRAIN") & (pl.col("y") == 1))
+                .group_by("target")
+                .len()
+                .rename({"target": "disease_id", "len": "num_training_pairs"})
+                .collect()
+            )
+        return result
+
     def evaluate(
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
+        input_paths: list[dict] | None = None,
+        **kwargs,
     ) -> pl.DataFrame:
         """Compute disease-specific hits@n and recall@n for all models and folds."""
         all_results = []
+
+        # Load training counts if train_data.filepath is defined
+        training_counts = None
+        if input_paths is not None:
+            training_counts = self._load_training_counts(input_paths, predictions_info["num_folds"])
+        has_training_data = training_counts is not None
 
         for model_name in predictions_info["model_names"]:
             for fold in range(predictions_info["num_folds"]):
@@ -837,10 +870,10 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
                 disease_stats = (
                     matrix.group_by("target")
                     .agg(
-                        pl.col(self.ground_truth_col).sum().alias("num_true_drugs"),
+                        pl.col(self.ground_truth_col).sum().alias("num_test_drugs"),
                         pl.len().alias("num_predictions"),
                     )
-                    .filter(pl.col("num_true_drugs") > 0)
+                    .filter(pl.col("num_test_drugs") > 0)
                 )
                 matrix = matrix.filter(pl.col("target").is_in(disease_stats["target"]))
 
@@ -850,23 +883,35 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
                 ).filter(pl.col(self.ground_truth_col))
 
                 # Compute hits@n and recall@n for each n
-                results = disease_stats
+                results = disease_stats.rename({"target": "disease_id"})
                 for n in self.n_values:
-                    hits = ranks_df.filter(pl.col("rank") <= n).group_by("target").len().rename({"len": f"hits@{n}"})
-                    results = results.join(hits, on="target", how="left").fill_null(0)
+                    hits = (
+                        ranks_df.filter(pl.col("rank") <= n)
+                        .group_by("target")
+                        .len()
+                        .rename({"target": "disease_id", "len": f"hits@{n}"})
+                    )
+                    results = results.join(hits, on="disease_id", how="left").fill_null(0)
                     results = results.with_columns(
-                        (pl.col(f"hits@{n}") / pl.col("num_true_drugs")).alias(f"recall@{n}")
+                        (pl.col(f"hits@{n}") / pl.col("num_test_drugs")).alias(f"recall@{n}")
+                    )
+
+                # Add training counts only if available
+                if has_training_data:
+                    results = results.join(training_counts[fold], on="disease_id", how="left").with_columns(
+                        pl.col("num_training_pairs").fill_null(0)
                     )
 
                 # Add metadata columns
-                results = results.with_columns(pl.lit(model_name).alias("model"), pl.lit(fold).alias("fold")).rename(
-                    {"target": "disease_id"}
-                )
+                results = results.with_columns(pl.lit(model_name).alias("model"), pl.lit(fold).alias("fold"))
                 all_results.append(results)
 
         # Reorder columns
         final = pl.concat(all_results)
-        cols = ["disease_id", "model", "fold", "num_true_drugs", "num_predictions"]
+        cols = ["disease_id", "model", "fold"]
+        if has_training_data:
+            cols.append("num_training_pairs")
+        cols += ["num_test_drugs", "num_predictions"]
         for n in self.n_values:
             cols += [f"hits@{n}", f"recall@{n}"]
         return final.select(cols)

@@ -136,6 +136,36 @@ def fabricate_run_comparison_matrices(
     }
 
 
+def fabricate_run_comparison_splits(N: int = 15, num_folds: int = 2, train_proportion: float = 0.9) -> pd.DataFrame:
+    """Generate fabricated training splits data to test run comparison training counts.
+
+    Args:
+        N: Number of drugs and diseases.
+        num_folds: Number of cross-validation folds.
+        train_proportion: Proportion of pairs to mark as training positives.
+
+    Returns:
+        DataFrame with columns: source, target, fold, split, y
+    """
+    np.random.seed(42)
+
+    drugs = [f"drug_{i}" for i in range(N)]
+    diseases = [f"disease_{i}" for i in range(N)]
+
+    rows = []
+    for fold in range(num_folds):
+        for drug in drugs:
+            for disease in diseases:
+                # Randomly assign to TRAIN or TEST
+                is_train = np.random.random() < train_proportion
+                split = "TRAIN" if is_train else "TEST"
+                # For training pairs, randomly assign y=1 (positive) or y=0 (negative)
+                y = 1 if (is_train and np.random.random() < 0.5) else 0
+                rows.append({"source": drug, "target": disease, "fold": fold, "split": split, "y": y})
+
+    return pd.DataFrame(rows)
+
+
 def format_infores_catalog(fabrication_params: dict) -> dict:
     """Generate and format infores catalog YAML structure directly from params."""
     result = fabricate_datasets(fabrication_params=fabrication_params)
@@ -437,6 +467,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "matrix_fold_2_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model",
                 },
                 name="fabricate_run_comparison_matrices",
+            ),
+            node(
+                func=fabricate_run_comparison_splits,
+                inputs=[
+                    "params:fabricator.run_comparison.matrix_size",
+                    "params:fabricator.run_comparison.num_folds",
+                    "params:fabricator.run_comparison.train_proportion",
+                ],
+                outputs="fabricator.raw.run_comparison_splits",
+                name="fabricate_run_comparison_splits",
             ),
             node(
                 func=fabricate_datasets,

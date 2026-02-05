@@ -7,11 +7,15 @@ run_comparison:
           - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_{1,2}_good_model.csv
         score_col_name: "treat score"
         file_format: "csv"
+        train_data:
+          filepath: ${globals:paths.raw}/run_comparison_matrices/splits
       - name: bad_model
         fold_paths_list: 
           - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_{1,2}_bad_model.csv
         score_col_name: "treat score"
         file_format: "csv"
+        train_data:
+          filepath: ${globals:paths.raw}/run_comparison_matrices/splits
 
   evaluations:
     ground_truth_recall_at_n:

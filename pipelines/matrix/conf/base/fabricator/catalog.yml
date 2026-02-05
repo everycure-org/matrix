@@ -60,3 +60,7 @@ fabricator.raw.run_comparison_matrices.matrix_fold_1_bad_model:
 fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model:
   type: pandas.CSVDataset
   filepath: ${globals:paths.raw}/run_comparison_matrices/matrix_fold_2_bad_model.csv
+
+fabricator.raw.run_comparison_splits:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw}/run_comparison_matrices/splits
