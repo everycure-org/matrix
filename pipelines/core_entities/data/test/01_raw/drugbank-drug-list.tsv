@@ -1,0 +1,21 @@
+drugbank_id	name	moldb_smiles
+DB00284	Acarbose	[H]C(=O)[C@H](O)[C@@H](O)[C@]([H])(O[C@@]1([H])O[C@H](CO)[C@@]([H])(O[C@H]2O[C@H](C)[C@@H](N[C@@]3([H])C=C(CO)[C@@H](O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2O)[C@H](O)[C@H]1O)[C@H](O)CO
+DB00316	Acetaminophen	CC(=O)NC1=CC=C(O)C=C1
+DB00459	Acitretin	COC1=C(C)C(C)=C(\C=C\C(\C)=C\C=C\C(\C)=C\C(O)=O)C(C)=C1
+DB00659	Acamprosate	CC(=O)NCCCS(O)(=O)=O
+DB00819	Acetazolamide	CC(=O)NC1=NN=C(S1)S(N)(=O)=O
+DB01048	Abacavir	NC1=NC2=C(N=CN2[C@@H]2C[C@H](CO)C=C2)C(NC2CC2)=N1
+DB01281	Abatacept	
+DB01418	Acenocoumarol	CC(=O)CC(C1=CC=C(C=C1)[N+]([O-])=O)C1=C(O)C2=CC=CC=C2OC1=O
+DB05084	Abaloparatide	[H]N[C@@H](C)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CO)C(=O)N[C@@H](CCC(O)=O)C(=O)N[C@@H](CC1=CN=CN1)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CC1=CN=CN1)C(=O)N[C@@H](CC(O)=O)C(=O)N[C@@H](CCCCN)C(=O)NCC(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CO)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](CCC(N)=O)C(=O)N[C@@H](CC(O)=O)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CCCNC(N)=N)C(=O)N[C@@H](CCCNC(N)=N)C(=O)N[C@@H](CCCNC(N)=N)C(=O)N[C@@H](CCC(O)=O)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CCC(O)=O)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CC(C)C)C(=O)NC(C)(C)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](CC1=CN=CN1)C(=O)N[C@@H]([C@@H](C)O)C(=O)N[C@@H](C)C(N)=O
+DB05812	Abiraterone	[H][C@@]12CC=C(C3=CC=CN=C3)[C@@]1(C)CC[C@@]1([H])[C@@]2([H])CC=C2C[C@@H](O)CC[C@]12C
+DB06151	Acetylcysteine	CC(=O)N[C@@H](CS)C(O)=O
+DB06736	Aceclofenac	OC(=O)COC(=O)CC1=CC=CC=C1NC1=C(Cl)C=CC=C1Cl
+DB08897	Aclidinium	OC(C(=O)O[C@H]1C[N+]2(CCCOC3=CC=CC=C3)CCC1CC2)(C1=CC=CS1)C1=CC=CS1
+DB11703	Acalabrutinib	CC#CC(=O)N1CCC[C@H]1C1=NC(=C2N1C=CN=C2N)C1=CC=C(C=C1)C(=O)NC1=CC=CC=N1
+DB12001	Abemaciclib	CCN1CCN(CC2=CC=C(NC3=NC=C(F)C(=N3)C3=CC(F)=C4N=C(C)N(C(C)C)C4=C3)N=C2)CC1
+DB12118	Sotatercept	
+DB14973	Abrocitinib	CCCS(=O)(=O)N[C@H]1C[C@H](C1)N(C)C1=C2C=CNC2=NC=N1
+DB17999	Acoramidis	CC1=C(CCCOC2=CC(=CC=C2F)C(O)=O)C(C)=NN1
+DB18305	Sebetralstat	COCC1=NN(CC2=CC=C(CN3C=CC=CC3=O)C=C2)C=C1C(=O)NCC1=NC=CC(OC)=C1F
+DB19202	Acoltremon	COC1=CC=C(NC(=O)[C@@H]2C[C@H](C)CC[C@H]2C(C)C)C=C1

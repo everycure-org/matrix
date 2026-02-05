@@ -1,0 +1,11 @@
+id	disease_kg_node_id	comment	source	status	archetype	created_at
+0	MONDO:9999001			ARCHIVED		2025-03-31 19:49:48.204651
+1	MONDO:9999001			ARCHIVED		2025-03-31 21:35:01.674794
+2	MONDO:9999001	Found no rationale for this		ARCHIVED		2025-04-04 18:50:16.852122
+3	MONDO:9999002			ARCHIVED		2025-04-17 16:22:09.785823
+4	MONDO:9999002	commonly used to treat MS-related fatigue		ARCHIVED		2025-04-07 18:06:24.687427
+5	MONDO:9999002	known entity		ARCHIVED		2025-04-09 19:58:51.742462
+6	MONDO:9999005	CHEMBL ID 		ARCHIVED		2025-04-14 17:28:45.738023
+7	MONDO:9999005	known entity		ARCHIVED		2025-05-14 21:14:35.596903
+8	MONDO:9999005	ravulizumab is used to treat paroxysmal nocturnal hemoglobinuria by inhibiting the complement protein C5. There is no role for this drug in AR distal titinopathy, aside from possibly reducing inflammation. But, there would be many more effective and cost-effective antiinflammatories for this purpose		ARCHIVED		2025-05-26 00:00:43.244238
+9	MONDO:9999005	nonspecific chemo		ARCHIVED		2025-05-28 20:03:35.356062

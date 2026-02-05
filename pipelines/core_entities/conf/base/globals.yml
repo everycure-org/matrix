@@ -1,0 +1,35 @@
+public_gcs_bucket: gs://data.dev.everycure.org
+dev_gcs_bucket: gs://mtrx-us-central1-hub-dev-storage
+prod_gcs_bucket: gs://mtrx-us-central1-hub-prod-storage
+github_token: ${oc.env:GH_TOKEN, dummy}
+service_account_file_path: ${oc.env:SERVICE_ACCOUNT_FILE_PATH, conf/local/gsheet_service_account.json}
+
+paths:
+  input: data/00_input
+  raw_llm: ${dev_gcs_bucket}/kedro/data/core-entities
+  raw_drugbank: ${prod_gcs_bucket}/data/01_RAW/source_data/drugbank/1332218/prm
+  primary: data/03_primary
+  release: data/03_primary/release
+  published: data/03_primary/published
+data_sources:
+  drug_list:
+    # check releases here: https://github.com/everycure-org/matrix-drug-list/releases
+    version: "Release v2.3.1"
+  disease_list:
+    # check releases here: https://github.com/everycure-org/matrix-disease-list/releases
+    version: 2025-10-01
+  disease_categories:
+    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_categories
+    version: v0.1.3
+  disease_labels: 
+    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_labels
+    version: v0.0.2
+  disease_umn:
+    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_umn
+    version: v0.0.2
+  disease_prevalence:
+    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_prevalence
+    version: v0.0.3
+  disease_txgnn:
+    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_txgnn
+    version: v0.0.1

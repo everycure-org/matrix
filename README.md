@@ -18,10 +18,11 @@ libraries, applications and services.
 
 - `/pipelines/matrix` - 🧬 [Main Drug Repurposing ML Pipeline](pipelines/matrix/README.md) - Main ML
   pipeline for drug repurposing using Kedro framework
+- `/pipelines/core_entities` - 🧬 [Core Entities Pipeline](pipelines/core_entities/README.md) - Pipeline to generate high quality disease and drug lists.
 - `/libs/` - 📚 Shared Libraries:
   - `matrix-auth/` - Authentication and environment utilities
   - `matrix-fabricator/` - Data fabrication and generation tools
-  - `matrix-gcp-datasets/` - GCP integration and Spark utilities
+  - `matrix-gcp-datasets/` - GCP and Github integration and Spark utilities
   - `matrix-mlflow-utils/` - MLflow integration and metric utilities
 - `/infra` - 🏗️ [Infrastructure as Code (IaC) configuration](docs/src/infrastructure) -
   Infrastructure as Code using Terraform/Terragrunt for GCP deployment
@@ -207,15 +208,6 @@ infrastructure, the repurposing pipeline or evaluation metrics.
 We welcome and encourage all external contributions! Please see our
 [Contributing Guide](CONTRIBUTING.md) for detailed information on how to contribute to the MATRIX
 project.
-
-## 🔗 Related Projects
-
-- [MATRIX disease list](https://github.com/everycure-org/matrix-disease-list) - Repo to manage the
-  MATRIX disease list.
-- [MATRIX drug list](https://github.com/everycure-org/matrix-drug-list) - Repo to manage the MATRIX
-  drug list.
-
-> Note both of these will eventually be merged into this monorepo.
 
 ---
 

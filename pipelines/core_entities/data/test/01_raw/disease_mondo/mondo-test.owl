@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://purl.obolibrary.org/obo/mondo.owl#"
+     xml:base="http://purl.obolibrary.org/obo/mondo.owl"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+     xmlns:oboInOwl="http://www.geneontology.org/formats/oboInOwl#"
+     xmlns:IAO="http://purl.obolibrary.org/obo/IAO_"
+     xmlns:mondo="http://purl.obolibrary.org/obo/mondo#">
+
+    <owl:Ontology rdf:about="http://purl.obolibrary.org/obo/mondo.owl">
+        <owl:versionIRI rdf:resource="http://purl.obolibrary.org/obo/mondo/releases/2025-01-01/mondo.owl"/>
+        <dc:title>MONDO Test Ontology</dc:title>
+    </owl:Ontology>
+
+    <!-- Root disease class -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0700096">
+        <rdfs:label>human disease</rdfs:label>
+        <IAO:0000115>A disease that affects humans.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 1 - hereditary disease (root for hereditary) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0003847">
+        <rdfs:label>hereditary disease</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A disease that is caused by genetic mutations inherited from parents.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 2 - Test Disease A (leaf) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999001">
+        <rdfs:label>test disease A</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A test disease for unit testing purposes.</IAO:0000115>
+        <oboInOwl:hasExactSynonym>TDA</oboInOwl:hasExactSynonym>
+        <oboInOwl:hasExactSynonym>test syndrome A</oboInOwl:hasExactSynonym>
+        <oboInOwl:hasDbXref>OMIM:100001</oboInOwl:hasDbXref>
+        <oboInOwl:inSubset rdf:resource="http://purl.obolibrary.org/obo/mondo#ordo_disorder"/>
+        <skos:exactMatch rdf:resource="https://omim.org/entry/100001"/>
+    </owl:Class>
+
+    <!-- Disease 3 - Test Disease B (with children) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999002">
+        <rdfs:label>test disease B</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A parent disease with subtypes for testing.</IAO:0000115>
+        <oboInOwl:hasExactSynonym>TDB</oboInOwl:hasExactSynonym>
+        <oboInOwl:hasDbXref>ICD10CM:Z99.9</oboInOwl:hasDbXref>
+        <oboInOwl:inSubset rdf:resource="http://purl.obolibrary.org/obo/mondo#harrisons_view"/>
+    </owl:Class>
+
+    <!-- Disease 4 - Test Disease B type 1 (subtype pattern test) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999003">
+        <rdfs:label>test disease B type 1</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_9999002"/>
+        <IAO:0000115>Type 1 of test disease B.</IAO:0000115>
+        <oboInOwl:hasDbXref>ICD10CM:Z99.1</oboInOwl:hasDbXref>
+    </owl:Class>
+
+    <!-- Disease 5 - Test Disease B type 2 (another subtype) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999004">
+        <rdfs:label>test disease B type 2</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_9999002"/>
+        <IAO:0000115>Type 2 of test disease B.</IAO:0000115>
+        <oboInOwl:hasDbXref>ICD10CM:Z99.2</oboInOwl:hasDbXref>
+    </owl:Class>
+
+    <!-- Disease 6 - Cardiovascular test disease (for filter testing) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0004995">
+        <rdfs:label>cardiovascular system disease</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A disease affecting the cardiovascular system.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 7 - Heart disease (subtype of cardiovascular) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0005267">
+        <rdfs:label>heart disease</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0004995"/>
+        <IAO:0000115>A disease affecting the heart.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 8 - Test cardiac condition -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999005">
+        <rdfs:label>test cardiac condition</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0005267"/>
+        <IAO:0000115>A test cardiac condition.</IAO:0000115>
+        <oboInOwl:hasDbXref>ICD10CM:I25.10</oboInOwl:hasDbXref>
+        <oboInOwl:inSubset rdf:resource="http://purl.obolibrary.org/obo/mondo#clingen"/>
+    </owl:Class>
+
+    <!-- Disease 9 - Psychiatric test (for filter testing) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0002025">
+        <rdfs:label>psychiatric disorder</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A disorder of mental health.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 10 - Test psychiatric condition -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999006">
+        <rdfs:label>test psychiatric condition</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0002025"/>
+        <IAO:0000115>A test psychiatric condition.</IAO:0000115>
+        <oboInOwl:hasDbXref>ICD10CM:F99</oboInOwl:hasDbXref>
+    </owl:Class>
+
+    <!-- Disease 11 - Inflammatory disease (for filter testing) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0021166">
+        <rdfs:label>inflammatory disease</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A disease characterized by inflammation.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 12 - Test inflammatory condition -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999007">
+        <rdfs:label>test inflammatory condition</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0021166"/>
+        <IAO:0000115>A test inflammatory condition.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 13 - Cancer root (for filter testing) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0045024">
+        <rdfs:label>cancer or benign tumor</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A neoplastic disease.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 14 - Test cancer -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999008">
+        <rdfs:label>test cancer</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0045024"/>
+        <IAO:0000115>A test cancer for testing purposes.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 15 - Paraphilic disorder root -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0000596">
+        <rdfs:label>paraphilic disorder</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A paraphilic disorder.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 16 - With or without test (label filter) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999009">
+        <rdfs:label>test syndrome with or without manifestation</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A syndrome with variable manifestations.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 17 - Acquired test disease (label filter) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999010">
+        <rdfs:label>acquired test condition</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>An acquired condition for testing.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 18 - Disease with OMIM PS mapping -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999011">
+        <rdfs:label>phenotypic series test disease</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A disease with OMIM Phenotypic Series mapping.</IAO:0000115>
+        <skos:exactMatch rdf:resource="https://omim.org/phenotypicSeries/PS123456"/>
+    </owl:Class>
+
+    <!-- Disease 19 - Chromosomal disease root (for exclusion testing) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0019040">
+        <rdfs:label>chromosomal disease</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A disease caused by chromosomal abnormalities.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease 20 - Test chromosomal condition (should be excluded from subtypes) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999012">
+        <rdfs:label>test chromosomal condition</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0019040"/>
+        <IAO:0000115>A test chromosomal condition.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Obsolete disease for testing obsoletes query -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_9999099">
+        <rdfs:label>obsolete test disease</rdfs:label>
+        <owl:deprecated rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</owl:deprecated>
+        <IAO:0100001 rdf:resource="http://purl.obolibrary.org/obo/MONDO_9999001"/>
+    </owl:Class>
+
+    <!-- Susceptibility disease root (for susceptibility filter) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0042489">
+        <rdfs:label>disease susceptibility</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://purl.obolibrary.org/obo/MONDO_0700096"/>
+        <IAO:0000115>A susceptibility to disease.</IAO:0000115>
+    </owl:Class>
+
+    <!-- Disease root (for susceptibility label matching) -->
+    <owl:Class rdf:about="http://purl.obolibrary.org/obo/MONDO_0000001">
+        <rdfs:label>disease</rdfs:label>
+        <IAO:0000115>Any abnormal condition that causes dysfunction.</IAO:0000115>
+    </owl:Class>
+
+</rdf:RDF>

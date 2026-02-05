@@ -31,7 +31,6 @@ readme = "README.md"
 dynamic = [ "version"]
 dependencies = [
     "faker",
-    "matrix-schema==0.4.3",
     "matrix-auth",
     "matrix-gcp-datasets",
     "matrix-io-utils",
@@ -39,7 +38,7 @@ dependencies = [
     "matrix-fabricator",
     "matrix-inject",
     "matrix-pandera",
-    "matrix-validator @ git+https://github.com/everycure-org/matrix-validator.git@v0.0.6#egg=matrix-validator",
+    "matrix-validator",
     "bmt", # biolink model toolkit
     "gcsfs==2024.3.1",
     "google-cloud-bigquery",
