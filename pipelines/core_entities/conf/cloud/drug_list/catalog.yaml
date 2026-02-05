@@ -19,7 +19,7 @@ primary.published.drug_list:
         name: Jacques Vergine
         email: jacques@everycure.org
       origin:
-        url: https://github.com/everycure-org/core-entities
+        url: https://github.com/everycure-org/matrix
         system: Drug list pipeline
       tags: ["drug_list"]
 

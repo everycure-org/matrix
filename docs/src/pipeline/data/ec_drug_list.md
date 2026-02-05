@@ -22,7 +22,7 @@ gs://data.dev.everycure.org/data/01_RAW/drug_list/{version}/ec-drug-list.tsv
 ```
 
 You can also find them in the `datasets` repository [here](https://github.com/everycure-org/datasets/tree/main/datasets/drug_list)
-New versions of the drug list are released through the [core-entities GitHub repository](https://github.com/everycure-org/core-entities/releases). Check the releases page for the latest version and update the version number in the MATRIX configuration (`pipelines/matrix/conf/base/globals.yml`). EC Data Products team follow a versioning system where users should always use at least the current minor release to ensure compatibility with other systems:
+New versions of the drug list are released through the [core-entities pipelines. The latest version can be found in GCS or in the datasets repository, you can then update the version number in the MATRIX configuration (`pipelines/matrix/conf/base/globals.yml`). EC Data Products team follow a versioning system where users should always use at least the current minor release to ensure compatibility with other systems:
 
 - PATCH (v0.1.0 → v0.1.1): Fixed incorrect data, corrected values (including changes in translator_id) or added a column
 - MINOR (v0.1.1 → v0.2.0): Changes in spine (EC_ID) or translator_id (Name Resolver or Node Normalizer)
@@ -190,4 +190,3 @@ These flags enable rapid filtering and analysis of specific drug categories with
 
 - [Disease List Documentation](drug_disease_lists.md) - Information about the companion EC Disease List
 - [Drug List Migration ADR](../architecture_decision_records/drug-list-migration.md) - Technical decision record for the migration to manual curation
-- [Core Entities GitHub Repository](https://github.com/everycure-org/core-entities/releases) - Source and release location for the drug list
