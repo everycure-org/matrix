@@ -178,12 +178,14 @@ def run_evaluation(
     evaluation: ComparisonEvaluation,
     combined_predictions: dict[str, Callable[[], pl.LazyFrame]],  # Dictionary of PartitionedDataset load fn's
     predictions_info: dict[str, any],
+    input_paths: list[dict] | None = None,
 ) -> pl.DataFrame:
     """Function to apply evaluation."""
     logger.info(f"Evaluation is: {evaluation}")
     return evaluation.evaluate(
         combined_predictions,
         predictions_info,
+        input_paths=input_paths,
     )
 
 

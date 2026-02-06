@@ -27,7 +27,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:run_comparison.input_data.input_paths",
                 ],
                 outputs="run_comparison.input_matrices",
-                name=f"process_input_filepaths",
+                name="process_input_filepaths",
             ),
             ArgoNode(
                 func=nodes.combine_matrix_pairs,
@@ -37,7 +37,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "params:run_comparison.input_data.apply_harmonization",
                 ],
                 outputs=["run_comparison.combined_pairs", "run_comparison.predictions_info"],
-                name=f"combine_matrix_pairs",
+                name="combine_matrix_pairs",
                 argo_config=RUN_COMPARISON_RESOURCE_CONFIG,
             ),
             ArgoNode(
@@ -48,11 +48,12 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "run_comparison.predictions_info",
                 ],
                 outputs="run_comparison.combined_predictions",
-                name=f"restrict_predictions",
+                name="restrict_predictions",
                 argo_config=RUN_COMPARISON_RESOURCE_CONFIG,
             ),
         ]
     )
+
     for evaluation in evaluations_to_perform:
         pipeline_nodes.extend(
             [
@@ -62,6 +63,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                         f"params:run_comparison.evaluations.{evaluation}",
                         "run_comparison.combined_predictions",
                         "run_comparison.predictions_info",
+                        "params:run_comparison.input_data.input_paths",
                     ],
                     outputs=f"run_comparison.{evaluation}.results",
                     name=f"give_evaluation_results.{evaluation}",
