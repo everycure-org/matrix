@@ -19,6 +19,12 @@ authors:
   - eKathleenCarter
 ---
 
+## Summary
+
+Version 0.15.0 represents a major consolidation and quality improvement release. The most significant change is the migration of the core entities pipeline into the matrix monorepo, bringing disease and drug list generation under unified infrastructure. This release also introduces the new matrix-validator library for comprehensive knowledge graph validation, upgrades to WHO-standard drug classification, and adds important new metrics like JaM and connectivity scoring. Infrastructure improvements focus on scaling, reliability, and operational excellence with enhanced CI/CD workflows and better resource management.
+
+<!-- TODO: Add any additional context about deployment considerations or migration steps if needed -->
+
 ### Breaking Changes 🛠
 
 No breaking changes in this release.
@@ -49,30 +55,6 @@ No breaking changes in this release.
 
 No experiment reports in this release.
 
-- **TxGNN Feature Restoration**: Re-added TxGNN feature that was previously removed. [#2052](https://github.com/everycure-org/matrix/pull/2052)
-
-- **Edge Color Consistency Fix**: Fixed visualization bug with inconsistent colors for recognized vs unrecognized edges in knowledge graph displays. [#2051](https://github.com/everycure-org/matrix/pull/2051)
-
-- **ATC Labels Public Storage**: Moved ATC labels source file to public GCS bucket for easier access. [#2049](https://github.com/everycure-org/matrix/pull/2049)
-
-- **Biolink Documentation Links**: Fixed broken links to Biolink model documentation. [#2047](https://github.com/everycure-org/matrix/pull/2047)
-
-- **Mondo Column Cleanup**: Removed unnecessary columns from Mondo disease list output. [#2044](https://github.com/everycure-org/matrix/pull/2044)
-
-- **Multi-URI Support**: Extended Kedro datasets to support both single and multi-parquet URI patterns. [#2029](https://github.com/everycure-org/matrix/pull/2029)
-
-- **Core Entities Release Process Improvements**: Removed commits difference logic from release comparison to simplify the release workflow. [#2018](https://github.com/everycure-org/matrix/pull/2018)
-
-- **Disease Category Updates**: Multiple updates to disease category labels and groupings, including moving "Substance withdrawal syndrome" to grouping category. [#2024](https://github.com/everycure-org/matrix/pull/2024), [#2017](https://github.com/everycure-org/matrix/pull/2017)
-
-- **Docker Cloud Build Fix**: Resolved issues with Docker cloud build process. [#1977](https://github.com/everycure-org/matrix/pull/1977)
-
-- **Key Node Version Granularity**: Reduced key node versioning to major releases only for simpler tracking. [#1986](https://github.com/everycure-org/matrix/pull/1986)
-
-- **Relevancy Scoring Tabular Format**: Created tabular version of relevancy scoring data and added to BigQuery for easier dashboard querying. [#1927](https://github.com/everycure-org/matrix/pull/1927)
-
-- **Disease List Kedro Migration**: Major refactor migrating legacy disease list code to Kedro framework. [#1943](https://github.com/everycure-org/matrix/pull/1943)
-
 ### Infrastructure 🏗️
 
 - **Cloud Build IAM Roles**: Added IAM roles for data-science group to access Cloud Build service account. [#2041](https://github.com/everycure-org/matrix/pull/2041)
@@ -88,12 +70,6 @@ No experiment reports in this release.
 - **GitHub Actions Runner Scale Set Updates**: Updated gha-runner-scale-set-controller and gha-runner-scale-set to version 0.13.0. [#1991](https://github.com/everycure-org/matrix/pull/1991)
 
 - **Logging Exclusions**: Added severity-based log exclusions (DEFAULT and NOTICE) for hub environments to reduce log noise. [#2050](https://github.com/everycure-org/matrix/pull/2050)
-
-- **OpenAI Key Reference Update**: Fixed reference to OpenAI API key in infrastructure configuration. [#1968](https://github.com/everycure-org/matrix/pull/1968)
-
-- **Redis AOF Corruption Recovery**: Added comprehensive runbook for recovering from Redis AOF corruption issues. [redis-aof-corruption-recovery.md](https://github.com/everycure-org/matrix/blob/main/infra/runbooks/redis-aof-corruption-recovery.md)
-
-- **Redis Configuration Updates**: Updated Redis deployment configuration and resolved AOF-related issues. [#1962](https://github.com/everycure-org/matrix/pull/1962)
 
 - **Disk Size Increase**: Enlarged disk allocations for compute resources. [#1978](https://github.com/everycure-org/matrix/pull/1978)
 
@@ -151,10 +127,3 @@ No experiment reports in this release.
 
 - **Core Entities Release PRs**: Multiple release-related PRs for the core entities pipeline (disease_list and drug_list releases). [#2064](https://github.com/everycure-org/matrix/pull/2064), [#2048](https://github.com/everycure-org/matrix/pull/2048), [#2024](https://github.com/everycure-org/matrix/pull/2024), [#2019](https://github.com/everycure-org/matrix/pull/2019)
 
----
-
-## Summary
-
-Version 0.15.0 represents a major consolidation and quality improvement release. The most significant change is the migration of the core entities pipeline into the matrix monorepo, bringing disease and drug list generation under unified infrastructure. This release also introduces the new matrix-validator library for comprehensive knowledge graph validation, upgrades to WHO-standard drug classification, and adds important new metrics like JaM and connectivity scoring. Infrastructure improvements focus on scaling, reliability, and operational excellence with enhanced CI/CD workflows and better resource management.
-
-<!-- TODO: Add any additional context about deployment considerations or migration steps if needed -->
