@@ -105,6 +105,8 @@ ingestion.raw.rtx_kg2.nodes@spark:
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/kg2_v2100_v22_edges_all_subclass_removed.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/kg2_v2_100_v22_edges_mondo_subclass_removed.tsv
   save_args:
     sep: "\t"
     header: true
@@ -124,6 +126,8 @@ ingestion.raw.rtx_kg2.nodes@polars:
 ingestion.raw.rtx_kg2.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/kg2_v2100_v22_edges_all_subclass_removed.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/kg2_v2_100_v22_edges_mondo_subclass_removed.tsv
   save_args:
     separator: "\t"
     has_header: true
@@ -134,6 +138,8 @@ ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/kg2_v2100_v22_edges_all_subclass_removed.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/kg2_v2_100_v22_edges_mondo_subclass_removed.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -476,7 +482,9 @@ ingestion.raw.robokop.nodes@polars:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_all_subclass_removed.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_mondo_subclass_removed.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -485,7 +493,9 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #ilepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_all_subclass_removed.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_mondo_subclass_removed.tsv
   save_args:
     sep: "\t"
     header: true
@@ -495,7 +505,9 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.raw.robokop.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_all_subclass_removed.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_mondo_subclass_removed.tsv
   save_args:
     separator: "\t"
     has_header: true
@@ -508,7 +520,9 @@ ingestion.raw.robokop.nodes@lazypolars:
 
 ingestion.raw.robokop.edges@lazypolars:
   <<: [*_polars_lazy_csv]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_all_subclass_removed.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_mondo_subclass_removed.tsv
 
 ingestion.int.preprocessing.robokop.nodes@polars:
   <<: [*_polars_csv, *_layer_int]
@@ -526,12 +540,16 @@ ingestion.int.preprocessing.robokop.nodes@spark:
 
 ingestion.int.preprocessing.robokop.edges@polars:
   <<: [*_polars_csv, *_layer_int]
-  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_all_subclass_removed.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_mondo_subclass_removed.tsv
 
 ingestion.int.preprocessing.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  #filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_all_subclass_removed.tsv
+  filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/modeling/filtered_KGs/robokop_30fd_edges_mondo_subclass_removed.tsv
   file_format: csv
   load_args:
     sep: "\t"

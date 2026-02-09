@@ -341,7 +341,7 @@ def normalize_core_nodes(
 
 def create_core_id_mapping(*nodes: ps.DataFrame) -> ps.DataFrame:
     """Creates a mapping from normalized_id to core_id for core sources."""
-
+    nodes = [x.select("id", "core_id", "name") for x in nodes]
     df = _union_datasets(*nodes)
 
     df_filtered = df.select("id", "core_id", "name").filter(  # 'id' is already the normalized_id at this point
