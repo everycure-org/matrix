@@ -53,6 +53,18 @@ No breaking changes in this release.
 
 ### Experiments 🧪
 
+- **Embiology Experiments**: This captures various experiments with MATRIX pipeline and Embiology KG to assess its value in drug repurposing. [link to report](https://github.com/everycure-org/lab-notebooks/blob/03773f8c1ad9e20f2eaeafda6d14c3835ed82643/cross-kg/embiology/embiology_matrix.ipynb)
+
+- **ESM2 Embeddings**: Experiment training a classifier for drug-target predictions using embeddings from ESM2 [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/3515b6197bfc1d60e678950a8f12c944912d4296/uab-new-models-for-improved-performance/experiment-december-2025/UAB_Michel_Reproduction_Embeddings_Experiment_Report.ipynb)
+
+- **Patent Scraping Part 4**: The experiment is intended to explore improved text phrase-to-CURIE resolution for Patents [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/c6ad78cd0097f6839f2052adabbbced1b6d91dc1/uab-LLM-patent-scraping/experiment-december-2025/UAB_Patent_Text_Improved_Phrase_to_CURIE_Experiment_Report.ipynb) 
+
+-**SPOKE Experiments**: This captures various experiments with MATRIX pipeline and SPOKE KG to assess its value in drug repurposing. [link to report](https://github.com/everycure-org/lab-notebooks/blob/03773f8c1ad9e20f2eaeafda6d14c3835ed82643/piotr/spoke/spoke_exp.ipynb) 
+
+- **Final Cross-KG Experiments**: Cross-KG benchmark with MATRIX pipeline and all usable KGs within our system, including aggregated score combining all matrix predictions. [link to report](https://github.com/everycure-org/lab-notebooks/pull/286/changes#diff-6f9510cf6c45eb80444cf45d09a6c12f5ff0bfe335532a50a08b9d49e237aac0)
+
+
+
 No experiment reports in this release.
 
 ### Infrastructure 🏗️
