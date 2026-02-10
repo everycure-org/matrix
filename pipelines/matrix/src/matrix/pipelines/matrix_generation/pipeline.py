@@ -12,6 +12,7 @@ from . import nodes
 
 def create_pipeline(**kwargs) -> Pipeline:
     """Create matrix generation pipeline."""
+    sources = [source["name"] for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")]
     private_sources = [
         source["name"] for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration") if source.get("is_private")
     ]
@@ -55,7 +56,11 @@ def create_pipeline(**kwargs) -> Pipeline:
                             "node_embeddings": "matrix_generation.feat.nodes@spark",
                             "clinical_trials": "integration.int.ec_clinical_trials.edges.norm@spark",
                             "off_label": "integration.int.off_label.edges.norm@spark",
-                            "ec_indications_list": "integration.int.ec_indications_list.edges.norm@spark",
+                            **(
+                                {"ec_indications_list": "integration.int.ec_indications_list.edges.norm@spark"}
+                                if "ec_indications_list" in sources
+                                else {}
+                            ),
                             **(
                                 {"orchard": "integration.int.orchard.edges.norm@spark"}
                                 if "orchard" in private_sources
