@@ -1,17 +1,19 @@
 # Public Data Releases
 
-Every Cure publishes processed knowledge graph data from the MATRIX pipeline on Hugging Face Hub,
-making it accessible for researchers, data scientists, and developers who want to experiment
-with biomedical knowledge graphs for drug repurposing and related applications.
+Every Cure publishes datasets from the MATRIX pipeline on Hugging Face Hub,
+making them accessible for researchers, data scientists, and developers who want to experiment
+with biomedical knowledge graphs, drug lists, disease lists, and drug repurposing applications.
 
 ## Available Datasets
 
-| Dataset | Description | Link |
-|---------|-------------|------|
-| **kg-nodes** | Knowledge graph nodes (entities) | [everycure/kg-nodes](https://huggingface.co/datasets/everycure/kg-nodes) |
-| **kg-edges** | Knowledge graph edges (relationships) | [everycure/kg-edges](https://huggingface.co/datasets/everycure/kg-edges) |
+| Dataset | Description | Link | Docs |
+|---------|-------------|------|------|
+| **kg-nodes** | Knowledge graph nodes (entities) | [everycure/kg-nodes](https://huggingface.co/datasets/everycure/kg-nodes) | |
+| **kg-edges** | Knowledge graph edges (relationships) | [everycure/kg-edges](https://huggingface.co/datasets/everycure/kg-edges) | |
+| **drug-list** | EC Drug List — curated list of ~1,800 drugs with metadata | [everycure/drug-list](https://huggingface.co/datasets/everycure/drug-list) | [EC Drug List](../pipeline/data/ec_drug_list.md) |
+| **disease-list** | EC Disease List — curated list of drug-targetable diseases | [everycure/disease-list](https://huggingface.co/datasets/everycure/disease-list) | [Disease List](../pipeline/data/drug_disease_lists.md) |
 
-Both datasets are published as Parquet files, making them easy to load with common data science tools
+All datasets are published as Parquet files, making them easy to load with common data science tools
 like pandas, polars, PySpark, or the Hugging Face `datasets` library.
 
 See the dataset pages on Hugging Face for detailed schema documentation and data previews.
@@ -111,8 +113,9 @@ The public datasets are released under the **Creative Commons Attribution 4.0 In
 
 ## Release Schedule
 
-The Hugging Face datasets are updated periodically as new versions of the MATRIX knowledge graph
-are released. Check the dataset pages for version history and release dates.
+All datasets are updated periodically as new versions are released.
+
+Check the dataset pages for version history and release dates.
 
 ## Developer Documentation
 
