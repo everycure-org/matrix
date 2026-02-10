@@ -22,6 +22,10 @@ gs://data.dev.everycure.org/data/01_RAW/drug_list/{version}/ec-drug-list.tsv
 ```
 
 You can also find them in the `datasets` repository [here](https://github.com/everycure-org/datasets/tree/main/datasets/drug_list)
+
+## Availability on HuggingFace Hub
+
+The EC Drug List is also published on HuggingFace Hub at [everycure/drug-list](https://huggingface.co/datasets/everycure/drug-list) under the CC-BY-4.0 license. The HF dataset is updated automatically on minor and major releases (patch releases are skipped).
 New versions of the drug list are released through the [core-entities pipelines. The latest version can be found in GCS or in the datasets repository, you can then update the version number in the MATRIX configuration (`pipelines/matrix/conf/base/globals.yml`). EC Data Products team follow a versioning system where users should always use at least the current minor release to ensure compatibility with other systems:
 
 - PATCH (v0.1.0 → v0.1.1): Fixed incorrect data, corrected values (including changes in translator_id) or added a column
