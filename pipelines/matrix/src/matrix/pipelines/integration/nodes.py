@@ -118,6 +118,7 @@ def union_and_deduplicate_nodes(
         .withColumn("id", F.coalesce("core_id", "id"))
         .withColumn("name", F.coalesce("core_name", "name"))
         .withColumn("category", F.coalesce("core_category", "category"))
+        .withColumn("all_categories", F.array_append("all_categories", "category"))
         .drop("core_name", "core_category")
     )
 
@@ -291,12 +292,7 @@ def normalize_nodes(
     """
     nodes_normalized = _normalize_nodes_base(mapping_df, nodes)
 
-    # Deduplicate rows by id
-    return (
-        nodes_normalized.withColumn("_rn", F.row_number().over(Window.partitionBy("id").orderBy("original_id")))
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
-    )
+    return nodes_normalized
 
 
 def normalize_core_nodes(
