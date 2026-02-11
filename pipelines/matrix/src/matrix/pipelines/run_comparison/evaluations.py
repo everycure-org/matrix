@@ -854,10 +854,9 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
         all_results = []
 
         # Load training counts if train_data.filepath is defined
-        training_counts = None
-        if input_paths is not None:
-            training_counts = self._load_training_counts(input_paths, predictions_info["num_folds"])
-        has_training_data = training_counts is not None
+        training_counts = (
+            self._load_training_counts(input_paths, predictions_info["num_folds"]) if input_paths is not None else None
+        )
 
         for model_name in predictions_info["model_names"]:
             for fold in range(predictions_info["num_folds"]):
@@ -871,7 +870,6 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
                     matrix.group_by("target")
                     .agg(
                         pl.col(self.ground_truth_col).sum().alias("num_test_drugs"),
-                        pl.len().alias("num_predictions"),
                     )
                     .filter(pl.col("num_test_drugs") > 0)
                 )
@@ -897,7 +895,7 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
                     )
 
                 # Add training counts only if available
-                if has_training_data:
+                if training_counts:
                     results = results.join(training_counts[fold], on="disease_id", how="left").with_columns(
                         pl.col("num_training_pairs").fill_null(0)
                     )
@@ -909,9 +907,9 @@ class DiseaseSpecificRecallAtNTable(ComparisonEvaluation):
         # Reorder columns
         final = pl.concat(all_results)
         cols = ["disease_id", "model", "fold"]
-        if has_training_data:
+        if training_counts:
             cols.append("num_training_pairs")
-        cols += ["num_test_drugs", "num_predictions"]
+        cols += ["num_test_drugs"]
         for n in self.n_values:
             cols += [f"hits@{n}", f"recall@{n}"]
         return final.select(cols)
@@ -969,6 +967,7 @@ class FoldSpecificRecallAtN(ComparisonEvaluation):
         self,
         combined_predictions: dict[str, Callable[[], pl.LazyFrame]],
         predictions_info: dict[str, any],
+        **kwargs,
     ) -> pl.DataFrame:
         """Compute fold-specific recall@n for all models and folds."""
         n_values = self._give_n_values()
