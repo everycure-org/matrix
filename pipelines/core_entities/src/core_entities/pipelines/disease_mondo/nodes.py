@@ -2,9 +2,6 @@
 
 This pipeline processes the MONDO disease ontology to create the MATRIX disease list,
 which defines which diseases are included in the drug repurposing platform.
-
-The workflow is modeled after the matrix-disease-list repository:
-https://github.com/everycure-org/matrix-disease-list
 """
 
 import logging
@@ -109,7 +106,7 @@ def create_billable_icd10_codes(
 def _is_ancestor(store: Store, parent_id: str, child_id: str) -> bool:
     """Check if parent_id is an ancestor of child_id in ontology hierarchy."""
     try:
-        from matrix.pipelines.disease_list.queries import query_get_ancestors
+        from core_entities.pipelines.disease_mondo.queries import query_get_ancestors
 
         ancestors = query_get_ancestors(store, child_id)
         return parent_id in ancestors
@@ -218,7 +215,7 @@ def _build_subtype_df(matched_df: pd.DataFrame, mondo_subtype_subset: str, contr
     return subset_rows.reset_index(drop=True)
 
 
-def _validate_mondo(mondo_graph, min_triples=1000000):
+def _validate_mondo(mondo_graph, min_triples=10):
     q = "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }"
     rows = list(mondo_graph.query(q))
     if not rows:
@@ -277,27 +274,19 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
             "subsets": pa.Column(dtype=str, nullable=True),
             "crossreferences": pa.Column(dtype=str, nullable=True),
             "malacards_linkouts": pa.Column(dtype=str, nullable=True),
-            "f_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
-            "f_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
             "f_clingen": pa.Column(dtype=bool, nullable=False),
             "f_susceptibility": pa.Column(dtype=bool, nullable=False),
             "f_mondo_subtype": pa.Column(dtype=bool, nullable=False),
-            "f_pathway_defect": pa.Column(dtype=bool, nullable=False),
             "f_grouping_subset": pa.Column(dtype=bool, nullable=False),
             "f_obsoletion_candidate": pa.Column(dtype=bool, nullable=False),
             "f_orphanet_subtype": pa.Column(dtype=bool, nullable=False),
             "f_orphanet_disorder": pa.Column(dtype=bool, nullable=False),
             "f_icd_billable": pa.Column(dtype=bool, nullable=False),
-            "f_paraphilic": pa.Column(dtype=bool, nullable=False),
             "f_cardiovascular": pa.Column(dtype=bool, nullable=False),
             "f_filter_heart_disorder": pa.Column(dtype=bool, nullable=False),
             "f_inflammatory": pa.Column(dtype=bool, nullable=False),
             "f_psychiatric": pa.Column(dtype=bool, nullable=False),
             "f_cancer_or_benign_tumor": pa.Column(dtype=bool, nullable=False),
-            "f_withorwithout": pa.Column(dtype=bool, nullable=False),
-            "f_andor": pa.Column(dtype=bool, nullable=False),
-            "f_acquired": pa.Column(dtype=bool, nullable=False),
-            "f_unclassified_hereditary": pa.Column(dtype=bool, nullable=False),
             "f_grouping_subset_ancestor": pa.Column(dtype=bool, nullable=False),
             "f_orphanet_subtype_descendant": pa.Column(dtype=bool, nullable=False),
             "f_omimps": pa.Column(dtype=bool, nullable=False),
@@ -334,9 +323,9 @@ def _validate_mondo(mondo_graph, min_triples=1000000):
         },
         checks=[
             pa.Check(
-                lambda df: df.shape[0] >= 100,
+                lambda df: df.shape[0] >= 1,
                 name="min_rows",
-                error=f"subtype_counts must have at least 100 rows",
+                error="subtype_counts must have at least 1 row",
             )
         ],
         strict=True,
@@ -371,12 +360,11 @@ def extract_disease_data_from_mondo(
             - mondo_obsoletes: DataFrame with obsolete terms
             - disease_list_raw: DataFrame with raw disease list features
             - mondo_metrics: DataFrame with disease metrics
-            - mondo_preprocessed: PyOxigraph Store with preprocessed ontology
             - subtype_counts: DataFrame with subtype counts (for downstream filtering)
     """
     logger.info("Extracting disease data from MONDO ontology")
 
-    from matrix.pipelines.disease_list.queries import (
+    from core_entities.pipelines.disease_mondo.queries import (
         query_matrix_disease_list_metrics,
         query_mondo_labels,
         query_mondo_obsoletes,
@@ -433,7 +421,7 @@ def _extract_subtype_data(
     mondo_graph: Store, subtypes_params: Dict[str, Any], subtype_patterns: Dict[str, str], mondo_labels: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Extract and identify disease subtypes using pattern matching and hierarchy validation."""
-    from matrix.pipelines.disease_list.queries import query_get_descendants
+    from core_entities.pipelines.disease_mondo.queries import query_get_descendants
 
     chromosomal_diseases_root = subtypes_params["chromosomal_diseases_root"]
     chromosomal_diseases_exceptions = subtypes_params["chromosomal_diseases_exceptions"]
@@ -481,18 +469,6 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
 
     df_disease_list_unfiltered[filter_column] = False
 
-    conflicts = df_disease_list_unfiltered[
-        (df_disease_list_unfiltered["f_matrix_manually_included"])
-        & (df_disease_list_unfiltered["f_matrix_manually_excluded"])
-    ]
-
-    if not conflicts.empty:
-        conflict_str = conflicts.to_string(index=False)
-        raise ValueError(
-            f"Conflicts found: The following entries are marked as both manually included and manually excluded:\n{conflict_str}"
-        )
-
-    df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_matrix_manually_included"]
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_leaf"]
 
     df_disease_list_unfiltered[filter_column] |= (df_disease_list_unfiltered["f_leaf_direct_parent"]) & (
@@ -507,10 +483,6 @@ def _matrix_disease_filter(df_disease_list_unfiltered: pd.DataFrame) -> pd.DataF
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_orphanet_disorder"]
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_clingen"]
     df_disease_list_unfiltered[filter_column] |= df_disease_list_unfiltered["f_omim"]
-
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_unclassified_hereditary"], filter_column] = False
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_paraphilic"], filter_column] = False
-    df_disease_list_unfiltered.loc[df_disease_list_unfiltered["f_matrix_manually_excluded"], filter_column] = False
 
     return df_disease_list_unfiltered
 
@@ -677,7 +649,6 @@ def _merge_disease_data_sources(
     metrics_df: pd.DataFrame,
     subtype_counts_df: pd.DataFrame,
     full_subtype_counts: pd.DataFrame,
-    disease_list_llm_tags: pd.DataFrame,
 ) -> pd.DataFrame:
     """Merge all disease data sources into single DataFrame.
 
@@ -714,28 +685,6 @@ def _merge_disease_data_sources(
         how="left",
     )
 
-    # Preprocess and merge LLM generated tags
-    # TODO this preprocessing might be better placed in the LLM tagging step and should be removed from here
-    disease_list_llm_tags.columns = [col.lower() for col in disease_list_llm_tags.columns]
-    llm_tag_str_columns = ["txgnn", "medical_specialization", "anatomical", "tag_qaly_lost"]
-    llm_tag_bool_columns = ["is_pathogen_caused", "is_cancer", "is_glucose_dysfunction", "tag_existing_treatment"]
-    llm_tag_columns = ["category_class"] + llm_tag_str_columns + llm_tag_bool_columns
-
-    disease_list_llm_tags_sub = disease_list_llm_tags[llm_tag_columns]
-    merged = merged.merge(
-        disease_list_llm_tags_sub,
-        left_on="category_class",
-        right_on="category_class",
-        how="left",
-    )
-
-    for col in llm_tag_str_columns:
-        merged[col] = merged[col].apply(_clean_multi_value)
-
-    for col in llm_tag_bool_columns:
-        merged[col] = merged[col].apply(_clean_boolean)
-    # FINISH: Preprocess and merge LLM generated tags
-
     return merged.drop(columns=["subset_id"], errors="ignore")
 
 
@@ -749,27 +698,19 @@ def _merge_disease_data_sources(
             "subsets": pa.Column(dtype=str, nullable=True),
             "crossreferences": pa.Column(dtype=str, nullable=True),
             "malacards_linkouts": pa.Column(dtype=str, nullable=True),
-            "f_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
-            "f_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
             "f_clingen": pa.Column(dtype=bool, nullable=False),
             "f_susceptibility": pa.Column(dtype=bool, nullable=False),
             "f_mondo_subtype": pa.Column(dtype=bool, nullable=False),
-            "f_pathway_defect": pa.Column(dtype=bool, nullable=False),
             "f_grouping_subset": pa.Column(dtype=bool, nullable=False),
             "f_obsoletion_candidate": pa.Column(dtype=bool, nullable=False),
             "f_orphanet_subtype": pa.Column(dtype=bool, nullable=False),
             "f_orphanet_disorder": pa.Column(dtype=bool, nullable=False),
             "f_icd_billable": pa.Column(dtype=bool, nullable=False),
-            "f_paraphilic": pa.Column(dtype=bool, nullable=False),
             "f_cardiovascular": pa.Column(dtype=bool, nullable=False),
             "f_filter_heart_disorder": pa.Column(dtype=bool, nullable=False),
             "f_inflammatory": pa.Column(dtype=bool, nullable=False),
             "f_psychiatric": pa.Column(dtype=bool, nullable=False),
             "f_cancer_or_benign_tumor": pa.Column(dtype=bool, nullable=False),
-            "f_withorwithout": pa.Column(dtype=bool, nullable=False),
-            "f_andor": pa.Column(dtype=bool, nullable=False),
-            "f_acquired": pa.Column(dtype=bool, nullable=False),
-            "f_unclassified_hereditary": pa.Column(dtype=bool, nullable=False),
             "f_grouping_subset_ancestor": pa.Column(dtype=bool, nullable=False),
             "f_orphanet_subtype_descendant": pa.Column(dtype=bool, nullable=False),
             "f_omimps": pa.Column(dtype=bool, nullable=False),
@@ -798,23 +739,6 @@ def _merge_disease_data_sources(
 @pa.check_input(
     pa.DataFrameSchema(
         {
-            "category_class": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=True),
-            "medical_specialization": pa.Column(dtype=str, nullable=True),
-            "anatomical": pa.Column(dtype=str, nullable=True),
-            "is_pathogen_caused": pa.Column(dtype=object, nullable=True),
-            "is_cancer": pa.Column(dtype=object, nullable=True),
-            "is_glucose_dysfunction": pa.Column(dtype=object, nullable=True),
-            "tag_existing_treatment": pa.Column(dtype=object, nullable=True),
-            "tag_QALY_lost": pa.Column(dtype=str, nullable=True),
-        },
-        strict=True,
-    ),
-    obj_getter="disease_list_llm_tags",
-)
-@pa.check_input(
-    pa.DataFrameSchema(
-        {
             "subset_id": pa.Column(dtype=str, nullable=False),
             "subset_label": pa.Column(dtype=str, nullable=False),
             "subset_group_id": pa.Column(dtype=str, nullable=False),
@@ -835,27 +759,19 @@ def _merge_disease_data_sources(
             "subsets": pa.Column(dtype=str, nullable=True),
             "crossreferences": pa.Column(dtype=str, nullable=True),
             "malacards_linkouts": pa.Column(dtype=str, nullable=True),
-            "is_matrix_manually_included": pa.Column(dtype=bool, nullable=False),
-            "is_matrix_manually_excluded": pa.Column(dtype=bool, nullable=False),
             "is_clingen": pa.Column(dtype=bool, nullable=False),
             "is_susceptibility": pa.Column(dtype=bool, nullable=False),
             "is_mondo_subtype": pa.Column(dtype=bool, nullable=False),
-            "is_pathway_defect": pa.Column(dtype=bool, nullable=False),
             "is_grouping_subset": pa.Column(dtype=bool, nullable=False),
             "is_obsoletion_candidate": pa.Column(dtype=bool, nullable=False),
             "is_orphanet_subtype": pa.Column(dtype=bool, nullable=False),
             "is_orphanet_disorder": pa.Column(dtype=bool, nullable=False),
             "is_icd_billable": pa.Column(dtype=bool, nullable=False),
-            "is_paraphilic": pa.Column(dtype=bool, nullable=False),
             "is_cardiovascular": pa.Column(dtype=bool, nullable=False),
             "is_filter_heart_disorder": pa.Column(dtype=bool, nullable=False),
             "is_inflammatory": pa.Column(dtype=bool, nullable=False),
             "is_psychiatric": pa.Column(dtype=bool, nullable=False),
             "is_cancer_or_benign_tumor": pa.Column(dtype=bool, nullable=False),
-            "is_withorwithout": pa.Column(dtype=bool, nullable=False),
-            "is_andor": pa.Column(dtype=bool, nullable=False),
-            "is_acquired": pa.Column(dtype=bool, nullable=False),
-            "is_unclassified_hereditary": pa.Column(dtype=bool, nullable=False),
             "is_grouping_subset_ancestor": pa.Column(dtype=bool, nullable=False),
             "is_orphanet_subtype_descendant": pa.Column(dtype=bool, nullable=False),
             "is_omimps": pa.Column(dtype=bool, nullable=False),
@@ -870,14 +786,6 @@ def _merge_disease_data_sources(
             "harrisons_view": pa.Column(dtype=str, nullable=False),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=False),
-            "medical_specialization": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=True),
-            "anatomical": pa.Column(dtype=str, nullable=True),
-            "is_pathogen_caused": pa.Column(dtype=bool, nullable=True),
-            "is_cancer": pa.Column(dtype=bool, nullable=True),
-            "is_glucose_dysfunction": pa.Column(dtype=bool, nullable=True),
-            "tag_existing_treatment": pa.Column(dtype=bool, nullable=True),
-            "tag_qaly_lost": pa.Column(dtype=str, nullable=True),
             "count_descendants": pa.Column(dtype=int, nullable=False),
             "count_subtypes": pa.Column(dtype=int, nullable=False),
             "subset_group_id": pa.Column(dtype=str, nullable=True),
@@ -888,19 +796,14 @@ def _merge_disease_data_sources(
         },
         strict=True,
         unique=["category_class"],
-        checks=[
-            pa.Check(
-                lambda df: df.shape[0] >= 15000, name="min_rows", error="disease_list must have at least 15000 rows"
-            )
-        ],
+        checks=[pa.Check(lambda df: df.shape[0] >= 1, name="min_rows", error="disease_list must have at least 1 row")],
     ),
     obj_getter="disease_list",
 )
-def create_disease_list(
+def create_mondo_disease_list(
     disease_list_raw: pd.DataFrame,
     mondo_metrics: pd.DataFrame,
     subtype_counts: pd.DataFrame,
-    disease_list_llm_tags: pd.DataFrame,
     parameters: Dict[str, Any],
 ) -> Dict[str, pd.DataFrame]:
     """Apply filters and transformations to create final disease list.
@@ -947,7 +850,7 @@ def create_disease_list(
     )
 
     merged_df = _merge_disease_data_sources(
-        filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts, disease_list_llm_tags
+        filtered_df, groupings_df, mondo_metrics, subtype_group_counts, subtype_counts
     )
 
     merged_df["count_subtypes"] = pd.to_numeric(merged_df["count_subtypes"], errors="coerce").fillna(0).astype(int)

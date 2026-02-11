@@ -24,7 +24,7 @@ class PyOxiGraphDataset(AbstractDataset):
 
     Example usage in catalog:
         mondo_graph:
-            type: matrix.datasets.rdf.PyOxiGraphDataset
+            type: core_entities.datasets.rdf.PyOxiGraphDataset
             filepath: data/01_raw/mondo.owl
             load_args:
                 format: xml  # or ttl, n3, nt, etc.

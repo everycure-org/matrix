@@ -209,15 +209,6 @@ We welcome and encourage all external contributions! Please see our
 [Contributing Guide](CONTRIBUTING.md) for detailed information on how to contribute to the MATRIX
 project.
 
-## 🔗 Related Projects
-
-- [MATRIX disease list](https://github.com/everycure-org/matrix-disease-list) - Repo to manage the
-  MATRIX disease list.
-- [MATRIX drug list](https://github.com/everycure-org/matrix-drug-list) - Repo to manage the MATRIX
-  drug list.
-
-> Note both of these will eventually be merged into this monorepo.
-
 ---
 
 ## Brand and Trademark Notice

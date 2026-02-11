@@ -50,7 +50,7 @@ Suitable for transparent provenance and iterative curation.
 
 #### Licensing & Accessibility
 
-* **License**: [MIT (software and KG)](https://robokop.renci.org/question-builder/about)
+* **License**: [MIT (software and KG)](https://robokop.renci.org/license)
 * **Accessibility**: Public UI and [APIs for exploratory queries](https://robokop.renci.org/api-docs/docs/automat/robokop-kg); programmatic access available
 * **Note on reuse**: Upstream source licenses apply; retain original terms when redistributing
 

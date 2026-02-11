@@ -1,14 +1,14 @@
-# Disease List Pipeline
+# Disease MONDO Pipeline
 
 ## Overview
 
-The Disease List Pipeline creates the MATRIX disease list from the MONDO disease ontology. This curated list determines which diseases are included in the MATRIX drug repurposing platform. The pipeline processes raw ontology data, enriches it with external mappings, applies sophisticated filters, and generates the final validated disease list.
+The Disease MONDO Pipeline extracts and processes disease data from the MONDO disease ontology. This pipeline creates the foundational disease list that feeds into the downstream `disease_list` pipeline, which enriches it with curated annotations and produces the final MATRIX disease list.
 
 ## How to Run
 
 ```bash
-# Run the full pipeline
-uv run kedro run -p disease_list
+# Run the MONDO extraction pipeline
+uv run kedro run -p disease_mondo --env test
 ```
 
 ## Pipeline Architecture
@@ -16,15 +16,15 @@ uv run kedro run -p disease_list
 The pipeline consists of 4 main nodes that process data sequentially:
 
 ```
-Raw Data Sources → Data Preparation → MONDO Extraction → Disease List Creation
+Raw Data Sources -> Data Preparation -> MONDO Extraction -> Disease List Creation
 ```
 
 ## Input Data Sources
 
-- **MONDO Ontology** (`disease_list.raw.mondo_graph`): The primary disease ontology source (PyOxigraph RDF graph)
-- **MONDO SSSOM Mappings** (`disease_list.raw.mondo_sssom`): Cross-ontology mappings for disease alignment
-- **ICD-10-CM Codes** (`disease_list.raw.icd10_cm_codes`): Official ICD-10 clinical modification codes from CMS
-- **MONDO Obsoletion Candidates** (`disease_list.raw.mondo_obsoletion_candidates`): Diseases marked for potential removal from MONDO
+- **MONDO Ontology** (`disease_mondo.raw.mondo_graph`): The primary disease ontology source (PyOxigraph RDF graph)
+- **MONDO SSSOM Mappings** (`disease_mondo.raw.mondo_sssom`): Cross-ontology mappings for disease alignment
+- **ICD-10-CM Codes** (`disease_mondo.raw.icd10_cm_codes`): Official ICD-10 clinical modification codes from CMS
+- **MONDO Obsoletion Candidates** (`disease_mondo.raw.mondo_obsoletion_candidates`): Diseases marked for potential removal from MONDO
 
 ## Pipeline Nodes
 
@@ -123,10 +123,10 @@ Raw Data Sources → Data Preparation → MONDO Extraction → Disease List Crea
 
 ---
 
-### Node 4: Create Disease List
-**Function**: `create_disease_list`
+### Node 4: Create MONDO Disease List
+**Function**: `create_mondo_disease_list`
 
-**Purpose**: Applies business logic filters, enriches with groupings, and creates the final curated disease list.
+**Purpose**: Applies business logic filters, enriches with groupings, and creates the MONDO-derived disease list.
 
 **Inputs**:
 - Raw disease list with filter features (from Node 3)
@@ -135,7 +135,7 @@ Raw Data Sources → Data Preparation → MONDO Extraction → Disease List Crea
 - Disease list parameters (filter rules, grouping configurations)
 
 **Outputs**:
-- Final disease list (`disease_list.prm.disease_list`) with:
+- MONDO disease list (`disease_mondo.prm.disease_list`) with:
   - 32+ boolean filters (renamed from `f_*` to `is_*`)
   - Disease groupings (curated + LLM-generated)
   - Hierarchy metrics
@@ -160,7 +160,7 @@ Raw Data Sources → Data Preparation → MONDO Extraction → Disease List Crea
 
    - **Conflict Detection**: Raises error if disease is both manually included AND excluded
 
-2. **Renames Filter Columns**: Changes `f_*` prefixes to `is_*` for clarity (e.g., `f_omim` → `is_omim`)
+2. **Renames Filter Columns**: Changes `f_*` prefixes to `is_*` for clarity (e.g., `f_omim` -> `is_omim`)
 
 3. **Extracts Disease Groupings**:
    - Parses MONDO subset annotations (semicolon-delimited)
@@ -188,27 +188,26 @@ Raw Data Sources → Data Preparation → MONDO Extraction → Disease List Crea
 
 **Output Schema**:
 - ~45 columns including disease metadata, boolean filters, groupings, and metrics
-- Validated to have ≥15,000 diseases
+- Validated to have >=15,000 diseases
 - Unique MONDO IDs enforced
 
-**Why this matters**: This creates the final Mondo-derived disease list from which the Orchard disease list is derived.
+**Why this matters**: This creates the foundational MONDO-derived disease list that the `disease_list` pipeline enriches with curated annotations.
 
 ---
 
 ## Output Datasets
 
 ### Primary Outputs
-- **`disease_list.prm.disease_list`**: Final curated disease list (>22,000 diseases)
-- **`disease_list.prm.mondo_metadata`**: MONDO version and provenance information
-- **`disease_list.prm.mondo_obsoletes`**: Deprecated diseases with replacement mappings
-- **`disease_list.prm.mondo_obsoletion_candidates`**: Diseases marked for potential obsoletion
+- **`disease_mondo.prm.disease_list`**: MONDO-derived disease list (>22,000 diseases) - consumed by `disease_list` pipeline
+- **`disease_mondo.prm.mondo_metadata`**: MONDO version and provenance information
+- **`disease_mondo.prm.mondo_obsoletes`**: Deprecated diseases with replacement mappings
+- **`disease_mondo.prm.mondo_obsoletion_candidates`**: Diseases marked for potential obsoletion
 
 ### Intermediate Outputs
-- **`disease_list.int.billable_icd10_codes`**: ICD-10 to MONDO mappings
-- **`disease_list.int.disease_list_raw`**: Unfiltered disease data with all features
-- **`disease_list.int.mondo_metrics`**: Disease hierarchy metrics
-- **`disease_list.int.subtype_counts`**: Subtype relationship data
-- **`disease_list.int.mondo_preprocessed`**: Enriched MONDO graph (RDF)
+- **`disease_mondo.int.billable_icd10_codes`**: ICD-10 to MONDO mappings
+- **`disease_mondo.int.disease_list_raw`**: Unfiltered disease data with all features
+- **`disease_mondo.int.mondo_metrics`**: Disease hierarchy metrics
+- **`disease_mondo.int.subtype_counts`**: Subtype relationship data
 
 ## Key Concepts
 
@@ -239,6 +238,15 @@ The pipeline uses Pandera schemas to validate:
 - **Data integrity**: No duplicate MONDO IDs, all IDs start with "MONDO:"
 
 Validation failures halt the pipeline with descriptive error messages.
+
+## Downstream Pipeline
+
+The output `disease_mondo.prm.disease_list` is consumed by the `disease_list` pipeline, which:
+- Merges with curated disease annotations from Google Sheets
+- Applies name patches and formatting
+- Adds prevalence, UMN, and category data
+- Handles disease migrations for obsoleted terms
+- Produces the final published disease list
 
 ## Related Documentation
 

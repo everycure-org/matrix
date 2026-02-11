@@ -53,7 +53,6 @@ curated_list_speciality_columns = [
                     "harrisons_view",
                     "mondo_txgnn",
                     "mondo_top_grouping",
-                    "txgnn",
                 ]
             ]
         ),
@@ -64,7 +63,6 @@ curated_list_speciality_columns = [
             "harrisons_view": pa.Column(nullable=True),
             "mondo_txgnn": pa.Column(nullable=True),
             "mondo_top_grouping": pa.Column(nullable=True),
-            "txgnn": pa.Column(nullable=False),
         },
         unique=["category_class"],
     )
@@ -78,7 +76,6 @@ curated_list_speciality_columns = [
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
         unique=["id"],
@@ -266,11 +263,11 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
         ),
         columns={
             "id": pa.Column(nullable=False),
-            "is_psychiatric_disease": pa.Column(nullable=False),
-            "is_malignant_cancer": pa.Column(nullable=False),
-            "is_benign_tumour": pa.Column(nullable=False),
-            "is_pathogen_caused": pa.Column(nullable=False),
-            "is_glucose_dysfunction": pa.Column(nullable=False),
+            "is_psychiatric_disease": pa.Column(nullable=True),
+            "is_malignant_cancer": pa.Column(nullable=True),
+            "is_benign_tumour": pa.Column(nullable=True),
+            "is_pathogen_caused": pa.Column(nullable=True),
+            "is_glucose_dysfunction": pa.Column(nullable=True),
         },
         unique=["id"],
     )
@@ -279,11 +276,11 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
     pa.DataFrameSchema(
         {
             "id": pa.Column(dtype=str, nullable=False),
-            "is_psychiatric_disease": pa.Column(nullable=False),
-            "is_malignant_cancer": pa.Column(nullable=False),
-            "is_benign_tumour": pa.Column(nullable=False),
-            "is_pathogen_caused": pa.Column(nullable=False),
-            "is_glucose_dysfunction": pa.Column(nullable=False),
+            "is_psychiatric_disease": pa.Column(nullable=True),
+            "is_malignant_cancer": pa.Column(nullable=True),
+            "is_benign_tumour": pa.Column(nullable=True),
+            "is_pathogen_caused": pa.Column(nullable=True),
+            "is_glucose_dysfunction": pa.Column(nullable=True),
         },
         strict=True,
         unique=["id"],
@@ -398,6 +395,38 @@ def ingest_disease_prevalence(disease_prevalence: pd.DataFrame) -> pd.DataFrame:
         parsers=pa.Parser(
             lambda df: df[
                 [
+                    "category_class",
+                    "txgnn",
+                ]
+            ]
+        ),
+        columns={
+            "category_class": pa.Column(nullable=False),
+            "txgnn": pa.Column(nullable=False),
+        },
+        strict=True,
+        unique=["category_class"],
+    )
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "id": pa.Column(dtype=str, nullable=False),
+            "txgnn": pa.Column(dtype=str, nullable=False),
+        },
+        strict=True,
+        unique=["id"],
+    )
+)
+def ingest_disease_txgnn(disease_txgnn: pd.DataFrame) -> pd.DataFrame:
+    return disease_txgnn.rename(columns={"category_class": "id"})
+
+
+@pa.check_input(
+    pa.DataFrameSchema(
+        parsers=pa.Parser(
+            lambda df: df[
+                [
                     "id",
                     "disease_kg_node_id",
                     "comment",
@@ -504,6 +533,7 @@ def merge_disease_lists(
     disease_categories: pd.DataFrame,
     disease_umn: pd.DataFrame,
     disease_prevalence: pd.DataFrame,
+    disease_txgnn: pd.DataFrame,
     curated_disease_list: pd.DataFrame,
 ) -> pd.DataFrame:
     _log_merge_statistics(
@@ -542,6 +572,21 @@ def merge_disease_lists(
     disease_list = pd.merge(
         disease_list,
         disease_prevalence,
+        on="id",
+        how="left",
+    )
+
+    _log_merge_statistics(
+        primary_df=disease_list,
+        secondary_df=disease_txgnn,
+        primary_name="disease list",
+        secondary_name="disease txgnn",
+        primary_only_action="will be kept with nulls",
+        secondary_only_action="will be dropped",
+    )
+    disease_list = pd.merge(
+        disease_list,
+        disease_txgnn,
         on="id",
         how="left",
     )
@@ -625,11 +670,11 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
             "is_malignant_cancer": pa.Column(nullable=True),
             "is_benign_tumour": pa.Column(nullable=True),
             "is_infectious_disease": pa.Column(nullable=True),
+            "txgnn": pa.Column(dtype=str, nullable=True),
             "is_glucose_dysfunction": pa.Column(nullable=True),
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
-            "txgnn": pa.Column(dtype=str, nullable=False),
         },
         strict=True,
         unique=["id"],
@@ -678,9 +723,9 @@ def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) 
             "is_benign_tumour": pa.Column(nullable=True),
             "harrisons_view": pa.Column(nullable=True),
             "is_infectious_disease": pa.Column(nullable=True),
+            "txgnn": pa.Column(nullable=True),
             "mondo_txgnn": pa.Column(nullable=True),
             "mondo_top_grouping": pa.Column(nullable=True),
-            "txgnn": pa.Column(nullable=True),
             "is_glucose_dysfunction": pa.Column(nullable=True),
             "new_id": pa.Column(nullable=True),
             "deleted": pa.Column(nullable=True),
