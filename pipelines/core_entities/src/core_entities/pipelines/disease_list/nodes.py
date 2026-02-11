@@ -263,11 +263,11 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
         ),
         columns={
             "id": pa.Column(nullable=False),
-            "is_psychiatric_disease": pa.Column(nullable=False),
-            "is_malignant_cancer": pa.Column(nullable=False),
-            "is_benign_tumour": pa.Column(nullable=False),
-            "is_pathogen_caused": pa.Column(nullable=False),
-            "is_glucose_dysfunction": pa.Column(nullable=False),
+            "is_psychiatric_disease": pa.Column(nullable=True),
+            "is_malignant_cancer": pa.Column(nullable=True),
+            "is_benign_tumour": pa.Column(nullable=True),
+            "is_pathogen_caused": pa.Column(nullable=True),
+            "is_glucose_dysfunction": pa.Column(nullable=True),
         },
         unique=["id"],
     )
@@ -276,11 +276,11 @@ def ingest_disease_name_patch(disease_name_patch: pd.DataFrame) -> pd.DataFrame:
     pa.DataFrameSchema(
         {
             "id": pa.Column(dtype=str, nullable=False),
-            "is_psychiatric_disease": pa.Column(nullable=False),
-            "is_malignant_cancer": pa.Column(nullable=False),
-            "is_benign_tumour": pa.Column(nullable=False),
-            "is_pathogen_caused": pa.Column(nullable=False),
-            "is_glucose_dysfunction": pa.Column(nullable=False),
+            "is_psychiatric_disease": pa.Column(nullable=True),
+            "is_malignant_cancer": pa.Column(nullable=True),
+            "is_benign_tumour": pa.Column(nullable=True),
+            "is_pathogen_caused": pa.Column(nullable=True),
+            "is_glucose_dysfunction": pa.Column(nullable=True),
         },
         strict=True,
         unique=["id"],
