@@ -8,6 +8,10 @@ The goal of the MATRIX disease list is, therefore, to separate these cases from 
 
 The list will be used for communication and navigation purposes
 
+## Availability on HuggingFace Hub
+
+The EC Disease List is also published on HuggingFace Hub at [everycure/disease-list](https://huggingface.co/datasets/everycure/disease-list) under the CC-BY-4.0 license. The HF dataset is updated automatically on minor and major releases (patch releases are skipped). Certain columns (`unmet_medical_need`, `is_psychiatric_disease`, `is_malignant_cancer`, `is_benign_tumour`, `is_infectious_disease`, `is_glucose_dysfunction`) are excluded from the public HF release.
+
 ## Maintainer team
 
 | Contributor | Organisation | ORCID |
