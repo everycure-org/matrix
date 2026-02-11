@@ -107,17 +107,25 @@ def fabricate_run_comparison_matrices(
     """Generate fabricated matrix predictions data to test the run comparison pipeline."""
     np.random.seed(0)
 
+    # Ground truth columns to generate
+    gt_columns = [
+        "is_known_positive",
+        "is_known_negative",
+        "off_label",
+        "ec_indications_list_on_label",
+        "ec_indications_list_off_label",
+        "ec_indications_list",
+    ]
+
     # Generate base matrices of drug-disease pairs
     drugs_df = pd.DataFrame({"source": [f"drug_{i}" for i in range(N)]})
     diseases_df = pd.DataFrame({"target": [f"disease_{i}" for i in range(N)]})
     base_matrix_fold_1 = pd.merge(drugs_df, diseases_df, how="cross")
-    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "is_known_positive")
-    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "is_known_negative")
-    base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, "off_label")
+    for col in gt_columns:
+        base_matrix_fold_1 = _add_test_set_columns(base_matrix_fold_1, test_set_proportion, col)
     base_matrix_fold_2 = base_matrix_fold_1.copy(deep=True)
-    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "is_known_positive")
-    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "is_known_negative")
-    base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, "off_label")
+    for col in gt_columns:
+        base_matrix_fold_2 = _add_test_set_columns(base_matrix_fold_2, test_set_proportion, col)
 
     # Generate scores and return
     return {
@@ -126,6 +134,36 @@ def fabricate_run_comparison_matrices(
         "matrix_fold_1_bad_model": _attach_scores(base_matrix_fold_1, skew_bad_model, seed=3),
         "matrix_fold_2_bad_model": _attach_scores(base_matrix_fold_2, skew_bad_model, seed=4),
     }
+
+
+def fabricate_run_comparison_splits(N: int = 15, num_folds: int = 2, train_proportion: float = 0.9) -> pd.DataFrame:
+    """Generate fabricated training splits data to test run comparison training counts.
+
+    Args:
+        N: Number of drugs and diseases.
+        num_folds: Number of cross-validation folds.
+        train_proportion: Proportion of pairs to mark as training positives.
+
+    Returns:
+        DataFrame with columns: source, target, fold, split, y
+    """
+    np.random.seed(42)
+
+    drugs = [f"drug_{i}" for i in range(N)]
+    diseases = [f"disease_{i}" for i in range(N)]
+
+    rows = []
+    for fold in range(num_folds):
+        for drug in drugs:
+            for disease in diseases:
+                # Randomly assign to TRAIN or TEST
+                is_train = np.random.random() < train_proportion
+                split = "TRAIN" if is_train else "TEST"
+                # For training pairs, randomly assign y=1 (positive) or y=0 (negative)
+                y = 1 if (is_train and np.random.random() < 0.5) else 0
+                rows.append({"source": drug, "target": disease, "fold": fold, "split": split, "y": y})
+
+    return pd.DataFrame(rows)
 
 
 def format_infores_catalog(fabrication_params: dict) -> dict:
@@ -429,6 +467,16 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "matrix_fold_2_bad_model": "fabricator.raw.run_comparison_matrices.matrix_fold_2_bad_model",
                 },
                 name="fabricate_run_comparison_matrices",
+            ),
+            node(
+                func=fabricate_run_comparison_splits,
+                inputs=[
+                    "params:fabricator.run_comparison.matrix_size",
+                    "params:fabricator.run_comparison.num_folds",
+                    "params:fabricator.run_comparison.train_proportion",
+                ],
+                outputs="fabricator.raw.run_comparison_splits",
+                name="fabricate_run_comparison_splits",
             ),
             node(
                 func=fabricate_datasets,

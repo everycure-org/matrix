@@ -7,11 +7,15 @@ run_comparison:
           - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_{1,2}_good_model.csv
         score_col_name: "treat score"
         file_format: "csv"
+        train_data:
+          filepath: ${globals:paths.raw}/run_comparison_matrices/splits
       - name: bad_model
         fold_paths_list: 
           - ${globals:paths.raw}/run_comparison_matrices/matrix_fold_{1,2}_bad_model.csv
         score_col_name: "treat score"
         file_format: "csv"
+        train_data:
+          filepath: ${globals:paths.raw}/run_comparison_matrices/splits
 
   evaluations:
     ground_truth_recall_at_n:
@@ -45,6 +49,11 @@ run_comparison:
     disease_specific_hit_at_k_off_label_bootstrap:
       k_max: 10
       N_bootstraps: 10
+    disease_specific_recall_at_n_table:
+      n_values: [10, 20, 50, 100]
+    fold_specific_recall_at_n:
+      n_max: 2500
+      num_n_values: 50
     drug_entropy_at_n:
       n_max: 2500
       num_n_values: 100
