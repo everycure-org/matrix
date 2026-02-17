@@ -849,11 +849,6 @@ _DISEASE_HF_COLUMNS_TO_DROP = [
 ]
 
 
-def drop_disease_hf_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Drop columns excluded from the public HF disease list release."""
-    return df.drop(columns=_DISEASE_HF_COLUMNS_TO_DROP, errors="ignore")
-
-
 def merge_mondo_and_ec_disease_list(
     mondo_disease_list: pd.DataFrame,
     ec_disease_list: pd.DataFrame,
