@@ -837,3 +837,18 @@ def publish_disease_list(disease_list: pd.DataFrame) -> dict:
         "disease_list_bq": disease_list,
         "disease_list_bq_latest": disease_list,
     }
+
+
+_DISEASE_HF_COLUMNS_TO_DROP = [
+    "unmet_medical_need",
+    "is_psychiatric_disease",
+    "is_malignant_cancer",
+    "is_benign_tumour",
+    "is_infectious_disease",
+    "is_glucose_dysfunction",
+]
+
+
+def drop_disease_hf_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop columns excluded from the public HF disease list release."""
+    return df.drop(columns=_DISEASE_HF_COLUMNS_TO_DROP, errors="ignore")

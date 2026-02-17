@@ -3,19 +3,6 @@ from __future__ import annotations
 from kedro.pipeline import Pipeline, node
 
 
-def _drop_disease_hf_columns(df):
-    """Drop columns excluded from the public HF disease list release."""
-    columns_to_drop = [
-        "unmet_medical_need",
-        "is_psychiatric_disease",
-        "is_malignant_cancer",
-        "is_benign_tumour",
-        "is_infectious_disease",
-        "is_glucose_dysfunction",
-    ]
-    return df.drop(columns=columns_to_drop, errors="ignore")
-
-
 def create_pipeline() -> Pipeline:
     return Pipeline(
         [
@@ -30,18 +17,6 @@ def create_pipeline() -> Pipeline:
                 inputs="integration.prm.unified_nodes",
                 outputs="data_publication.prm.kg_nodes_hf_published",
                 name="publish_kg_nodes_node",
-            ),
-            node(
-                func=lambda x: x,
-                inputs="data_publication.prm.drug_list_source",
-                outputs="data_publication.prm.drug_list_hf_published",
-                name="publish_drug_list_node",
-            ),
-            node(
-                func=_drop_disease_hf_columns,
-                inputs="data_publication.prm.disease_list_source",
-                outputs="data_publication.prm.disease_list_hf_published",
-                name="publish_disease_list_node",
             ),
         ]
     )

@@ -12,29 +12,3 @@ data_publication.prm.kg_nodes_hf_published:
   split: train
   dataframe_type: spark
   data_dir: data/nodes
-
-# -------------------------------------------------------------------------
-# Drug / Disease list -> HuggingFace Hub
-# -------------------------------------------------------------------------
-
-# Input: published lists from GCS (version injected via env var by CI)
-data_publication.prm.drug_list_source:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.raw_public}/drug_list/${oc.env:CE_RELEASE_VERSION}/ec-drug-list.parquet
-
-data_publication.prm.disease_list_source:
-  type: pandas.ParquetDataset
-  filepath: ${globals:paths.raw_public}/disease_list/${oc.env:CE_RELEASE_VERSION}/ec-disease-list.parquet
-
-# Output: HF Hub datasets
-data_publication.prm.drug_list_hf_published:
-  type: matrix_gcp_datasets.huggingface.HFIterableDataset
-  repo_id: everycure/drug-list
-  split: train
-  dataframe_type: pandas
-
-data_publication.prm.disease_list_hf_published:
-  type: matrix_gcp_datasets.huggingface.HFIterableDataset
-  repo_id: everycure/disease-list
-  split: train
-  dataframe_type: pandas

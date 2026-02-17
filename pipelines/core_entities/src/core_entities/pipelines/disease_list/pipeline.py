@@ -149,3 +149,16 @@ def create_publish_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
+
+
+def create_publish_hf_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=nodes.drop_disease_hf_columns,
+                inputs="primary.release.disease_list_parquet",
+                outputs="primary.published.disease_list_hf",
+                name="publish_disease_list_hf",
+            ),
+        ]
+    )

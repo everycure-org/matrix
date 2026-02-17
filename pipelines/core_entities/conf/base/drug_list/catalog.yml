@@ -115,3 +115,9 @@ primary.published.drug_list_bq:
 primary.published.drug_list_bq_latest:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.published}/ec-drug-list-bq-latest.parquet
+
+primary.published.drug_list_hf:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/drug-list
+  split: train
+  dataframe_type: pandas
