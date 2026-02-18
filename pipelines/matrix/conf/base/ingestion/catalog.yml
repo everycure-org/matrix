@@ -403,7 +403,7 @@ ingestion.int.drugbank_ground_truth.positive.edges@spark:
 ingestion.raw.robokop.nodes@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_nodes.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -412,7 +412,7 @@ ingestion.raw.robokop.nodes@spark:
 
 ingestion.raw.robokop.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_nodes.tsv
   save_args:
     sep: "\t"
     header: true
@@ -422,7 +422,7 @@ ingestion.raw.robokop.nodes@pandas:
 
 ingestion.raw.robokop.nodes@polars:
   <<: [*_polars_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_nodes.tsv
   save_args:
     separator: "\t"
     has_header: true
@@ -432,7 +432,7 @@ ingestion.raw.robokop.nodes@polars:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_edges.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -441,7 +441,7 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_edges.tsv
   save_args:
     sep: "\t"
     header: true
@@ -451,7 +451,7 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.raw.robokop.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_edges.tsv
   save_args:
     separator: "\t"
     has_header: true
@@ -460,11 +460,11 @@ ingestion.raw.robokop.edges@polars:
 
 ingestion.raw.robokop.nodes@lazypolars:
   <<: [*_polars_lazy_csv]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_nodes.tsv
 
 ingestion.raw.robokop.edges@lazypolars:
   <<: [*_polars_lazy_csv]
-  filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/ts_edges.tsv
 
 ingestion.int.preprocessing.robokop.nodes@polars:
   <<: [*_polars_csv, *_layer_int]
