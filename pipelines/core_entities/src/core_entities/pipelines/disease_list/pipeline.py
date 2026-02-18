@@ -149,3 +149,19 @@ def create_publish_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
+
+
+def create_publish_hf_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=nodes.merge_mondo_and_ec_disease_list,
+                inputs={
+                    "mondo_disease_list": "disease_mondo.prm.disease_list",
+                    "ec_disease_list": "primary.release.disease_list_parquet",
+                },
+                outputs="primary.published.disease_list_hf",
+                name="publish_disease_list_hf",
+            ),
+        ]
+    )
