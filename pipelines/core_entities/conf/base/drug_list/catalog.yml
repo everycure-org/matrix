@@ -121,3 +121,4 @@ primary.published.drug_list_hf:
   repo_id: everycure/drug-list
   split: train
   dataframe_type: pandas
+  tag: ${globals:release_version, null}
