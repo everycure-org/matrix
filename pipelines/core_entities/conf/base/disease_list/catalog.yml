@@ -152,3 +152,4 @@ primary.published.disease_list_hf:
   repo_id: everycure/disease-list
   split: train
   dataframe_type: pandas
+  tag: ${globals:release_version, null}
