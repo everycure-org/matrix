@@ -237,9 +237,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                         "nodes": "integration.prm.unified_nodes",
                         "edges": "integration.prm.unified_edges",
                         "algorithm": "params:integration.connectivity.algorithm",
+                        "core_id_mapping": "integration.int.core_node_mapping",
                     },
                     outputs={
-                        "node_assignments": "integration.prm.connected_components_node_assignments",
+                        "node_assignments": "integration.prm.node_metrics",
                         "component_stats": "integration.prm.connected_components_stats",
                     },
                     name="compute_connected_components",
@@ -247,16 +248,20 @@ def create_pipeline(**kwargs) -> Pipeline:
                     argo_config=ArgoResourceConfig(memory_request=96, memory_limit=96),
                 ),
                 node(
+                    func=connectivity_metrics.compute_component_summary,
+                    inputs="integration.prm.node_metrics",
+                    outputs="integration.prm.connected_components",
+                    name="compute_component_summary",
+                    tags=["metrics", "connectivity"],
+                ),
+                node(
                     func=connectivity_metrics.compute_core_connectivity_metrics,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
                         "core_id_mapping": "integration.int.core_node_mapping",
-                        "connected_components": "integration.prm.connected_components_node_assignments",
+                        "connected_components": "integration.prm.node_metrics",
                     },
-                    outputs={
-                        "summary_metrics": "integration.prm.metric_core_connectivity_summary",
-                        "subgraph_details": "integration.prm.metric_core_connectivity_subgraph_details",
-                    },
+                    outputs="integration.prm.metric_core_connectivity_summary",
                     name="compute_core_connectivity_metrics",
                     tags=["metrics", "connectivity"],
                 ),

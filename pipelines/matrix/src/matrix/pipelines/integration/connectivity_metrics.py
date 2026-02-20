@@ -2,11 +2,11 @@ import gc
 import logging
 import time
 from collections import Counter
-from functools import reduce
 from typing import Dict
 
 import pyspark.sql as ps
 import pyspark.sql.functions as F
+from pyspark.sql.window import Window
 
 logger = logging.getLogger(__name__)
 
@@ -253,7 +253,56 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
     }
 
 
-def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algorithm: str) -> Dict[str, ps.DataFrame]:
+def _apply_dense_rank_ids(results: Dict[str, ps.DataFrame]) -> Dict[str, ps.DataFrame]:
+    """
+    Replace arbitrary component IDs with dense-ranked IDs ordered by descending component size.
+
+    The LCC gets component_id=0, the next largest gets 1, etc. This makes the IDs
+    human-readable and meaningful.
+
+    Args:
+        results: Dictionary with "node_assignments" and "component_stats" DataFrames
+                 using arbitrary component IDs from the algorithm.
+
+    Returns:
+        Same dictionary structure with component_id replaced by dense-ranked values.
+    """
+    component_stats = results["component_stats"]
+    node_assignments = results["node_assignments"]
+
+    # Create mapping from old component_id to dense rank (0-indexed)
+    window = Window.orderBy(F.desc("component_size"))
+    id_mapping = component_stats.select(
+        F.col("component_id").alias("_old_component_id"),
+        (F.dense_rank().over(window) - 1).alias("_new_component_id"),
+    )
+
+    # Apply to component_stats
+    new_stats = (
+        component_stats.join(id_mapping, component_stats.component_id == id_mapping._old_component_id)
+        .drop("component_id", "_old_component_id")
+        .withColumnRenamed("_new_component_id", "component_id")
+        .select("component_id", "component_size", "num_components")
+        .orderBy("component_id")
+    )
+
+    # Apply to node_assignments
+    new_assignments = (
+        node_assignments.join(id_mapping, node_assignments.component_id == id_mapping._old_component_id)
+        .drop("component_id", "_old_component_id")
+        .withColumnRenamed("_new_component_id", "component_id")
+        .select("id", "component_id")
+    )
+
+    return {
+        "node_assignments": new_assignments,
+        "component_stats": new_stats,
+    }
+
+
+def compute_connected_components(
+    nodes: ps.DataFrame, edges: ps.DataFrame, algorithm: str, core_id_mapping: ps.DataFrame
+) -> Dict[str, ps.DataFrame]:
     """
     Compute connected components using specified algorithm or benchmark all.
 
@@ -263,14 +312,18 @@ def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algor
     implementations, compares their performance (logged only, not saved), and
     returns results from the first algorithm.
 
+    Component IDs are dense-ranked by descending component size: the largest
+    connected component (LCC) gets component_id=0, the next largest gets 1, etc.
+
     Args:
         nodes: DataFrame with 'id' column
         edges: DataFrame with 'subject' and 'object' columns (unified edges)
         algorithm: One of "graphframes", "grape", "rustworkx", or "benchmark"
+        core_id_mapping: Core entity mapping with 'normalized_id' column
 
     Returns:
         Dictionary with keys:
-        - "node_assignments": DataFrame with (id, component_id) - node-to-component mapping
+        - "node_assignments": DataFrame with (id, component_id, is_ec_core) - node-to-component mapping
         - "component_stats": DataFrame with (component_id, component_size, num_components) - statistics
 
     Raises:
@@ -285,14 +338,34 @@ def compute_connected_components(nodes: ps.DataFrame, edges: ps.DataFrame, algor
     simplified_edges = _simplify_graph_for_connectivity(edges)
 
     if algorithm == "benchmark":
-        return _run_benchmark(nodes, simplified_edges)
-    else:
-        if algorithm == "graphframes":
-            return compute_connected_components_graphframes(nodes, simplified_edges)
-        elif algorithm == "grape":
-            return compute_connected_components_grape(nodes, simplified_edges)
-        elif algorithm == "rustworkx":
-            return compute_connected_components_rustworkx(nodes, simplified_edges)
+        results = _run_benchmark(nodes, simplified_edges)
+    elif algorithm == "graphframes":
+        results = compute_connected_components_graphframes(nodes, simplified_edges)
+    elif algorithm == "grape":
+        results = compute_connected_components_grape(nodes, simplified_edges)
+    elif algorithm == "rustworkx":
+        results = compute_connected_components_rustworkx(nodes, simplified_edges)
+
+    results = _apply_dense_rank_ids(results)
+
+    # Add ec_core_category: "drug", "disease", or null
+    core_categories = core_id_mapping.select(
+        F.col("normalized_id"),
+        F.when(F.col("category") == "biolink:Drug", F.lit("drug"))
+        .when(F.col("category") == "biolink:Disease", F.lit("disease"))
+        .alias("ec_core_category"),
+    ).distinct()
+    node_assignments = results["node_assignments"]
+    node_assignments = (
+        node_assignments.join(core_categories, node_assignments.id == core_categories.normalized_id, how="left")
+        .drop("normalized_id")
+        .select("id", "component_id", "ec_core_category")
+    )
+
+    return {
+        "node_assignments": node_assignments,
+        "component_stats": results["component_stats"],
+    }
 
 
 def _run_benchmark(nodes: ps.DataFrame, edges: ps.DataFrame) -> Dict[str, ps.DataFrame]:
@@ -389,9 +462,7 @@ def compute_core_connectivity_metrics(
         connected_components: Component assignments with 'id' and 'component_id' columns
 
     Returns:
-        Dictionary with keys:
-        - "summary_metrics": Aggregate metrics by category (all_core, drugs, diseases)
-        - "subgraph_details": Per-subgraph breakdown by category
+        Aggregate metrics DataFrame by category (all_core, drugs, diseases)
     """
     logger.info("Computing EC Core Entities connectivity metrics...")
 
@@ -417,7 +488,6 @@ def compute_core_connectivity_metrics(
     ]
 
     summary_data = []
-    detail_data = []
 
     for category_name, category_df in categories:
         logger.info(f"\nCalculating metrics for category: {category_name}")
@@ -436,8 +506,6 @@ def compute_core_connectivity_metrics(
         component_stats = (
             component_sizes.join(core_per_component, on="component_id", how="left")
             .fillna(0, subset=["core_entity_count"])
-            .withColumn("core_entity_fraction", F.col("core_entity_count") / F.lit(n_ec))
-            .withColumn("size_relative_to_lcc", F.col("component_size") / F.lit(lcc_size))
             .withColumn("is_lcc", F.col("component_size") == F.lit(lcc_size))
         )
 
@@ -474,23 +542,45 @@ def compute_core_connectivity_metrics(
             }
         )
 
-        # Add to details (with category column)
-        category_details = component_stats.select(
-            F.lit(category_name).alias("category"),
-            "component_id",
-            "component_size",
-            "core_entity_count",
-            "core_entity_fraction",
-            "size_relative_to_lcc",
-            "is_lcc",
-        ).orderBy(F.desc("component_size"))
-
-        detail_data.append(category_details)
-
     summary_metrics = nodes.sparkSession.createDataFrame(summary_data)
-    subgraph_details = reduce(lambda df1, df2: df1.union(df2), detail_data)
 
     logger.info("EC Core Connectivity Metrics Summary:")
     summary_metrics.show(truncate=False)
 
-    return {"summary_metrics": summary_metrics, "subgraph_details": subgraph_details}
+    return summary_metrics
+
+
+def compute_component_summary(
+    node_metrics: ps.DataFrame,
+) -> ps.DataFrame:
+    """
+    Produce a single-row-per-component summary with EC core drug/disease counts.
+
+    Args:
+        node_metrics: DataFrame with (id, component_id, ec_core_category) columns
+
+    Returns:
+        DataFrame with columns: component_id, component_size, num_drugs, num_diseases, num_other
+        Ordered by component_id (0 = LCC).
+    """
+    component_summary = (
+        node_metrics.groupBy("component_id")
+        .agg(
+            F.count("*").alias("component_size"),
+            F.sum(F.when(F.col("ec_core_category") == "drug", 1).otherwise(0)).alias("num_drugs"),
+            F.sum(F.when(F.col("ec_core_category") == "disease", 1).otherwise(0)).alias("num_diseases"),
+        )
+        .withColumn("num_other", F.col("component_size") - F.col("num_drugs") - F.col("num_diseases"))
+        .select("component_id", "component_size", "num_drugs", "num_diseases", "num_other")
+        .orderBy("component_id")
+    )
+
+    first = component_summary.first()
+    num_components = component_summary.count()
+    logger.info(
+        f"Component summary: {num_components:,} components. "
+        f"LCC (component 0): {first['component_size']:,} nodes, "
+        f"{first['num_drugs']:,} drugs, {first['num_diseases']:,} diseases."
+    )
+
+    return component_summary
