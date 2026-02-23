@@ -146,10 +146,3 @@ primary.published.disease_list_bq:
 primary.published.disease_list_bq_latest:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.published}/ec-disease-list-bq-latest.parquet
-
-primary.published.disease_list_hf:
-  type: matrix_gcp_datasets.huggingface.HFIterableDataset
-  repo_id: everycure/disease-list
-  split: train
-  dataframe_type: pandas
-  tag: ${globals:release_version, null}
