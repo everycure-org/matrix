@@ -11,7 +11,7 @@ with biomedical knowledge graphs, drug lists, disease lists, and drug repurposin
 | **kg-nodes** | Knowledge graph nodes (entities) | [everycure/kg-nodes](https://huggingface.co/datasets/everycure/kg-nodes) | |
 | **kg-edges** | Knowledge graph edges (relationships) | [everycure/kg-edges](https://huggingface.co/datasets/everycure/kg-edges) | |
 | **drug-list** | EC Drug List — curated list of ~1,800 drugs with metadata | [everycure/drug-list](https://huggingface.co/datasets/everycure/drug-list) | [EC Drug List](../pipeline/data/ec_drug_list.md) |
-| **disease-list** | EC Disease List — curated list of drug-targetable diseases | [everycure/disease-list](https://huggingface.co/datasets/everycure/disease-list) | [Disease List](../pipeline/data/drug_disease_lists.md) |
+| **disease-list** | EC Disease List — curated list of ~22,000 diseases | [everycure/disease-list](https://huggingface.co/datasets/everycure/disease-list) | [Disease List](../pipeline/data/drug_disease_lists.md) |
 
 All datasets are published as Parquet files, making them easy to load with common data science tools
 like pandas, polars, PySpark, or the Hugging Face `datasets` library.
