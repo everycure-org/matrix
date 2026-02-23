@@ -270,8 +270,8 @@ def _apply_dense_rank_ids(results: Dict[str, ps.DataFrame]) -> Dict[str, ps.Data
     component_stats = results["component_stats"]
     node_assignments = results["node_assignments"]
 
-    # Create mapping from old component_id to dense rank (0-indexed)
-    window = Window.orderBy(F.desc("component_size"))
+    # Global rank is intentional — component_stats is small (~1 row per component)
+    window = Window.partitionBy(F.lit(1)).orderBy(F.desc("component_size"))
     id_mapping = component_stats.select(
         F.col("component_id").alias("_old_component_id"),
         (F.dense_rank().over(window) - 1).alias("_new_component_id"),
@@ -478,9 +478,7 @@ def compute_core_connectivity_metrics(
 
     # Get LCC size
     lcc_size = component_sizes.agg(F.max("component_size")).collect()[0][0]
-    logger.info(f"Largest connected component has {lcc_size:,} nodes")
 
-    # Calculate metrics for each category
     categories = [
         ("all_core", core_entities),
         ("drugs", core_entities.filter(F.col("core_category") == "biolink:Drug")),
@@ -490,17 +488,8 @@ def compute_core_connectivity_metrics(
     summary_data = []
 
     for category_name, category_df in categories:
-        logger.info(f"\nCalculating metrics for category: {category_name}")
-
-        # Count total core entities in this category
         n_ec = category_df.count()
-        logger.info(f"  Total {category_name} entities: {n_ec:,}")
 
-        if n_ec == 0:
-            logger.warning(f"  No entities found for {category_name}, skipping")
-            continue
-
-        # Count core entities per component and join with component sizes
         core_per_component = category_df.groupBy("component_id").agg(F.count("*").alias("core_entity_count"))
 
         component_stats = (
@@ -524,11 +513,6 @@ def compute_core_connectivity_metrics(
         )
 
         num_subgraphs = component_stats.count()
-
-        logger.info(f"  Number of subgraphs: {num_subgraphs:,}")
-        logger.info(f"  Core entities in LCC: {c_lcc:,}")
-        logger.info(f"  LCC Fraction: {lcc_fraction:.4f}")
-        logger.info(f"  Weighted Connectivity score: {weighted_score:.4f}")
 
         summary_data.append(
             {
