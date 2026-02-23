@@ -38,3 +38,10 @@ primary.published.drug_list_bq_latest:
   label_value: ${globals:release_version_underscore}
   save_args:
     if_exists: replace
+
+primary.published.drug_list_hf:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/drug-list
+  split: train
+  dataframe_type: pandas
+  tag: ${globals:release_version}
