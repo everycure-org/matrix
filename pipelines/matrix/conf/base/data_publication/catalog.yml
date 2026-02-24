@@ -1,14 +1,2 @@
-# Hugging Face Hub datasets (write) - datasets to publish
-data_publication.prm.kg_edges_hf_published:
-  type: matrix_gcp_datasets.huggingface.HFIterableDataset
-  repo_id: everycure/kg-edges
-  split: train
-  dataframe_type: spark
-  data_dir: data/edges
-
-data_publication.prm.kg_nodes_hf_published:
-  type: matrix_gcp_datasets.huggingface.HFIterableDataset
-  repo_id: everycure/kg-nodes
-  split: train
-  dataframe_type: spark
-  data_dir: data/nodes
+# HF datasets are configured in the cloud environment catalog
+# where ${globals:versions.release} is available for tagging.
