@@ -134,3 +134,16 @@ def create_publish_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
+
+
+def create_publish_hf_pipeline(**kwargs) -> Pipeline:
+    return pipeline(
+        [
+            node(
+                func=lambda x: x,
+                inputs="primary.release.drug_list_parquet",
+                outputs="primary.published.drug_list_hf",
+                name="publish_drug_list_hf",
+            ),
+        ]
+    )
