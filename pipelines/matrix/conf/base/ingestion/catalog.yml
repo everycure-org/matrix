@@ -512,7 +512,7 @@ ingestion.int.robokop.violations:
 ingestion.raw.primekg.nodes@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/ts_nodes.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -521,7 +521,7 @@ ingestion.raw.primekg.nodes@spark:
 
 ingestion.raw.primekg.nodes@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/ts_nodes.tsv
   save_args:
     sep: "\t"
     header: true
@@ -531,7 +531,7 @@ ingestion.raw.primekg.nodes@pandas:
 
 ingestion.raw.primekg.nodes@polars:
   <<: [*_polars_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_nodes.tsv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/ts_nodes.tsv
   save_args:
     separator: "\t"
     has_header: true
@@ -541,7 +541,7 @@ ingestion.raw.primekg.nodes@polars:
 ingestion.raw.primekg.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
-  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/ts_edges.tsv
   file_format: csv
   load_args:
     sep: "\t"
@@ -550,7 +550,7 @@ ingestion.raw.primekg.edges@spark:
 
 ingestion.raw.primekg.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/ts_edges.tsv
   save_args:
     sep: "\t"
     header: true
@@ -560,7 +560,7 @@ ingestion.raw.primekg.edges@pandas:
 
 ingestion.raw.primekg.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
-  filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/ts_edges.tsv
   save_args:
     separator: "\t"
     has_header: true
