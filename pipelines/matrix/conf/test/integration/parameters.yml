@@ -12,6 +12,14 @@ integration:
       conflate: true
       drug_chemical_conflate: true
 
+  connectivity:
+    # GraphFrames is incompatible with Kedro's ThreadRunner (used in test via
+    # `make run_test_native_through_docker`). GraphFrame.__init__ calls
+    # SparkSession.getActiveSession() which is a JVM thread-local that returns
+    # None in worker threads, causing: AttributeError: 'NoneType' has no attribute '_sc'
+    # rustworkx avoids this since it doesn't depend on the JVM active session.
+    algorithm: "rustworkx"
+
   filtering:
     node_filters:
       filter_node_labels:
