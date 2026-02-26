@@ -18,5 +18,11 @@ def create_pipeline() -> Pipeline:
                 outputs="data_publication.prm.kg_nodes_hf_published",
                 name="publish_kg_nodes_node",
             ),
+            node(
+                func=lambda x: x,
+                inputs="matrix_transformations.full_matrix_output@spark",
+                outputs="data_publication.prm.matrix_scores_hf_published",
+                name="publish_matrix_scores_node",
+            ),
         ]
     )
