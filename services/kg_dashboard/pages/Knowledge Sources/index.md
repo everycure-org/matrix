@@ -29,23 +29,25 @@ ORDER BY primary_knowledge_source
 ## Knowledge Source Details
 
 ```sql knowledge_source_table
-SELECT 
+SELECT
   primary_knowledge_source.source,
   catalog.name as name,
   '/Knowledge Sources/' || primary_knowledge_source.source as link,
-  COALESCE(edge_counts.total_edges, 0) as n_edges
+  COALESCE(edge_counts.total_edges, 0) as n_edges,
+  rs.label_rubric as relevancy
 FROM (
-  SELECT DISTINCT source 
+  SELECT DISTINCT source
   FROM bq.primary_knowledge_source
 ) primary_knowledge_source
 JOIN infores.catalog on infores.catalog.id = primary_knowledge_source.source
 LEFT JOIN (
-  SELECT 
+  SELECT
     primary_knowledge_source,
     SUM(count) as total_edges
   FROM bq.merged_kg_edges
   GROUP BY primary_knowledge_source
 ) edge_counts ON edge_counts.primary_knowledge_source = primary_knowledge_source.source
+LEFT JOIN bq.relevancy_scores rs ON rs.primary_knowledge_source = primary_knowledge_source.source
 ORDER BY n_edges DESC
 ```
 
@@ -53,6 +55,7 @@ ORDER BY n_edges DESC
   <Column id="source" title="Knowledge Source ID" />
   <Column id="name" title="Name" />
   <Column id="n_edges" title="Edges" contentType="bar" barColor="#93c5fd" backgroundColor="#e5e7eb" fmt="num0" />
+  <Column id="relevancy" title="Relevancy" />
 </DataTable>
 
 ```sql distinct_upstream_knowledge_source
