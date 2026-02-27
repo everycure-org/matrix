@@ -235,7 +235,7 @@ WHERE primary_knowledge_source = '${params.knowledge_source}'
 <Details title="Reviewer Comments">
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700">
   {#if ks_relevancy[0].reviewer}
-  <p class="mb-2"><strong>Reviewed by:</strong> {ks_relevancy[0].reviewer}</p>
+  <p class="mb-2"><strong>Reviewed by:</strong> <a class="underline text-blue-600" href="https://orcid.org/{ks_relevancy[0].reviewer.replace('https://orcid.org/', '')}" target="_blank">ORCID:{ks_relevancy[0].reviewer.replace('https://orcid.org/', '')}</a></p>
   {/if}
   {#if ks_relevancy[0].domain_coverage_comments}
   <p class="mb-2"><strong>Domain Coverage:</strong> {ks_relevancy[0].domain_coverage_comments}</p>
