@@ -7,6 +7,7 @@ from typing import Any, Literal, Optional
 
 import requests
 from datasets import load_dataset
+from huggingface_hub import create_tag
 from kedro.io import AbstractDataset
 from pydantic import BaseModel, Field, ValidationError
 from pyspark.sql import SparkSession
@@ -232,7 +233,6 @@ class HFIterableDataset(AbstractDataset):
 
     def _create_tag(self, dataset_id: str, revision: str, tag: str, token: str | None = None) -> None:
         """Create a Git tag on the HuggingFace Hub dataset repository."""
-        from huggingface_hub import create_tag
 
         log.info(f"Creating tag '{tag}' on {dataset_id} at {revision}")
         create_tag(
