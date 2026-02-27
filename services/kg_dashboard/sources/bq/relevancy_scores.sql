@@ -1,5 +1,5 @@
 SELECT
-  pks_id AS primary_knowledge_source,
+  CONCAT('infores:', pks_id) AS primary_knowledge_source,
   domain_coverage_score,
   domain_coverage_comments,
   source_scope_score,
