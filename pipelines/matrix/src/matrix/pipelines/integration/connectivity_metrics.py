@@ -253,28 +253,27 @@ def compute_connected_components_rustworkx(nodes: ps.DataFrame, edges: ps.DataFr
     }
 
 
-def _apply_dense_rank_ids(results: Dict[str, ps.DataFrame]) -> Dict[str, ps.DataFrame]:
+def _apply_size_ranked_ids(results: Dict[str, ps.DataFrame]) -> Dict[str, ps.DataFrame]:
     """
-    Replace arbitrary component IDs with dense-ranked IDs ordered by descending component size.
+    Replace arbitrary component IDs with size-ranked IDs ordered by descending component size.
 
-    The LCC gets component_id=0, the next largest gets 1, etc. This makes the IDs
-    human-readable and meaningful.
+    The LCC gets component_id=0, the next largest gets 1, etc.
 
     Args:
         results: Dictionary with "node_assignments" and "component_stats" DataFrames
                  using arbitrary component IDs from the algorithm.
 
     Returns:
-        Same dictionary structure with component_id replaced by dense-ranked values.
+        Same dictionary structure with component_id replaced by size-ranked values.
     """
     component_stats = results["component_stats"]
     node_assignments = results["node_assignments"]
 
-    # Global rank is intentional — component_stats is small (~1 row per component)
+    # Global rank is intentional — component_stats is small (~1 row per component).
     window = Window.partitionBy(F.lit(1)).orderBy(F.desc("component_size"))
     id_mapping = component_stats.select(
         F.col("component_id").alias("_old_component_id"),
-        (F.dense_rank().over(window) - 1).alias("_new_component_id"),
+        (F.row_number().over(window) - 1).alias("_new_component_id"),
     )
 
     # Apply to component_stats
@@ -312,9 +311,6 @@ def compute_connected_components(
     implementations, compares their performance (logged only, not saved), and
     returns results from the first algorithm.
 
-    Component IDs are dense-ranked by descending component size: the largest
-    connected component (LCC) gets component_id=0, the next largest gets 1, etc.
-
     Args:
         nodes: DataFrame with 'id' column
         edges: DataFrame with 'subject' and 'object' columns (unified edges)
@@ -346,7 +342,7 @@ def compute_connected_components(
     elif algorithm == "rustworkx":
         results = compute_connected_components_rustworkx(nodes, simplified_edges)
 
-    results = _apply_dense_rank_ids(results)
+    results = _apply_size_ranked_ids(results)
 
     # Add ec_core_category: "drug", "disease", or null
     core_categories = core_id_mapping.select(
@@ -544,27 +540,30 @@ def compute_component_summary(
         node_metrics: DataFrame with (id, component_id, ec_core_category) columns
 
     Returns:
-        DataFrame with columns: component_id, component_size, num_drugs, num_diseases, num_other
+        DataFrame with columns: component_id, component_size, component_hash, num_drugs, num_diseases, num_other
         Ordered by component_id (0 = LCC).
+
+        component_hash is an MD5 fingerprint of the sorted set of node IDs in the component.
+        It is stable across runs as long as the component's membership does not change, making
+        it useful for tracking which components persist, split, or merge between releases.
     """
     component_summary = (
         node_metrics.groupBy("component_id")
         .agg(
             F.count("*").alias("component_size"),
+            F.md5(F.concat_ws(",", F.sort_array(F.collect_list("id")))).alias("component_hash"),
             F.sum(F.when(F.col("ec_core_category") == "drug", 1).otherwise(0)).alias("num_drugs"),
             F.sum(F.when(F.col("ec_core_category") == "disease", 1).otherwise(0)).alias("num_diseases"),
         )
         .withColumn("num_other", F.col("component_size") - F.col("num_drugs") - F.col("num_diseases"))
-        .select("component_id", "component_size", "num_drugs", "num_diseases", "num_other")
+        .select("component_id", "component_size", "component_hash", "num_drugs", "num_diseases", "num_other")
         .orderBy("component_id")
     )
 
-    first = component_summary.first()
-    num_components = component_summary.count()
     logger.info(
-        f"Component summary: {num_components:,} components. "
-        f"LCC (component 0): {first['component_size']:,} nodes, "
-        f"{first['num_drugs']:,} drugs, {first['num_diseases']:,} diseases."
+        f"Component summary: {component_summary.count():,} components. "
+        f"LCC (component 0): {component_summary.first()['component_size']:,} nodes, "
+        f"{component_summary.first()['num_drugs']:,} drugs, {component_summary.first()['num_diseases']:,} diseases."
     )
 
     return component_summary
