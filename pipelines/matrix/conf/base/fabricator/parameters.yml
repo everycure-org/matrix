@@ -2539,6 +2539,8 @@ fabricator.run_comparison:
   skew_good_model: 20
   skew_bad_model: 2
   test_set_proportion: 0.1
+  num_folds: 2
+  train_proportion: 0.9
 
 fabricator.document_kg.infores_catalog:
   information_resources:

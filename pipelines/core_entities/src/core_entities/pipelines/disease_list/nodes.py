@@ -837,3 +837,38 @@ def publish_disease_list(disease_list: pd.DataFrame) -> dict:
         "disease_list_bq": disease_list,
         "disease_list_bq_latest": disease_list,
     }
+
+
+_DISEASE_HF_COLUMNS_TO_DROP = [
+    "unmet_medical_need",
+    "is_psychiatric_disease",
+    "is_malignant_cancer",
+    "is_benign_tumour",
+    "is_infectious_disease",
+    "is_glucose_dysfunction",
+]
+
+
+def merge_mondo_and_ec_disease_list(
+    mondo_disease_list: pd.DataFrame,
+    ec_disease_list: pd.DataFrame,
+) -> pd.DataFrame:
+    """Merge the full mondo disease list with the EC curated disease list for HF publication.
+
+    All mondo diseases are included. Where a disease also appears in the EC list,
+    EC column values take precedence over mondo values for overlapping columns.
+    """
+    mondo = mondo_disease_list.rename(columns={"category_class": "id", "label": "name"})
+
+    overlap_cols = [c for c in mondo.columns if c in ec_disease_list.columns and c != "id"]
+
+    merged = mondo.merge(ec_disease_list, on="id", how="left", suffixes=("_mondo", "_ec"))
+
+    for col in overlap_cols:
+        ec_col = f"{col}_ec"
+        mondo_col = f"{col}_mondo"
+        if ec_col in merged.columns:
+            merged[col] = merged[ec_col].combine_first(merged[mondo_col])
+            merged = merged.drop(columns=[ec_col, mondo_col])
+
+    return merged.drop(columns=_DISEASE_HF_COLUMNS_TO_DROP, errors="ignore")

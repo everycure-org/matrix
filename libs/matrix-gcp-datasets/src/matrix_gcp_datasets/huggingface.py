@@ -7,6 +7,7 @@ from typing import Any, Literal, Optional
 
 import requests
 from datasets import load_dataset
+from huggingface_hub import create_tag
 from kedro.io import AbstractDataset
 from pydantic import BaseModel, Field, ValidationError
 from pyspark.sql import SparkSession
@@ -25,6 +26,7 @@ class HFIterableDatasetConfig(BaseModel):
     token: Optional[str] = None
     dataframe_type: Literal["spark", "polars", "pandas"] = Field(default="spark")
     data_dir: Optional[str] = None
+    tag: Optional[str] = None
 
     def build_push_kwargs(self, token: str) -> dict[str, Any]:
         kwargs: dict[str, Any] = {
@@ -46,7 +48,8 @@ class HFIterableDatasetConfig(BaseModel):
             f"HFIterableDatasetConfig(repo_id={self.repo_id!r}, split={self.split!r}, "
             f"config_name={self.config_name!r}, private={self.private!r}, "
             f"token_key={self.token_key!r}, token={'***' if tok else None}, "
-            f"dataframe_type={self.dataframe_type!r}, data_dir={self.data_dir!r})"
+            f"dataframe_type={self.dataframe_type!r}, data_dir={self.data_dir!r}, "
+            f"tag={self.tag!r})"
         )
 
 
@@ -80,6 +83,7 @@ class HFIterableDataset(AbstractDataset):
         token_key: str = "HF_TOKEN",
         token: Optional[str] = None,
         dataframe_type: Literal["spark", "polars", "pandas"] = "spark",
+        tag: Optional[str] = None,
     ) -> None:
         super().__init__()
         try:
@@ -92,6 +96,7 @@ class HFIterableDataset(AbstractDataset):
                 token_key=token_key,
                 token=token,
                 dataframe_type=dataframe_type,
+                tag=tag,
             )
         except ValidationError as exc:
             raise ValueError(f"Invalid HFIterableDataset configuration: {exc}")
@@ -155,6 +160,9 @@ class HFIterableDataset(AbstractDataset):
         push_kwargs = self.config.build_push_kwargs(token or "")
         ci = hf_ds.push_to_hub(**push_kwargs)
         self._verify_hf_upload(self.config.repo_id, ci.oid, token=token)
+
+        if self.config.tag:
+            self._create_tag(self.config.repo_id, ci.oid, self.config.tag, token=token)
 
     def _resolve_token(self) -> str | None:
         # Precedence: explicit token override > credentials > env var
@@ -222,6 +230,20 @@ class HFIterableDataset(AbstractDataset):
             return True
         except Exception as e:
             raise RuntimeError(f"Streaming load failed: {e}")
+
+    def _create_tag(self, dataset_id: str, revision: str, tag: str, token: str | None = None) -> None:
+        """Create a Git tag on the HuggingFace Hub dataset repository."""
+
+        log.info(f"Creating tag '{tag}' on {dataset_id} at {revision}")
+        create_tag(
+            dataset_id,
+            repo_type="dataset",
+            revision=revision,
+            tag=tag,
+            token=token,
+            exist_ok=True,
+        )
+        log.info(f"✓ Tag '{tag}' created on {dataset_id}")
 
     def _verify_hf_upload(self, dataset_id, pushed_sha, token: str | None = None):
         """Verify if the upload to Hugging Face Hub was successful."""
