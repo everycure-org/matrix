@@ -185,6 +185,78 @@ FROM scored_edges
 </div>
 {/if}
 
+## Relevancy Assessment
+
+```sql ks_relevancy
+SELECT *
+FROM bq.relevancy_scores
+WHERE primary_knowledge_source = '${params.knowledge_source}'
+```
+
+{#if ks_relevancy.length > 0}
+
+<div class="text-left text-md max-w-3xl mx-auto mb-4">
+  Relevancy Assessment evaluates this knowledge source's expected utility for drug repurposing, based on manual expert review across three dimensions: domain coverage, source scope, and direct utility for drug-to-disease prediction.
+</div>
+
+<div class="text-center mb-6">
+  <span class="font-semibold text-4xl" style="color: #9D79D6;">
+    {ks_relevancy[0].label_rubric || 'Not Scored'}
+  </span><br/>
+  <span class="text-xl">Overall Relevancy (Rubric)</span><br/>
+  {#if ks_relevancy[0].label_manual}
+  <span class="text-sm text-gray-600">
+    Manual assessment: <span class="font-semibold">{ks_relevancy[0].label_manual}</span>
+  </span>
+  {/if}
+</div>
+
+<Grid col=3 class="max-w-5xl mx-auto mb-8">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      {ks_relevancy[0].domain_coverage_score ?? '—'}
+    </span><br/>
+    <span class="text-lg">Domain Coverage</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      {ks_relevancy[0].source_scope_score ?? '—'}
+    </span><br/>
+    <span class="text-lg">Source Scope</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      {ks_relevancy[0].utility_drugrepurposing_score ?? '—'}
+    </span><br/>
+    <span class="text-lg">Drug Repurposing Utility</span>
+  </div>
+</Grid>
+
+<Details title="Reviewer Comments">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700">
+  {#if ks_relevancy[0].reviewer}
+  <p class="mb-2"><strong>Reviewed by:</strong> <a class="underline text-blue-600" href="https://orcid.org/{ks_relevancy[0].reviewer.replace('https://orcid.org/', '')}" target="_blank">ORCID:{ks_relevancy[0].reviewer.replace('https://orcid.org/', '')}</a></p>
+  {/if}
+  {#if ks_relevancy[0].domain_coverage_comments}
+  <p class="mb-2"><strong>Domain Coverage:</strong> {ks_relevancy[0].domain_coverage_comments}</p>
+  {/if}
+  {#if ks_relevancy[0].source_scope_score_comment}
+  <p class="mb-2"><strong>Source Scope:</strong> {ks_relevancy[0].source_scope_score_comment}</p>
+  {/if}
+  {#if ks_relevancy[0].utility_drugrepurposing_comment}
+  <p class="mb-2"><strong>Drug Repurposing Utility:</strong> {ks_relevancy[0].utility_drugrepurposing_comment}</p>
+  {/if}
+</div>
+</Details>
+
+{:else}
+
+<div class="text-center text-lg text-gray-500 mb-6">
+  No relevancy assessment data available for this knowledge source.
+</div>
+
+{/if}
+
 ## Edge Type Validation
 
 ```sql ks_edge_validation
