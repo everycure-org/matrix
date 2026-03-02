@@ -104,7 +104,11 @@ ingestion.raw.rtx_kg2.nodes@spark:
 
 ingestion.raw.rtx_kg2.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/rtx_kg2/experimental-time-split/v2.10.0/pre2014_ts2_edges_c.tsv
+>>>>>>> Stashed changes
   save_args:
     sep: "\t"
     header: true
@@ -123,7 +127,11 @@ ingestion.raw.rtx_kg2.nodes@polars:
 
 ingestion.raw.rtx_kg2.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/rtx_kg2/experimental-time-split/v2.10.0/pre2014_ts2_edges_c.tsv
+>>>>>>> Stashed changes
   save_args:
     separator: "\t"
     has_header: true
@@ -133,7 +141,11 @@ ingestion.raw.rtx_kg2.edges@polars:
 ingestion.raw.rtx_kg2.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/rtx_kg2/${globals:data_sources.rtx_kg2.version}/rtx-kg2_2.10.0_edges_v2-2.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/rtx_kg2/experimental-time-split/v2.10.0/pre2014_ts2_edges_c.tsv
+>>>>>>> Stashed changes
   file_format: csv
   load_args:
     sep: "\t"
@@ -432,7 +444,11 @@ ingestion.raw.robokop.nodes@polars:
 ingestion.raw.robokop.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/pre2014_ts_edges.tsv
+>>>>>>> Stashed changes
   file_format: csv
   load_args:
     sep: "\t"
@@ -441,7 +457,11 @@ ingestion.raw.robokop.edges@spark:
 
 ingestion.raw.robokop.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/pre2014_ts_edges.tsv
+>>>>>>> Stashed changes
   save_args:
     sep: "\t"
     header: true
@@ -451,7 +471,11 @@ ingestion.raw.robokop.edges@pandas:
 
 ingestion.raw.robokop.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/pre2014_ts_edges.tsv
+>>>>>>> Stashed changes
   save_args:
     separator: "\t"
     has_header: true
@@ -464,7 +488,11 @@ ingestion.raw.robokop.nodes@lazypolars:
 
 ingestion.raw.robokop.edges@lazypolars:
   <<: [*_polars_lazy_csv]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/robokop-kg/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/robokop-kg/experimental-time-split/pre2014_ts_edges.tsv
+>>>>>>> Stashed changes
 
 ingestion.int.preprocessing.robokop.nodes@polars:
   <<: [*_polars_csv, *_layer_int]
@@ -541,7 +569,11 @@ ingestion.raw.primekg.nodes@polars:
 ingestion.raw.primekg.edges@spark:
   <<: *_layer_raw
   type: matrix_gcp_datasets.gcp.LazySparkDataset
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/pre2014_ts2_edges.tsv
+>>>>>>> Stashed changes
   file_format: csv
   load_args:
     sep: "\t"
@@ -550,7 +582,11 @@ ingestion.raw.primekg.edges@spark:
 
 ingestion.raw.primekg.edges@pandas:
   <<: [*_pandas_csv, *_layer_raw]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/pre2014_ts2_edges.tsv
+>>>>>>> Stashed changes
   save_args:
     sep: "\t"
     header: true
@@ -560,7 +596,11 @@ ingestion.raw.primekg.edges@pandas:
 
 ingestion.raw.primekg.edges@polars:
   <<: [*_polars_csv, *_layer_raw]
+<<<<<<< Updated upstream
   filepath: ${globals:paths.raw_public}/KGs/prime-kg/${globals:data_sources.primekg.version}/prime-kg-${globals:data_sources.primekg.version}_edges.tsv
+=======
+  filepath: ${globals:paths.raw}/KGs/prime-kg/experimental-time-split/pre2014_ts2_edges.tsv
+>>>>>>> Stashed changes
   save_args:
     separator: "\t"
     has_header: true
