@@ -27,7 +27,7 @@ modelling.splitter:
   #   - 'metabolic_disease'
   #   - 'neurodegenerative_disease'
   #_object: sklearn.model_selection.KFold
-   _object: matrix.pipelines.modelling.model_selection.PredefinedTimeSplit
+  _object: matrix.pipelines.modelling.model_selection.PredefinedTimeSplit
   shuffle: true
   random_state: ${globals:random_state}
   n_splits: ${setting:cross_validation.n_cross_val_folds}
