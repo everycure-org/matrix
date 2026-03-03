@@ -31,15 +31,15 @@ ORDER BY primary_knowledge_source
 ```sql knowledge_source_table
 SELECT
   primary_knowledge_source.source,
-  catalog.name as name,
+  meta.name as name,
   '/Knowledge Sources/' || primary_knowledge_source.source as link,
   COALESCE(edge_counts.total_edges, 0) as n_edges,
-  rs.label_rubric as relevancy
+  meta.label_rubric as relevancy
 FROM (
   SELECT DISTINCT source
   FROM bq.primary_knowledge_source
 ) primary_knowledge_source
-JOIN infores.catalog on infores.catalog.id = primary_knowledge_source.source
+LEFT JOIN bq.pks_metadata meta ON meta.primary_knowledge_source = primary_knowledge_source.source
 LEFT JOIN (
   SELECT
     primary_knowledge_source,
@@ -47,7 +47,6 @@ LEFT JOIN (
   FROM bq.merged_kg_edges
   GROUP BY primary_knowledge_source
 ) edge_counts ON edge_counts.primary_knowledge_source = primary_knowledge_source.source
-LEFT JOIN bq.relevancy_scores rs ON rs.primary_knowledge_source = primary_knowledge_source.source
 ORDER BY n_edges DESC
 ```
 
