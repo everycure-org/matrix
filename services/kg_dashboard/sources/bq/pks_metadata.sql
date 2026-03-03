@@ -1,5 +1,8 @@
 SELECT
   CONCAT('infores:', pks_id) AS primary_knowledge_source,
+  name,
+  description,
+  homepage_url,
   domain_coverage_score,
   domain_coverage_comments,
   source_scope_score,
@@ -10,6 +13,3 @@ SELECT
   label_manual,
   reviewer
 FROM `${project_id}.release_${bq_release_version}.all_pks_metadata_table`
-WHERE domain_coverage_score IS NOT NULL
-   OR source_scope_score IS NOT NULL
-   OR utility_drugrepurposing_score IS NOT NULL
