@@ -24,6 +24,7 @@ Each custom role includes the following permissions:
 - `bigquery.jobs.create` - Create BigQuery jobs for queries
 - `bigquery.readsessions.create` - Create read sessions for optimal performance
 - `bigquery.connections.use` - Use BigQuery connections (required for tables backed by external data sources such as Cloud SQL via dbt)
+- `bigquery.readsessions.create` - Use BigQuery read session creation
 
 ### Service Account Access
 
