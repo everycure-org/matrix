@@ -43,7 +43,8 @@ resource "google_project_iam_custom_role" "bigquery_read_from_orchard_dev" {
     "bigquery.tables.list",
     "bigquery.tables.getData",
     "bigquery.jobs.create",
-    "bigquery.readsessions.create"
+    "bigquery.readsessions.create",
+    "bigquery.connections.use"
   ]
 }
 
@@ -59,6 +60,7 @@ resource "google_project_iam_custom_role" "bigquery_read_from_orchard_prod" {
     "bigquery.tables.list",
     "bigquery.tables.getData",
     "bigquery.jobs.create",
-    "bigquery.readsessions.create"
+    "bigquery.readsessions.create",
+    "bigquery.connections.use"
   ]
 }
