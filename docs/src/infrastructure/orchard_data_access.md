@@ -16,28 +16,33 @@ Two custom IAM roles have been created to provide secure, read-only access to or
 #### Permissions Granted
 
 Each custom role includes the following permissions:
+
 - `bigquery.datasets.get` - Retrieve dataset metadata
 - `bigquery.tables.get` - Retrieve table metadata
 - `bigquery.tables.list` - List tables within datasets
 - `bigquery.tables.getData` - Read table data
 - `bigquery.jobs.create` - Create BigQuery jobs for queries
 - `bigquery.readsessions.create` - Create read sessions for optimal performance
+- `bigquery.connections.use` - Use BigQuery connections (required for tables backed by external data sources such as Cloud SQL via dbt)
 
 ### Service Account Access
 
 The following service accounts have been granted access to orchard datasets:
 
 #### Matrix User Service Accounts
+
 - `sa-internal-data-science@mtrx-hub-prod-sms.iam.gserviceaccount.com` - For internal data science team
 - `sa-subcon-standard@mtrx-hub-prod-sms.iam.gserviceaccount.com` - For standard contractors
 - `sa-subcon-embiology@mtrx-hub-prod-sms.iam.gserviceaccount.com` - For embiology contractors
 
 #### Kubernetes Service Account
+
 - `sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com` - For Kubernetes workloads running in the Matrix cluster to access Orchard Data.
 
 ### Cross-Project Access
 
 The IAM bindings are configured to grant Matrix service accounts access to the external orchard projects:
+
 - **Development**: `ec-orchard-dev`
 - **Production**: `ec-orchard-prod`
 
@@ -100,6 +105,7 @@ To debug access issues:
 ## Infrastructure Code
 
 The orchard access configuration is managed through Terraform in the following files:
+
 - `infra/deployments/hub/prod/custom_role.tf` - Custom IAM role definitions
 - `infra/deployments/hub/prod/iam.tf` - IAM bindings and access grants
 - `infra/deployments/hub/prod/locals.tf` - Project IDs and service account definitions
