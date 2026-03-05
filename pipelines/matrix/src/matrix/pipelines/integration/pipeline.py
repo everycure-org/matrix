@@ -231,15 +231,26 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="metric_abox_tbox",
                     tags=["metrics", "ontological"],
                 ),
+                node(
+                    func=nodes.compute_ontology_inclusion_metric,
+                    inputs={
+                        "nodes": "integration.prm.unified_nodes",
+                        "edges": "integration.prm.unified_edges",
+                    },
+                    outputs="integration.prm.node_ontology",
+                    name="compute_ontology_inclusion_metric",
+                    tags=["metrics", "ontological"],
+                ),
                 ArgoNode(
                     func=connectivity_metrics.compute_connected_components,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
                         "edges": "integration.prm.unified_edges",
                         "algorithm": "params:integration.connectivity.algorithm",
+                        "core_id_mapping": "integration.int.core_node_mapping",
                     },
                     outputs={
-                        "node_assignments": "integration.prm.connected_components_node_assignments",
+                        "node_assignments": "integration.prm.node_components",
                         "component_stats": "integration.prm.connected_components_stats",
                     },
                     name="compute_connected_components",
@@ -247,18 +258,32 @@ def create_pipeline(**kwargs) -> Pipeline:
                     argo_config=ArgoResourceConfig(memory_request=96, memory_limit=96),
                 ),
                 node(
+                    func=connectivity_metrics.compute_component_summary,
+                    inputs="integration.prm.node_metrics",
+                    outputs="integration.prm.connected_components",
+                    name="compute_component_summary",
+                    tags=["metrics", "connectivity"],
+                ),
+                node(
                     func=connectivity_metrics.compute_core_connectivity_metrics,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
                         "core_id_mapping": "integration.int.core_node_mapping",
-                        "connected_components": "integration.prm.connected_components_node_assignments",
+                        "connected_components": "integration.prm.node_metrics",
                     },
-                    outputs={
-                        "summary_metrics": "integration.prm.metric_core_connectivity_summary",
-                        "subgraph_details": "integration.prm.metric_core_connectivity_subgraph_details",
-                    },
+                    outputs="integration.prm.metric_core_connectivity_summary",
                     name="compute_core_connectivity_metrics",
                     tags=["metrics", "connectivity"],
+                ),
+                node(
+                    func=nodes.combine_node_metrics,
+                    inputs={
+                        "node_components": "integration.prm.node_components",
+                        "node_ontology": "integration.prm.node_ontology",
+                    },
+                    outputs="integration.prm.node_metrics",
+                    name="combine_node_metrics",
+                    tags=["metrics"],
                 ),
             ]
         )
