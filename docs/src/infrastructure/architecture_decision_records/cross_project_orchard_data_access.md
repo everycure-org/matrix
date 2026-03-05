@@ -29,6 +29,7 @@ Each role includes only the minimum required permissions:
 - `bigquery.jobs.create`
 - `bigquery.readsessions.create`
 - `bigquery.connections.use`
+- `bigquery.readsessions.create`
 
 ### 2. Service Account Access Pattern
 
