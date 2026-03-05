@@ -68,20 +68,13 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
         .drop("core_id")
     )
 
-    if logger.isEnabledFor(logging.INFO):
-        pre_dedup_count = unioned_edges.count()
-        logger.info(f"union_edges: {pre_dedup_count} total edges before dedup")
-        unioned_edges.select(F.explode("upstream_data_source").alias("source")).groupBy("source").count().show(
-            truncate=False
-        )
+    pre_dedup_count = unioned_edges.count()
+    logger.info(f"union_edges: {pre_dedup_count} total edges before dedup")
 
-    # Deduplicate on (subject, predicate, object, primary_knowledge_source).
-    # Edges from different knowledge sources asserting the same SPO are preserved as separate rows.
     unioned_edges = unioned_edges.dropDuplicates(["subject", "predicate", "object", "primary_knowledge_source"])
 
-    if logger.isEnabledFor(logging.INFO):
-        post_dedup_count = unioned_edges.count()
-        logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")
+    post_dedup_count = unioned_edges.count()
+    logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")
 
     # Compute primary_knowledge_sources: all PKS values asserting the same (S, P, O) triple.
     # Each edge row retains its own attributes while also carrying cross-source provenance.
