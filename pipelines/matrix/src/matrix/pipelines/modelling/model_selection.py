@@ -238,7 +238,7 @@ class PredefinedTimeSplit(BaseCrossValidator):
     This cross-validator is for testing predefined test/training set using a provided tsv
     """
 
-    def __init__(self, n_splits=1, test_size=0.1, random_state=None, test_pool=None):
+    def __init__(self, n_splits=1, test_size=0.1, random_state=None, shuffle=False, test_pool=None):
         """Initialize the DrugStratifiedSplit cross-validator.
 
         Args:
