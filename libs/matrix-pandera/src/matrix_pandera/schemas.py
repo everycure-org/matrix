@@ -107,6 +107,6 @@ def get_unioned_edge_schema() -> DataFrameSchema:
             "num_references": Column(T.IntegerType(), nullable=True),
             "num_sentences": Column(T.IntegerType(), nullable=True),
         },
-        unique=["subject", "predicate", "object"],
+        unique=["subject", "predicate", "object", "primary_knowledge_source"],
         strict=True,
     )

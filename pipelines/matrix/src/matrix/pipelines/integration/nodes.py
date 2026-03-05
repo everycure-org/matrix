@@ -68,27 +68,28 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
         .drop("core_id")
     )
 
-    unioned_dataset = (
-        unioned_edges.groupBy(["subject", "predicate", "object"])
-        .agg(
-            F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
-            # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
-            F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
-            F.first("agent_type", ignorenulls=True).alias("agent_type"),
-            F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
-            F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
-            F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
-            F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
-            F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
-            F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
-            F.collect_set(F.col("primary_knowledge_source")).alias("primary_knowledge_sources"),
-            F.flatten(F.collect_set("publications")).alias("publications"),
-            F.max("num_references").cast(T.IntegerType()).alias("num_references"),
-            F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
+    if logger.isEnabledFor(logging.INFO):
+        pre_dedup_count = unioned_edges.count()
+        logger.info(f"union_edges: {pre_dedup_count} total edges before dedup")
+        unioned_edges.select(F.explode("upstream_data_source").alias("source")).groupBy("source").count().show(
+            truncate=False
         )
-        .select(*cols)
+
+    # Deduplicate on (subject, predicate, object, primary_knowledge_source).
+    # Edges from different knowledge sources asserting the same SPO are preserved as separate rows.
+    unioned_edges = unioned_edges.dropDuplicates(["subject", "predicate", "object", "primary_knowledge_source"])
+
+    if logger.isEnabledFor(logging.INFO):
+        post_dedup_count = unioned_edges.count()
+        logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")
+
+    # Compute primary_knowledge_sources: all PKS values asserting the same (S, P, O) triple.
+    # Each edge row retains its own attributes while also carrying cross-source provenance.
+    spo_pks_mapping = unioned_edges.groupBy(["subject", "predicate", "object"]).agg(
+        F.collect_set("primary_knowledge_source").alias("primary_knowledge_sources")
     )
-    return unioned_dataset
+
+    return unioned_edges.join(spo_pks_mapping, on=["subject", "predicate", "object"], how="left").select(*cols)
 
 
 def unify_ground_truth(*edges) -> ps.DataFrame:
@@ -219,11 +220,8 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
 
-    dedup_cols = ["subject", "predicate", "object"]
-    if "primary_knowledge_source" in edges.columns:
-        dedup_cols.append("primary_knowledge_source")
-
-    edges = edges.dropDuplicates(subset=dedup_cols)
+    edges = edges.dropDuplicates()
+    logger.info(f"normalize_edges: {edges.count()} edges after normalization and exact-row dedup")
 
     return edges
 
