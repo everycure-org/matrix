@@ -79,18 +79,6 @@ resource "google_storage_bucket_iam_member" "dev_bucket_read_access_for_prod" {
   member   = each.value
 }
 
-resource "google_project_iam_member" "bigquery_read_from_orchard_dev" {
-  project = local.orchard_dev_project_id
-  role    = google_project_iam_custom_role.bigquery_read_from_orchard_dev.id
-  member  = local.prod_k8s_sas
-}
-
-resource "google_project_iam_member" "bigquery_read_from_orchard_prod" {
-  project = local.orchard_prod_project_id
-  role    = google_project_iam_custom_role.bigquery_read_from_orchard_prod.id
-  member  = local.prod_k8s_sas
-}
-
 // Granting read access to the dev bucket for prod service accounts.
 resource "google_storage_bucket_iam_member" "github_actions_rw_dev_bucket_access_to_prod_read_only" {
   for_each = toset(local.binding_members)
