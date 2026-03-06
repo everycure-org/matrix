@@ -40,7 +40,7 @@ document_kg.raw.matrix_curated_pks@pandas:
 document_kg.raw.matrix_reviews_pks@pandas:
   type: pandas.CSVDataset
   <<: *_layer_raw
-  filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1308154629&single=true&output=tsv"
+  filepath: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxpQU80dpW9bo7STfrX7k9Wv70jA_2C4BN6tDceM1LEOfF9YL22OisdmaUPf7Ptw/pub?gid=1421827631&single=true&output=tsv"
   load_args:
     sep: "\t"
 

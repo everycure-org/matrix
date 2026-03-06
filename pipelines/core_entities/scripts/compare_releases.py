@@ -1,4 +1,4 @@
-# Note: this file was generated with AI. It works, but it's not beautiful code.
+# NOTE: This file was partially generated using AI assistance.
 import click
 import pandas as pd
 
@@ -122,8 +122,10 @@ def compare_releases(
                 }
             )
 
-            # Add up to 5 examples per column
-            for change in changes[:5]:
+            # Add up to 5 examples per column; for "deleted" column include full comparison
+            max_examples = None if col == "deleted" else 5
+            examples_to_include = changes if max_examples is None else changes[:max_examples]
+            for change in examples_to_include:
                 example_record = {
                     "column": col,
                     id_column: change[id_column],
@@ -274,16 +276,19 @@ def generate_markdown_report(
 
         lines.append("### Examples by Column")
         lines.append("")
-        lines.append("*Up to 5 examples per column*")
+        lines.append("*Up to 5 examples per column; full comparison for `deleted` column*")
         lines.append("")
 
         # Group examples by column
         for _, summary_row in changed_values.iterrows():
             col = summary_row["column"]
-            col_examples = changed_examples[changed_examples["column"] == col].head(5)
+            col_examples_df = changed_examples[changed_examples["column"] == col]
+            col_examples = col_examples_df if col == "deleted" else col_examples_df.head(5)
 
             if len(col_examples) > 0:
                 lines.append(f"#### `{col}`")
+                if col == "deleted":
+                    lines.append("*(Full comparison of all changed values)*")
                 lines.append("")
 
                 # Check if name column is present in examples (for non-name columns)

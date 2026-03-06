@@ -4,10 +4,19 @@ This pipeline publishes MATRIX datasets to Hugging Face Hub for public access an
 
 ## Overview
 
-The data publication pipeline takes processed datasets from the MATRIX integration pipeline and publishes them to Hugging Face Hub as Parquet datasets. Currently, the pipeline publishes:
+The data publication pipeline takes processed datasets from the MATRIX project and publishes them to Hugging Face Hub as Parquet datasets. The pipeline publishes:
 
 - **Knowledge Graph Edges** → [everycure/kg-edges](https://huggingface.co/datasets/everycure/kg-edges)
 - **Knowledge Graph Nodes** → [everycure/kg-nodes](https://huggingface.co/datasets/everycure/kg-nodes)
+- **EC Drug List** → [everycure/drug-list](https://huggingface.co/datasets/everycure/drug-list) (CC-BY-4.0)
+- **EC Disease List** → [everycure/disease-list](https://huggingface.co/datasets/everycure/disease-list) (CC-BY-4.0)
+
+The KG datasets are sourced from the integration pipeline (Spark DataFrames). The drug and disease
+lists are sourced from GCS parquet files published by the core_entities pipeline, with the version
+determined by the `CE_RELEASE_VERSION` environment variable set during CI.
+
+HF publication for drug/disease lists is only triggered on minor or major releases (patch releases
+are skipped).
 
 ## How It Works
 
@@ -54,6 +63,28 @@ data_publication.prm.kg_nodes_hf_published:
   split: train
   dataframe_type: spark
   data_dir: data/nodes
+
+# Drug/disease list sources (version from CE_RELEASE_VERSION env var)
+data_publication.prm.drug_list_source:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/drug_list/${oc.env:CE_RELEASE_VERSION}/ec-drug-list.parquet
+
+data_publication.prm.disease_list_source:
+  type: pandas.ParquetDataset
+  filepath: ${globals:paths.raw_public}/disease_list/${oc.env:CE_RELEASE_VERSION}/ec-disease-list.parquet
+
+# Drug/disease list HF outputs
+data_publication.prm.drug_list_hf_published:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/drug-list
+  split: train
+  dataframe_type: pandas
+
+data_publication.prm.disease_list_hf_published:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/disease-list
+  split: train
+  dataframe_type: pandas
 ```
 
 ### Configuration Options

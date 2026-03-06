@@ -61,7 +61,6 @@ For instance, the following parameters specify that all datasets (ec, drugbank, 
 ```yaml
 modelling.training_data_sources:
   - ec # EveryCure Indications
-  - drugbank # DrugBank Indications (private)
   - kgml_xdtd # KGML-xDTD Indications
 ```
 

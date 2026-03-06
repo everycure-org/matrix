@@ -141,4 +141,12 @@ jobs:
         RELEASE_VERSION_SEMVER: ${{ steps.fetch_release_version.outputs.release_version_semver }}
       run: |
         uv run kedro run -e cloud --pipeline=publish_"${PIPELINE_NAME}"
+
+    - name: Publish to HuggingFace Hub
+      env:
+        PIPELINE_NAME: ${{ steps.fetch_release_version.outputs.pipeline }}
+        RELEASE_VERSION: ${{ steps.fetch_release_version.outputs.release_version }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        uv run kedro run -e cloud --pipeline=publish_"${PIPELINE_NAME}"_hf
     

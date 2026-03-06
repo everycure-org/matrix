@@ -8,6 +8,14 @@ The goal of the MATRIX disease list is, therefore, to separate these cases from 
 
 The list will be used for communication and navigation purposes
 
+## Availability on HuggingFace Hub
+
+The EC Disease List is available on HuggingFace Hub at [everycure/disease-list](https://huggingface.co/datasets/everycure/disease-list) under the CC-BY-4.0 license. The HuggingFace dataset is automatically updated with each minor and major release (patch releases are not included).
+
+The public HuggingFace version is designed to be clear, stable, and broadly usable. As part of that goal, certain internal-use fields that are still evolving are not included in the public release.
+
+EC team members looking for the full dataset, including all internal fields, should refer to the datasets repository.
+
 ## Maintainer team
 
 | Contributor | Organisation | ORCID |

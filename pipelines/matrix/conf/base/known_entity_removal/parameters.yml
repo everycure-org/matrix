@@ -10,9 +10,6 @@ known_entity_removal:
     medic_ground_truth:
       positives: true
       negatives: true
-    drugbank_ground_truth:
-      positives: true
-      negatives: true
     off_label:
       positives: true
       negatives: false # NOTE: off label is only positive pairs

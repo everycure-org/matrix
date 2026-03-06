@@ -5,6 +5,7 @@ data_publication.prm.kg_edges_hf_published:
   split: train
   dataframe_type: spark
   data_dir: data/edges
+  tag: ${globals:versions.release}
 
 data_publication.prm.kg_nodes_hf_published:
   type: matrix_gcp_datasets.huggingface.HFIterableDataset
@@ -12,3 +13,4 @@ data_publication.prm.kg_nodes_hf_published:
   split: train
   dataframe_type: spark
   data_dir: data/nodes
+  tag: ${globals:versions.release}

@@ -12,7 +12,7 @@ spec:
     namespace: litellm
   source:
     repoURL: https://github.com/BerriAI/litellm.git
-    targetRevision: v1.81.3-stable.sonnet-4-6
+    targetRevision: v1.81.12-stable
     path: deploy/charts/litellm-helm
     helm:
       values: |
@@ -23,7 +23,7 @@ spec:
 
         image:
           repository: ghcr.io/berriai/litellm
-          tag: main-stable
+          tag: v1.81.12-stable
           pullPolicy: IfNotPresent
 
         replicaCount: 3
