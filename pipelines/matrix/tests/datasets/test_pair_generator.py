@@ -232,9 +232,9 @@ def test_disease_split_drug_disease_pair_generator_disease_distribution(
 
     # 3. The distribution is roughly uniform (allowing for some randomness)
     expected_count = len(unknown) / len(train_diseases)
-    assert all(
-        abs(count - expected_count) < expected_count * 0.5 for count in disease_counts
-    ), "Disease distribution is not roughly uniform"
+    assert all(abs(count - expected_count) < expected_count * 0.5 for count in disease_counts), (
+        "Disease distribution is not roughly uniform"
+    )
 
     # 4. Create a simulated training set by combining positives and negatives
     training_positives = known_pairs_split[known_pairs_split["split"] == "TRAIN"]
