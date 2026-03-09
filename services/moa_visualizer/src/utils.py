@@ -151,7 +151,7 @@ class FlowDiagram:
                     id=row[intermediate_cols[-1]] + "-" + row["disease_name"],
                     source=row[intermediate_cols[-1]],
                     target=row["disease_name"],
-                    label=select_last_edge(row[f"predicates_{len(intermediate_cols)+1}"]),
+                    label=select_last_edge(row[f"predicates_{len(intermediate_cols) + 1}"]),
                     edge_type="default",
                     animated=False,
                     label_style=edge_style,
