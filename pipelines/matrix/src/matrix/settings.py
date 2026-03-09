@@ -68,13 +68,6 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                     "has_edges": True,
                     "integrate_in_kg": False,
                 },
-                {
-                    "name": "drugbank_ground_truth",
-                    "has_nodes": False,
-                    "has_edges": True,
-                    "integrate_in_kg": False,
-                    "is_private": True,
-                },
                 # {"name": "drugmech", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "ec_clinical_trials", "integrate_in_kg": False, "has_nodes": False},
                 {"name": "off_label", "integrate_in_kg": False, "has_nodes": False},
@@ -146,7 +139,6 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
                 "available_datasets": [
                     "kgml_xdtd_ground_truth",
                     "medic_ground_truth",
-                    # "drugbank_ground_truth", TODO: figure out how to add private datasets
                     "off_label",
                 ]
             },
