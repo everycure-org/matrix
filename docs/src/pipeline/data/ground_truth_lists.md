@@ -13,9 +13,6 @@ This ground truth dataset was developed and published as part of the KGML-xDTD [
 ## EC Ground Truth Dataset 
 This ground truth dataset was developed and published as a part of MATRIX project and can be found [within Matrix Indication List repo](https://github.com/everycure-org/matrix-indication-list). It's a curated datasets that was developed collaboratively with medical experts to ensure good quality training pairs can be provided for the model. It should be KG-agnostic as it's directly extracted from regulatory authorities bodies. The versions of this dataset are linked to the [releases in the Github repository](https://github.com/everycure-org/matrix-indication-list/releases).
 
-## DrugBank Ground Truth Dataset (Private)
-This proprietary ground truth dataset was extracted from [DrugBank Database](https://go.drugbank.com) provided to EveryCure. It contains a list of indications & contraindications which are present within the database. Versions follow DrugBank convention.
-
 # Evaluation Datasets
 Those datasets are used for evaluating performance of our ML classifiers in predicting good quality drug repurposing candidates. Note that we always evaluate our model performance on standard train-test split in a K-Fold cross-validated fashion however here we are only describing withheld / external datasets.
 
