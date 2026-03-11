@@ -71,7 +71,14 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
     pre_dedup_count = unioned_edges.count()
     logger.info(f"union_edges: {pre_dedup_count} total edges before dedup")
 
-    unioned_edges = unioned_edges.dropDuplicates(["subject", "predicate", "object", "primary_knowledge_source"])
+    # Dedup on SPO + PKS + upstream_data_source: preserves rows that genuinely differ in
+    # qualifiers or publications, while dropping exact duplicates within the same upstream KG.
+    # Same-PKS edges from different upstream KGs (e.g. rtxkg2 and robokop both carrying
+    # infores:semmeddb) are kept as separate rows here; DeduplicateEdges in the filtering
+    # pipeline merges their upstream_data_source arrays when collapsing by SPO.
+    unioned_edges = unioned_edges.dropDuplicates(
+        ["subject", "predicate", "object", "primary_knowledge_source", "upstream_data_source"]
+    )
 
     post_dedup_count = unioned_edges.count()
     logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")

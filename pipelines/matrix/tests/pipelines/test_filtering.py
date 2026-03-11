@@ -551,12 +551,13 @@ def test_deduplicate_edges(spark):
     # num_references is the max across all 3 edges
     assert row["num_references"] == 5
 
-    # source_edge_properties is a JSON string keyed by primary_knowledge_source
-    # Note: Spark's to_json omits null fields, so use .get() for nullable fields
+    # source_edge_properties is a JSON string keyed by primary_knowledge_source.
+    # Scalar qualifier fields are arrays of all distinct non-null observed values
+    # (collect_set preserves all unique values and ignores nulls).
     props = json.loads(row["source_edge_properties"])
     assert set(props.keys()) == {"infores:semmeddb", "infores:ctd", "infores:monarch"}
-    assert props["infores:semmeddb"].get("object_direction_qualifier") == "increased"
-    assert props["infores:ctd"].get("object_direction_qualifier") == "decreased"
-    assert props["infores:monarch"].get("object_direction_qualifier") is None
-    assert props["infores:semmeddb"].get("knowledge_level") == "not_provided"
-    assert props["infores:ctd"].get("knowledge_level") == "knowledge_assertion"
+    assert props["infores:semmeddb"]["object_direction_qualifier"] == ["increased"]
+    assert props["infores:ctd"]["object_direction_qualifier"] == ["decreased"]
+    assert props["infores:monarch"]["object_direction_qualifier"] == []
+    assert props["infores:semmeddb"]["knowledge_level"] == ["not_provided"]
+    assert props["infores:ctd"]["knowledge_level"] == ["knowledge_assertion"]

@@ -254,12 +254,41 @@ class DeduplicateEdges(Filter):
 
         groupby_keys = ["subject", "predicate", "object"] + filtering_pipeline_cols
 
-        return df.groupBy(groupby_keys).agg(
-            sf.flatten(sf.collect_set("upstream_data_source")).alias("upstream_data_source"),
+        array_type_cols = {
+            f.name for f in df.schema.fields if isinstance(f.dataType, T.ArrayType) and f.name in source_property_cols
+        }
+
+        def _step1_agg(col_name):
+            """Aggregate a source_property column within (SPO, PKS).
+
+            Arrays are flattened and deduplicated. Integers take the max.
+            Scalar strings are collected into a set of all distinct non-null values,
+            so qualifier values from different upstream KGs are preserved.
+            """
+            if col_name in array_type_cols:
+                return sf.array_distinct(sf.flatten(sf.collect_list(col_name))).alias(col_name)
+            elif isinstance(df.schema[col_name].dataType, (T.IntegerType, T.LongType, T.ShortType)):
+                return sf.max(col_name).alias(col_name)
+            else:
+                return sf.collect_set(col_name).alias(col_name)
+
+        # Step 1: merge rows with same (SPO, PKS) from different upstream KGs.
+        # upstream_data_source arrays are unioned; scalar qualifier fields become arrays
+        # of all distinct observed values (collect_set ignores nulls).
+        per_pks = df.groupBy(groupby_keys + ["primary_knowledge_source"]).agg(
+            sf.array_distinct(sf.flatten(sf.collect_list("upstream_data_source"))).alias("upstream_data_source"),
+            *[_step1_agg(c) for c in source_property_cols],
+        )
+
+        # Step 2: collapse by SPO. PKS keys are now unique so map_from_entries is safe.
+        return per_pks.groupBy(groupby_keys).agg(
+            sf.array_distinct(sf.flatten(sf.collect_list("upstream_data_source"))).alias("upstream_data_source"),
             sf.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
             sf.collect_set("primary_knowledge_source").alias("primary_knowledge_sources"),
-            sf.flatten(sf.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
-            sf.flatten(sf.collect_set("publications")).alias("publications"),
+            sf.array_distinct(sf.flatten(sf.collect_list("aggregator_knowledge_source"))).alias(
+                "aggregator_knowledge_source"
+            ),
+            sf.array_distinct(sf.flatten(sf.collect_list("publications"))).alias("publications"),
             sf.max("num_references").cast(T.IntegerType()).alias("num_references"),
             sf.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
             sf.to_json(
