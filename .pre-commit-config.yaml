@@ -52,9 +52,22 @@ repos:
         ]
 
   - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.26 # Get the latest from: https://github.com/gruntwork-io/pre-commit/releases
+    rev: v0.1.30 # Get the latest from: https://github.com/gruntwork-io/pre-commit/releases
     hooks:
       - id: terragrunt-hclfmt
+        # Temporarily disabled due to Terragrunt CLI changes in v0.91+
+        # See: https://github.com/gruntwork-io/terragrunt/releases/tag/v0.91.0
+        exclude: ".*"
+  
+  # Custom local hook for Terragrunt HCL formatting (replaces broken gruntwork hook)
+  - repo: local
+    hooks:
+      - id: terragrunt-hcl-format
+        name: Terragrunt HCL format
+        entry: bash -c 'for file in "$@"; do terragrunt hcl format --file "$file"; done' --
+        language: system
+        files: '\.hcl$'
+        exclude: '.terraform.lock.hcl'
   
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

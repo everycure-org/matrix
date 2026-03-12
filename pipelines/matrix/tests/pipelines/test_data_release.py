@@ -21,9 +21,9 @@ class TestDataReleasePipeline:
         terminal_nodes = [node.name for node in pipeline.nodes if node.name not in all_dependencies]
 
         # The sentinel should be a terminal node
-        assert (
-            last_node_name in terminal_nodes
-        ), f"Sentinel node {last_node_name} should be a terminal node, but terminal nodes are: {terminal_nodes}"
+        assert last_node_name in terminal_nodes, (
+            f"Sentinel node {last_node_name} should be a terminal node, but terminal nodes are: {terminal_nodes}"
+        )
 
     def test_sentinel_has_expected_inputs_kg_release_patch(self):
         """
@@ -66,9 +66,9 @@ class TestDataReleasePipeline:
         terminal_nodes = [node.name for node in pipeline.nodes if node.name not in all_dependencies]
 
         # The sentinel should be among the terminal nodes
-        assert (
-            last_node_name in terminal_nodes
-        ), f"Sentinel node {last_node_name} should be a terminal node, but terminal nodes are: {terminal_nodes}"
+        assert last_node_name in terminal_nodes, (
+            f"Sentinel node {last_node_name} should be a terminal node, but terminal nodes are: {terminal_nodes}"
+        )
 
     def test_sentinel_has_expected_inputs_kg_release(self):
         """
