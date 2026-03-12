@@ -24,6 +24,7 @@ def join_array_columns(df: ps.DataFrame, cols: List[str], sep: str = SEPARATOR) 
             "aggregator_knowledge_source": Column(T.StringType(), nullable=True),
             "publications": Column(T.StringType(), nullable=True),
         },
+        unique=["subject", "predicate", "object", "upstream_data_source"],
     ),
     pass_columns=True,
 )
