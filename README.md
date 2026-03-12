@@ -7,6 +7,9 @@
 Welcome to MATRIX! This repository contains our drug repurposing platform which includes data
 science pipelines, infrastructure, and documentation.
 
+- [Link to the published data](https://huggingface.co/datasets/everycure/)
+- [Link to the public heatmap](https://prototypes.everycure.org/matrix-heatmap-public/)
+
 MATRIX is a drug repurposing platform organized as a monorepo containing machine learning pipelines,
 infrastructure as code, applications, and services. The repository uses **uv**'s workspace feature
 for efficient multi-package development with infrastructure, machine learning pipelines, shared
