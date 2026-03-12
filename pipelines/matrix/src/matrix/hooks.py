@@ -71,7 +71,7 @@ class SparkHooks:
         if self.__class__._already_initialized:
             return
 
-        dataset = self.catalog._get_dataset(dataset_name)
+        dataset = self.catalog.get(dataset_name)
         if isinstance(dataset, SparkDataset):
             logger.info(f"SparkDataset detected: {dataset}")
             self._initialize_spark()
