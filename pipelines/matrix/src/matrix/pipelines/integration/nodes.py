@@ -594,3 +594,56 @@ def compute_abox_tbox_metric(edges: ps.DataFrame) -> ps.DataFrame:
         F.sum(F.when(F.col("predicate").isin(instance_desc), 1).otherwise(0)).alias("abox"),
         F.sum(F.when(F.col("predicate").isin(concept_desc), 1).otherwise(0)).alias("tbox"),
     )
+
+
+def compute_ontology_inclusion_metric(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
+    """
+    Compute a per-node ontology inclusion flag.
+
+    A node is considered to be connected to an ontological structure (TBox) if it
+    appears as subject or object in at least one concept-level edge.
+
+    Args:
+        nodes: DataFrame with 'id' column representing all nodes in the KG slice.
+        edges: DataFrame with 'subject', 'predicate', and 'object' columns.
+
+    Returns:
+        DataFrame with columns:
+            - id: node identifier
+            - is_ontology_connected: True if the node has at least one
+              concept-level (TBox) edge, False otherwise.
+    """
+    concept_predicate = "related_to_at_concept_level"
+    concept_desc = tk.get_descendants(concept_predicate, mixin=True, formatted=True, reflexive=True)
+
+    tbox_edges = edges.filter(F.col("predicate").isin(concept_desc))
+
+    ontology_connected_ids = (
+        tbox_edges.select(F.col("subject").alias("id"))
+        .union(tbox_edges.select(F.col("object").alias("id")))
+        .distinct()
+        .withColumn("is_ontology_connected", F.lit(True))
+    )
+
+    return (
+        nodes.select("id")
+        .join(ontology_connected_ids, on="id", how="left")
+        .withColumn("is_ontology_connected", F.coalesce(F.col("is_ontology_connected"), F.lit(False)))
+    )
+
+
+def combine_node_metrics(node_components: ps.DataFrame, node_ontology: ps.DataFrame) -> ps.DataFrame:
+    """
+    Combine per-node metric files into a single node_metrics table.
+
+    Joins all node-level metric datasets on 'id' to produce the canonical
+    node_metrics output used downstream.
+
+    Args:
+        node_components: DataFrame with 'id', 'component_id', and 'ec_core_category'.
+        node_ontology: DataFrame with 'id' and 'is_ontology_connected'.
+
+    Returns:
+        DataFrame with all node metric columns joined on 'id'.
+    """
+    return node_components.join(node_ontology, on="id", how="left")

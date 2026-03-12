@@ -311,6 +311,9 @@ def compute_connected_components(
     implementations, compares their performance (logged only, not saved), and
     returns results from the first algorithm.
 
+    Component IDs are ranked by descending component size: the largest
+    connected component (LCC) gets component_id=0, the next largest gets 1, etc.
+
     Args:
         nodes: DataFrame with 'id' column
         edges: DataFrame with 'subject' and 'object' columns (unified edges)
