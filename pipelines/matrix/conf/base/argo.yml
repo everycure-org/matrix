@@ -1,0 +1,146 @@
+namespace: argo-workflows # cluster namespace to run on
+
+# To enable running on the cluster, Argo requires the plugin to be packaged
+# as a Docker image. This section defines the image to use.
+deployment:
+  image: ${oc.env:IMAGE, dummy}  # Docker image to use for workflow execution
+  tag: ${ka.random:} # Will match the random string in the workflow name
+  target_platform: linux/amd64  # Target platform for the image
+  context: ..  # Docker build context directory (relative to the Kedro project root)
+  dockerfile: ../Dockerfile  # Dockerfile path relative to the build context
+
+# Configuration passed to the runner
+runner:
+  # Flag to indicate that memory datasets should be
+  # used within the fused pipeline boundary, essentially
+  # indicating that catalog entries are removed, and datasets
+  # are passed in-memory as a result.
+  use_memory_datasets: true
+
+# Machine types available for use, the name of the `machine_type`
+# is used to assign resources to a Kedro node.
+machine_types:
+  default:
+    mem: 16
+    cpu: 4
+    num_gpu: 0
+  g2-standard-4:
+    mem: 16
+    cpu: 4
+    num_gpu: 1
+  g2-standard-8:
+    mem: 32
+    cpu: 8
+    num_gpu: 1
+  g2-standard-12:
+    mem: 48
+    cpu: 12
+    num_gpu: 1
+  g2-standard-16:
+    mem: 64
+    cpu: 16
+    num_gpu: 1
+  g2-standard-24:
+    mem: 96
+    cpu: 24
+    num_gpu: 2
+  g2-standard-32:
+    mem: 128
+    cpu: 32
+    num_gpu: 1
+  g2-standard-48:
+    mem: 192
+    cpu: 48
+    num_gpu: 4
+  g2-standard-96:
+    mem: 384
+    cpu: 96
+    num_gpu: 8
+  c4-highmem-8:
+    mem: 62
+    cpu: 8
+    num_gpu: 0
+  c4-highmem-16:
+    mem: 124
+    cpu: 16
+    num_gpu: 0
+  c4-highmem-24:
+    mem: 186
+    cpu: 24
+    num_gpu: 0
+  c4-highmem-32:
+    mem: 248
+    cpu: 32
+    num_gpu: 0
+  c4-highmem-48:
+    mem: 372
+    cpu: 48
+    num_gpu: 0
+  c4-highmem-96:
+    mem: 744
+    cpu: 96
+    num_gpu: 0
+  c4-highmem-144:
+    mem: 1116
+    cpu: 144
+    num_gpu: 0
+  c4-highmem-192:
+    mem: 1488
+    cpu: 192
+    num_gpu: 0
+  c4-highmem-288:
+    mem: 2232
+    cpu: 288
+    num_gpu: 0
+
+# Default machine type to use when none specified
+default_machine_type: default
+
+# Section allows for customizing the Workflow
+# template sent to Argo
+template:
+
+  # Section allows for including environment variables in the
+  # node for execution, currently limited to secret references.
+  environment:
+    - name: MLFLOW_TRACKING_URI
+      secret_ref:
+        name: mlflow-oidc-credentials
+        key: url
+    - name: MLFLOW_TRACKING_USERNAME
+      secret_ref:
+        name: mlflow-oidc-credentials
+        key: username
+    - name: MLFLOW_TRACKING_PASSWORD
+      secret_ref:
+        name: mlflow-oidc-credentials
+        key: token
+    - name: MLFLOW_EXPERIMENT_NAME
+      value: argo_test
+
+  # Custom templates to be used in the workflow
+  templates:
+    - name: init-mlflow-run
+      container:
+        name: init-mlflow-run
+        command: ["python", "-c"]
+        args: |
+          import os
+          import mlflow
+          mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
+          mlflow.set_experiment(os.environ["MLFLOW_EXPERIMENT_NAME"])
+          run = mlflow.start_run(run_name=os.environ["WORKFLOW_ID"])
+          with open("/tmp/mlflow_run_id", "w", encoding="utf-8") as f:
+              f.write(run.info.run_id)
+      outputs:
+        parameters:
+          - name: mlflow_run_id
+            path: /tmp/mlflow_run_id
+
+  # Register templates to be executed before the main pipeline,
+  # all outputs of the init templates are passed as environment
+  # variables to each of the nodes of the pipeline, e.g., for the
+  # above configuration, each node gets an `MLFLOW_RUN_ID` environment
+  # variable that can be used within the node.
+  init_templates: ["init-mlflow-run"]
+

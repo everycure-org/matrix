@@ -1,8 +1,8 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from argo_kedro.pipeline import Node
+from kedro.pipeline import Pipeline, pipeline
 
 import matrix.pipelines.ingestion.nodes as nodes
 from matrix import settings
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.utils.validation import validate
 
 from . import nodes
@@ -16,14 +16,14 @@ def create_pipeline(**kwargs) -> Pipeline:
     # Drug list and disease list
     nodes_lst.extend(
         [
-            node(
+            Node(
                 func=nodes.write_drug_list,
                 inputs=["ingestion.raw.drug_list"],
                 outputs="ingestion.raw.drug_list.nodes@pandas",
                 name="write_drug_list",
                 tags=["drug-list"],
             ),
-            node(
+            Node(
                 func=nodes.write_disease_list,
                 inputs=["ingestion.raw.disease_list"],
                 outputs="ingestion.raw.disease_list.nodes@pandas",
@@ -35,7 +35,7 @@ def create_pipeline(**kwargs) -> Pipeline:
 
     # RTX-KG2 curies
     nodes_lst.append(
-        node(
+        Node(
             func=lambda x: x,
             inputs=["ingestion.raw.rtx_kg2.curie_to_pmids@spark"],
             outputs="ingestion.int.rtx_kg2.curie_to_pmids",
@@ -50,18 +50,19 @@ def create_pipeline(**kwargs) -> Pipeline:
             if "robokop" in source.get("name", ""):
                 nodes_lst.extend(
                     [
-                        ArgoNode(
+                        Node(
                             name="robokop_preprocessing_nodes",
                             func=nodes.preprocess_robokop_nodes,
                             inputs=f"ingestion.raw.{source['name']}.nodes@lazypolars",
                             outputs=f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
                             tags=[f"{source['name']}"],
-                            argo_config=ArgoResourceConfig(
-                                memory_limit=256,
-                                memory_request=192,
-                            ),
+                            # TODO: Pick big machine type here
+                            # argo_config=ArgoResourceConfig(
+                            #     memory_limit=256,
+                            #     memory_request=192,
+                            # ),
                         ),
-                        node(
+                        Node(
                             func=lambda x: x,
                             inputs=f"ingestion.int.preprocessing.{source['name']}.nodes@spark",
                             outputs=f"ingestion.int.{source['name']}.nodes",
@@ -72,7 +73,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             else:
                 nodes_lst.append(
-                    node(
+                    Node(
                         func=lambda x: x,
                         inputs=f"ingestion.raw.{source['name']}.nodes@spark",
                         outputs=f"ingestion.int.{source['name']}.nodes",
@@ -82,7 +83,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
         if "ground_truth" in source.get("name", ""):
             nodes_lst.append(
-                node(
+                Node(
                     func=lambda x, y: [x, y],
                     inputs=[
                         f"ingestion.raw.{source['name']}.positives",
@@ -100,18 +101,19 @@ def create_pipeline(**kwargs) -> Pipeline:
             if "robokop" in source.get("name", ""):
                 nodes_lst.extend(
                     [
-                        ArgoNode(
+                        Node(
                             name="robokop_preprocessing_edges",
                             func=nodes.preprocess_robokop_edges,
                             inputs=f"ingestion.raw.{source['name']}.edges@lazypolars",
                             outputs=f"ingestion.int.preprocessing.{source['name']}.edges@polars",
                             tags=[f"{source['name']}"],
-                            argo_config=ArgoResourceConfig(
-                                memory_limit=128,
-                                memory_request=64,
-                            ),
+                            # TODO: Big machine type here
+                            # argo_config=ArgoResourceConfig(
+                            #     memory_limit=128,
+                            #     memory_request=64,
+                            # ),
                         ),
-                        node(
+                        Node(
                             func=lambda x: x,
                             inputs=f"ingestion.int.preprocessing.{source['name']}.edges@spark",
                             outputs=f"ingestion.int.{source['name']}.edges",
@@ -122,7 +124,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 )
             else:
                 nodes_lst.append(
-                    node(
+                    Node(
                         func=lambda x: x,
                         inputs=[f"ingestion.raw.{source['name']}.edges@spark"],
                         outputs=f"ingestion.int.{source['name']}.edges",
@@ -137,23 +139,23 @@ def create_pipeline(**kwargs) -> Pipeline:
             }
             argo_config = None
             if "robokop" in source.get("name", ""):
-                argo_config = ArgoResourceConfig(
-                    memory_limit=128,
-                    memory_request=64,
-                )
                 inputs = {
                     "nodes": f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
                     "edges": f"ingestion.int.preprocessing.{source['name']}.edges@polars",
                 }
 
             nodes_lst.append(
-                ArgoNode(
+                Node(
                     func=validate,
                     inputs=inputs,
                     outputs=f"ingestion.int.{source['name']}.violations",
                     name=f"validate_{source['name']}",
                     tags=[f"{source['name']}"],
-                    argo_config=argo_config,
+                    # TODO: Big machine type here
+                    # argo_config=ArgoResourceConfig(
+                    #     memory_limit=128,
+                    #     memory_request=64,
+                    # )
                 )
             )
 

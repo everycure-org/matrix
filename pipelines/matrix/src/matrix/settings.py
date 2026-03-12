@@ -11,7 +11,6 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 import os
 
 from kedro.config import OmegaConfigLoader  # noqa: E402
-from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
 from matrix.utils.hook_utilities import (
@@ -24,17 +23,12 @@ from .resolvers import cast_to_int, env, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
-    "mlflow": MlflowHook(),
-    "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
     "release": matrix_hooks.ReleaseInfoHooks(),
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = determine_hooks_to_execute(hooks)
-
-# Installed plugins for which to disable hook auto-registration.
-DISABLE_HOOKS_FOR_PLUGINS = ("kedro-mlflow",)
 
 # Class that manages storing KedroSession data.
 

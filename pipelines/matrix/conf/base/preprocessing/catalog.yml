@@ -1,18 +1,3 @@
-_layer_raw: &_layer_raw
-  metadata:
-    kedro-viz:
-      layer: raw
-
-_layer_int: &_layer_int
-  metadata:
-    kedro-viz:
-      layer: integration
-
-_layer_prm: &_layer_prm
-  metadata:
-    kedro-viz:
-      layer: primary
-
 _spark_parquet_ds: &_spark_parquet
   type: matrix_gcp_datasets.gcp.LazySparkDataset
   file_format: parquet
