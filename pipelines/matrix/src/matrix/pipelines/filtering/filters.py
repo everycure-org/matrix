@@ -259,7 +259,7 @@ class DeduplicateEdges(Filter):
         }
 
         def _step1_agg(col_name):
-            """Aggregate a source_property column within (SPO, PKS).
+            """Aggregate a source_property column within (subject, predicate, object, primary-knowledge-source).
 
             Arrays are flattened and deduplicated. Integers take the max.
             Scalar strings are collected into a set of all distinct non-null values,
