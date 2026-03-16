@@ -7,7 +7,7 @@ service_account_file_path: ${oc.env:SERVICE_ACCOUNT_FILE_PATH, conf/local/gsheet
 paths:
   input: data/00_input
   raw_llm: ${dev_gcs_bucket}/kedro/data/core-entities
-  raw_drugbank: ${prod_gcs_bucket}/data/01_RAW/source_data/drugbank/1332218/prm
+  raw_drugbank: ${prod_gcs_bucket}/data/01_RAW/source_data/drugbank
   primary: data/03_primary
   release: data/03_primary/release
   published: data/03_primary/published

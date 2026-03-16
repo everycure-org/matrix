@@ -43,7 +43,6 @@ drug_list:
     - is_analgesic
     - is_cardiovascular
     - is_cell_therapy
-    - smiles
     - atc_main
     - atc_level_1
     - atc_level_2

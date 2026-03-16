@@ -282,16 +282,15 @@ def ingest_curated_drug_list(curated_drug_list: pd.DataFrame) -> pd.DataFrame:
     return curated_drug_list
 
 
-@pa.check_input(
-    pa.DataFrameSchema(
-        parsers=pa.Parser(lambda df: df[["drugbank_id", "name", "moldb_smiles"]]),
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
-            "moldb_smiles": pa.Column(nullable=True),
-        },
-    )
-)
+# @pa.check_input(
+#     pa.DataFrameSchema(
+#         parsers=pa.Parser(lambda df: df[["drugbank_id", "name"]]),
+#         columns={
+#             "drugbank_id": pa.Column(nullable=False),
+#             "name": pa.Column(nullable=False),
+#         },
+#     )
+# )
 @pa.check_output(
     pa.DataFrameSchema(
         columns={
@@ -309,53 +308,13 @@ def ingest_curated_drug_list(curated_drug_list: pd.DataFrame) -> pd.DataFrame:
                     ),
                 ],
             ),
-            "smiles": pa.Column(nullable=True),
         },
         strict=True,
     )
 )
-def ingest_drugbank_drug_list(drugbank_drug_list: pd.DataFrame) -> pd.DataFrame:
-    drugbank_drug_list.loc[:, "name"] = drugbank_drug_list.loc[:, "name"].apply(lambda x: x.lower().strip())
-    drugbank_drug_list = drugbank_drug_list.rename(columns={"moldb_smiles": "smiles"})
-    return drugbank_drug_list
-
-
-@pa.check_input(
-    pa.DataFrameSchema(
-        parsers=pa.Parser(lambda df: df[["drugbank_id", "name", "moldb_smiles"]]),
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
-            "moldb_smiles": pa.Column(nullable=True),
-        },
-    )
-)
-@pa.check_output(
-    pa.DataFrameSchema(
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "name": pa.Column(
-                nullable=False,
-                checks=[
-                    pa.Check(
-                        lambda col: col.apply(lambda x: x == x.lower()),
-                        title="name must be lowercase",
-                    ),
-                    pa.Check(
-                        lambda col: col.apply(lambda x: x == x.strip()),
-                        title="name must be stripped (no leading/trailing whitespace)",
-                    ),
-                ],
-            ),
-            "smiles": pa.Column(nullable=True),
-        },
-        strict=True,
-    )
-)
-def ingest_drugbank_salt_list(drugbank_salt_list: pd.DataFrame) -> pd.DataFrame:
-    drugbank_salt_list.loc[:, "name"] = drugbank_salt_list.loc[:, "name"].apply(lambda x: x.lower().strip())
-    drugbank_salt_list = drugbank_salt_list.rename(columns={"moldb_smiles": "smiles"})
-    return drugbank_salt_list
+def ingest_drugbank_identifiers(drugbank_identifiers: pd.DataFrame) -> pd.DataFrame:
+    drugbank_identifiers.loc[:, "name"] = drugbank_identifiers.loc[:, "name"].apply(lambda x: x.lower().strip())
+    return drugbank_identifiers
 
 
 @pa.check_input(
@@ -665,35 +624,10 @@ def normalize_drug_curies(drug_curies: pd.DataFrame, node_normalizer_base_url: s
         columns={
             "drugbank_id": pa.Column(nullable=False),
             "name": pa.Column(nullable=False),
-            "smiles": pa.Column(nullable=True),
         },
     ),
-    obj_getter="drugbank_drug_list",
+    obj_getter="drugbank_identifiers",
 )
-@pa.check_input(
-    pa.DataFrameSchema(
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
-            "smiles": pa.Column(nullable=True),
-        },
-    ),
-    obj_getter="drugbank_salt_list",
-)
-@pa.check_output(
-    pa.DataFrameSchema(
-        columns={
-            "drugbank_id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
-            "smiles": pa.Column(nullable=True),
-        },
-        strict=True,
-    )
-)
-def union_drugbank_lists(drugbank_drug_list: pd.DataFrame, drugbank_salt_list: pd.DataFrame) -> pd.DataFrame:
-    return pd.concat([drugbank_drug_list, drugbank_salt_list])
-
-
 @pa.check_output(
     pa.DataFrameSchema(
         columns={
@@ -707,22 +641,21 @@ def union_drugbank_lists(drugbank_drug_list: pd.DataFrame, drugbank_salt_list: p
                     raise_warning=True,
                 ),
             ),
-            "smiles": pa.Column(nullable=True),
         },
         unique=["id"],
         strict=True,
     )
 )
-def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: pd.DataFrame) -> pd.DataFrame:
+def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_identifiers: pd.DataFrame) -> pd.DataFrame:
     drug_name_and_synonyms = curated_drug_list.explode("synonyms")[["id", "name", "synonyms"]]
     merged_df = pd.merge(
         pd.merge(
             drug_name_and_synonyms,
-            drugbank_union_list[["name", "drugbank_id"]].rename(columns={"drugbank_id": "drugbank_id_via_name"}),
+            drugbank_identifiers[["name", "drugbank_id"]].rename(columns={"drugbank_id": "drugbank_id_via_name"}),
             on="name",
             how="left",
         ),
-        drugbank_union_list[["name", "drugbank_id"]].rename(columns={"drugbank_id": "drugbank_id_via_synonym"}),
+        drugbank_identifiers[["name", "drugbank_id"]].rename(columns={"drugbank_id": "drugbank_id_via_synonym"}),
         left_on="synonyms",
         right_on="name",
         how="left",
@@ -734,7 +667,7 @@ def resolve_drugbank_ids(curated_drug_list: pd.DataFrame, drugbank_union_list: p
     )
     merged_df = pd.merge(
         merged_df,
-        drugbank_union_list[["drugbank_id", "smiles"]],
+        drugbank_identifiers[["drugbank_id"]],
         on="drugbank_id",
         how="left",
     )
@@ -963,7 +896,6 @@ def get_log_nan_check(column_name: str):
             "is_analgesic": pa.Column(dtype=bool, nullable=False),
             "is_cardiovascular": pa.Column(dtype=bool, nullable=False),
             "is_cell_therapy": pa.Column(dtype=bool, nullable=False),
-            "smiles": pa.Column(nullable=True),
             "atc_main": pa.Column(nullable=True),
             "atc_level_1": pa.Column(nullable=True),
             "atc_level_2": pa.Column(nullable=True),

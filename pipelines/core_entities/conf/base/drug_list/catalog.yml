@@ -23,13 +23,9 @@ raw.curated_drug_list:
   worksheet_gid: 1299365445
   service_account_file_path: ${globals:service_account_file_path}
 
-raw.drugbank_drug_list:
+raw.drugbank_identifiers:
   type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/drugs.csv
-
-raw.drugbank_salt_list:
-  type: pandas.CSVDataset
-  filepath: ${globals:paths.raw_drugbank}/salts.csv
+  filepath: ${globals:paths.raw_drugbank}/drugbank_identifiers.csv
 
 # File downloaded here: https://bioportal.bioontology.org/ontologies/ATC
 raw.atc_labels:
@@ -44,13 +40,9 @@ primary.curated_drug_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/curated-drug-list.parquet
 
-primary.drugbank_drug_list:
+primary.drugbank_identifiers:
   <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-drug-list.parquet
-
-primary.drugbank_salt_list:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-salt-list.parquet
+  filepath: ${globals:paths.primary}/drug/drugbank-identifiers.parquet
 
 primary.atc_labels:
   <<: [*_pandas_parquet]
@@ -63,10 +55,6 @@ primary.drug_curies:
 primary.normalized_drug_curies:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/normalized-drug-curies.parquet
-
-primary.drugbank_union_list:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/drugbank-union-list.parquet
 
 primary.drug_list_with_drugbank_id:
   <<: [*_pandas_parquet]
