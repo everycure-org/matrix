@@ -237,7 +237,7 @@ wheels = [
 
 [[package]]
 name = "argo-kedro"
-version = "0.1.35"
+version = "0.1.39"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -246,9 +246,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/bc/f6d5d80d31d3bf7f954ccac5d8b22356c710e733a9a15f38262cd235cfca/argo_kedro-0.1.35.tar.gz", hash = "sha256:debeb1bed6f45e19ddfe8c879229252ba2cad2168c26383a9637a8ebd32c59be", size = 73229, upload-time = "2026-03-10T11:25:03.876Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/12/56d093e3b9018f23f1bd1b04399f224abad2d58f5d395f67bde71f605d9f/argo_kedro-0.1.39.tar.gz", hash = "sha256:1557363c9700fe26b961a3caf12af550dcb63bdf26e200f478e605f830147df3", size = 74096, upload-time = "2026-03-16T10:21:24.778Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/56/652b089d0224fe5824e8a40648b710a71cd51d44588b548229242806cc44/argo_kedro-0.1.35-py3-none-any.whl", hash = "sha256:274d492dce7e1a07bc16e86670986a32731acaf916a0aa9b55c22d7e940778bc", size = 25991, upload-time = "2026-03-10T11:25:02.996Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/7e/6397eb7a6bd7b614e8df9a6c97a43076ac404a05e5f671fdba7d1d62e891/argo_kedro-0.1.39-py3-none-any.whl", hash = "sha256:41c1e7111fdff756cbc29f39005eaf2fb14b539ecf528b048e366588e9d61559", size = 26740, upload-time = "2026-03-16T10:21:23.668Z" },
 ]
 
 [[package]]
@@ -4076,7 +4076,7 @@ pre-commit = [
 
 [package.metadata]
 requires-dist = [
-    { name = "argo-kedro", specifier = ">=0.1.35" },
+    { name = "argo-kedro", specifier = ">=0.1.39" },
     { name = "bmt" },
     { name = "bracex", specifier = ">=2.6" },
     { name = "db-dtypes" },

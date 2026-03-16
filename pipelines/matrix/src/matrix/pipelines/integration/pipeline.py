@@ -1,4 +1,5 @@
 from argo_kedro.pipeline import FusedPipeline, Node, sum_pipelines
+from argo_kedro.pipeline.node import Node
 from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings

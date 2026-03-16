@@ -3,11 +3,11 @@ namespace: argo-workflows # cluster namespace to run on
 # To enable running on the cluster, Argo requires the plugin to be packaged
 # as a Docker image. This section defines the image to use.
 deployment:
-  image: ${oc.env:IMAGE, dummy}  # Docker image to use for workflow execution
+  image: us-central1-docker.pkg.dev/ec-ai-platform-dev/ai-platform-images/matrix  # Docker image to use for workflow execution
   tag: ${ka.random:} # Will match the random string in the workflow name
   target_platform: linux/amd64  # Target platform for the image
-  context: ..  # Docker build context directory (relative to the Kedro project root)
-  dockerfile: ../Dockerfile  # Dockerfile path relative to the build context
+  context: ../..  # Docker build context directory (relative to the Kedro project root)
+  dockerfile: Dockerfile  # Dockerfile path relative to the build context
 
 # Configuration passed to the runner
 runner:
@@ -116,7 +116,14 @@ template:
         name: mlflow-oidc-credentials
         key: token
     - name: MLFLOW_EXPERIMENT_NAME
-      value: argo_test
+      value: matrix
+    - name: RUNTIME_GCP_BUCKET
+      value: mtrx-us-central1-hub-dev-storage
+    - name: RUNTIME_GCP_PROJECT_ID
+      value: mtrx-hub-dev-3of
+    - name: RELEASE_VERSION
+      value: v0.0.01 # dummy!
+
 
   # Custom templates to be used in the workflow
   templates:

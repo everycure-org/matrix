@@ -65,6 +65,8 @@ def register_pipelines() -> dict[str, Pipeline]:
         # # "inference": create_inference_pipeline(),  # Run manually based on medical input
     }
 
+    pipelines["test"] = pipelines["fabricator"] + pipelines["ingestion"] + pipelines["integration"]
+
     # # Higher order pipelines
     # # fmt: off
     # pipelines["data_engineering"] = (
