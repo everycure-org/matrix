@@ -420,20 +420,6 @@ def check_nodes_and_edges_matching(edges: ps.DataFrame, nodes: ps.DataFrame):
         return "validation_passed"
 
 
-@check_output(
-    DataFrameSchema(
-        columns={
-            "id": Column(T.StringType(), nullable=False),
-            "original_id": Column(T.StringType(), nullable=False),
-            "normalization_success": Column(T.BooleanType(), nullable=True),
-            "original_categories": Column(T.ArrayType(T.StringType()), nullable=True),
-            "normalized_categories": Column(T.ArrayType(T.StringType()), nullable=True),
-            "all_categories": Column(T.ArrayType(T.StringType()), nullable=True),
-            "source_role": Column(T.StringType(), nullable=False),
-            "upstream_data_source": Column(T.StringType(), nullable=False),
-        }
-    )
-)
 def normalization_summary_nodes_and_edges(
     edges: ps.DataFrame,
     nodes: ps.DataFrame,
@@ -508,20 +494,6 @@ def normalization_summary_nodes_and_edges(
     )
 
 
-@check_output(
-    DataFrameSchema(
-        columns={
-            "id": Column(T.StringType(), nullable=False),
-            "original_id": Column(T.StringType(), nullable=False),
-            "normalization_success": Column(T.BooleanType(), nullable=True),
-            "original_categories": Column(T.ArrayType(T.StringType()), nullable=True),
-            "normalized_categories": Column(T.ArrayType(T.StringType()), nullable=True),
-            "all_categories": Column(T.ArrayType(T.StringType()), nullable=True),
-            "source_role": Column(T.StringType(), nullable=False),
-            "upstream_data_source": Column(T.StringType(), nullable=False),
-        }
-    )
-)
 def normalization_summary_nodes_only(
     nodes: ps.DataFrame,
     mapping_df: ps.DataFrame,

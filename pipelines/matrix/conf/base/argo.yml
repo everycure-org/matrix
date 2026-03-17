@@ -69,6 +69,7 @@ machine_types:
     mem: 186
     cpu: 24
     num_gpu: 0
+    emph_storage: 100
   c4-highmem-32:
     mem: 248
     cpu: 32

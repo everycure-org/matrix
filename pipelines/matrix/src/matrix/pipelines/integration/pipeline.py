@@ -101,7 +101,7 @@ def _create_integration_pipeline(
         ],
         name=f"integrate_{source}_fused",
         tags=source,
-        machine_type="c4-highmem-16",
+        machine_type="c4-highmem-24",
     )
 
 
