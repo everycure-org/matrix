@@ -241,7 +241,7 @@ ingestion.raw.ec_indications_list.edges@pandas:
   filepath: ${globals:paths.raw}/ec_indications_list/${globals:data_sources.ec_indications_list.version}/ec_indications_list.parquet
 
 ingestion.raw.ec_indications_list.edges@spark:
-  <<: [*_layer_int, *_spark_parquet]
+  <<: [*_layer_raw, *_spark_parquet]
   filepath: ${globals:paths.raw}/ec_indications_list/${globals:data_sources.ec_indications_list.version}/ec_indications_list.parquet
 
 # -------------------------------------------------------------------------
@@ -435,7 +435,7 @@ ingestion.int.preprocessing.robokop.nodes@polars:
   filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
 
 ingestion.int.preprocessing.robokop.nodes@spark:
-  <<: *_layer_raw
+  <<: *_layer_int
   type: matrix_gcp_datasets.gcp.LazySparkDataset
   filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_nodes.tsv
   file_format: csv
@@ -445,7 +445,7 @@ ingestion.int.preprocessing.robokop.nodes@spark:
     index: false
 
 ingestion.int.preprocessing.robokop.edges@polars:
-  <<: [*_polars_csv, *_layer_int]
+  <<: [*_polars_csv, *_layer_raw]
   filepath: ${globals:paths.ingestion}/int/preprocessing/robokop/${globals:data_sources.robokop.version}/robokop-${globals:data_sources.robokop.version}_edges.tsv
 
 ingestion.int.preprocessing.robokop.edges@spark:

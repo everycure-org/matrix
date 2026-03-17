@@ -1,4 +1,4 @@
-run_name: ${oc.env:RUN_NAME}
+run_name: ${oc.env:WORKFLOW_ID}
 
 versions:
   release: ${oc.env:RELEASE_VERSION,v0.13.0}
@@ -18,8 +18,8 @@ public_gcs_bucket: gs://data.dev.everycure.org
 
 # NOTE: MLflow does not like "new options" in the mlflow.yml
 # due to schema validation.
-mlflow_artifact_root: ${run_dir}/mlflow
-mlflow_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID, 1}
+# mlflow_artifact_root: ${run_dir}/mlflow
+# mlflow_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID, null}
 
 paths:
   raw:             ${dev_gcs_bucket}/data/01_RAW

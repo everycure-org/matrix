@@ -1,9 +1,10 @@
-from kedro.pipeline import Pipeline, node, pipeline
+from argo_kedro.pipeline import FusedPipeline, Node, sum_pipelines
+from argo_kedro.pipeline.node import Node
+from kedro.pipeline import Pipeline, pipeline
 
 from matrix import settings
 from matrix.pipelines.batch import pipeline as batch_pipeline
 
-from ...kedro4argo_node import ArgoNode, ArgoResourceConfig
 from . import connectivity_metrics, nodes
 
 
@@ -13,83 +14,69 @@ def _create_integration_pipeline(
     has_edges: bool = True,
     is_core: bool = False,
 ) -> Pipeline:
-    pipelines = []
-
-    pipelines.append(
-        pipeline(
-            [
-                ArgoNode(
-                    func=nodes.transform,
-                    inputs={
-                        "transformer": f"params:integration.sources.{source}.transformer",
-                        # NOTE: The datasets below are currently only picked up by RTX
-                        # the goal is to ensure that semmed filtering occurs for all
-                        # graphs in the future.
-                        "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
-                        "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
-                        # NOTE: This dynamically wires the nodes and edges into each transformer.
-                        # This is due to the fact that the Transformer objects are only created
-                        # during node execution time, otherwise we could infer this based on
-                        # the transformer.
-                        **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
-                        **(
-                            {
-                                "positive_edges_df": f"ingestion.int.{source}.positive.edges@spark",
-                                "negative_edges_df": f"ingestion.int.{source}.negative.edges@spark",
-                            }
-                            if ("ground_truth" in source)
-                            else {"edges_df": f"ingestion.int.{source}.edges"}
-                            if has_edges
-                            else {}
-                        ),
-                    },
-                    outputs={
-                        "nodes": f"integration.int.{source}.nodes",
-                        **({"edges": f"integration.int.{source}.edges"} if has_edges else {}),
-                    },
-                    name=f"transform_{source}_nodes",
-                    tags=["standardize"],
-                    argo_config=ArgoResourceConfig(
-                        memory_request=128,
-                        memory_limit=128,
+    return FusedPipeline(
+        [
+            Node(
+                func=nodes.transform,
+                inputs={
+                    "transformer": f"params:integration.sources.{source}.transformer",
+                    # NOTE: The datasets below are currently only picked up by RTX
+                    # the goal is to ensure that semmed filtering occurs for all
+                    # graphs in the future.
+                    "curie_to_pmids": "ingestion.int.rtx_kg2.curie_to_pmids",
+                    "semmed_filters": "params:integration.preprocessing.rtx.semmed_filters",
+                    # NOTE: This dynamically wires the nodes and edges into each transformer.
+                    # This is due to the fact that the Transformer objects are only created
+                    # during node execution time, otherwise we could infer this based on
+                    # the transformer.
+                    **({"nodes_df": f"ingestion.int.{source}.nodes"} if has_nodes else {}),
+                    **(
+                        {
+                            "positive_edges_df": f"ingestion.int.{source}.positive.edges@spark",
+                            "negative_edges_df": f"ingestion.int.{source}.negative.edges@spark",
+                        }
+                        if ("ground_truth" in source)
+                        else {"edges_df": f"ingestion.int.{source}.edges"}
+                        if has_edges
+                        else {}
                     ),
-                ),
-                batch_pipeline.cached_api_enrichment_pipeline(
-                    source=f"normalization_source_{source}",
-                    workers=20,
-                    input=f"integration.int.{source}.nodes",
-                    output=f"integration.int.{source}.nodes.nodes_norm_mapping",
-                    preprocessor="params:integration.normalization.preprocessor",
-                    cache_miss_resolver="params:integration.normalization.normalizer",
-                    new_col="params:integration.normalization.target_col",
-                    primary_key="params:integration.normalization.primary_key",
-                    batch_size="params:integration.normalization.batch_size",
-                    cache_schema="params:integration.normalization.cache_schema",
-                ),
-                node(
-                    func=nodes.normalization_summary_nodes_and_edges
-                    if has_edges
-                    else nodes.normalization_summary_nodes_only,
-                    inputs={
-                        "nodes": f"integration.int.{source}.nodes.norm@spark",
-                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
-                        **({"edges": f"integration.int.{source}.edges.norm@spark"} if has_edges else {}),
-                        "source": f"params:integration.sources.{source}.name",
-                    },
-                    outputs=f"integration.int.{source}.normalization_summary",
-                    name=f"create_{source}_normalization_summary",
-                    tags=["normalization", f"argowf.fuse-group.{source}"],
-                ),
-            ],
-            tags=source,
-        )
-    )
-
-    if has_edges:
-        pipelines.append(
-            pipeline(
+                },
+                outputs={
+                    "nodes": f"integration.int.{source}.nodes",
+                    **({"edges": f"integration.int.{source}.edges"} if has_edges else {}),
+                },
+                name=f"transform_{source}_nodes",
+                tags=["standardize"],
+            ),
+            batch_pipeline.cached_api_enrichment_pipeline(
+                source=f"normalization_source_{source}",
+                workers=20,
+                input=f"integration.int.{source}.nodes",
+                output=f"integration.int.{source}.nodes.nodes_norm_mapping",
+                cache_miss_resolver="params:integration.normalization.normalizer",
+                new_col="params:integration.normalization.target_col",
+                preprocessor="params:integration.normalization.preprocessor",
+                primary_key="params:integration.normalization.primary_key",
+                batch_size="params:integration.normalization.batch_size",
+                cache_schema="params:integration.normalization.cache_schema",
+            ),
+            Node(
+                func=nodes.normalization_summary_nodes_and_edges
+                if has_edges
+                else nodes.normalization_summary_nodes_only,
+                inputs={
+                    "nodes": f"integration.int.{source}.nodes.norm@spark",
+                    "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
+                    **({"edges": f"integration.int.{source}.edges.norm@spark"} if has_edges else {}),
+                    "source": f"params:integration.sources.{source}.name",
+                },
+                outputs=f"integration.int.{source}.normalization_summary",
+                name=f"create_{source}_normalization_summary",
+                tags=["normalization"],
+            ),
+            *(
                 [
-                    ArgoNode(
+                    Node(
                         func=nodes.normalize_edges,
                         inputs={
                             "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
@@ -97,34 +84,25 @@ def _create_integration_pipeline(
                         },
                         outputs=f"integration.int.{source}.edges.norm@spark",
                         name=f"normalize_{source}_edges",
-                        tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-                        argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                     ),
-                ],
-                tags=source,
-            )
-        )
-
-    pipelines.append(
-        pipeline(
-            [
-                ArgoNode(
-                    func=nodes.normalize_core_nodes if is_core else nodes.normalize_nodes,
-                    inputs={
-                        "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
-                        "nodes": f"integration.int.{source}.nodes",
-                    },
-                    outputs=f"integration.int.{source}.nodes.norm@spark",
-                    name=f"normalize_{source}_nodes",
-                    tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
-                ),
-            ],
-            tags=source,
-        )
+                ]
+                if has_edges
+                else []
+            ),
+            Node(
+                func=nodes.normalize_core_nodes if is_core else nodes.normalize_nodes,
+                inputs={
+                    "mapping_df": f"integration.int.{source}.nodes.nodes_norm_mapping",
+                    "nodes": f"integration.int.{source}.nodes",
+                },
+                outputs=f"integration.int.{source}.nodes.norm@spark",
+                name=f"normalize_{source}_nodes",
+            ),
+        ],
+        name=f"integrate_{source}_fused",
+        tags=source,
+        machine_type="c4-highmem-16",
     )
-
-    return sum(pipelines)
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -147,9 +125,9 @@ def create_pipeline(**kwargs) -> Pipeline:
         )
     # Add integration pipeline
     pipelines.append(
-        pipeline(
+        FusedPipeline(
             [
-                node(
+                Node(
                     func=nodes.create_core_id_mapping,
                     inputs=[
                         *[
@@ -161,7 +139,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.int.core_node_mapping",
                     name="create_core_id_mapping",
                 ),
-                node(
+                Node(
                     func=nodes.union_and_deduplicate_nodes,
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",
@@ -175,7 +153,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_nodes",
                     name="create_prm_unified_nodes",
                 ),
-                node(
+                Node(
                     func=nodes.unify_ground_truth,
                     inputs=[
                         *[
@@ -187,7 +165,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.int.unified_ground_truth_edges",
                     name="create_unified_ground_truth_edges",
                 ),
-                ArgoNode(
+                Node(
                     func=nodes.union_edges,
                     inputs=[
                         "integration.int.core_node_mapping",
@@ -199,9 +177,8 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
-                    argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
-                node(
+                Node(
                     func=nodes._union_datasets,
                     inputs=[
                         *[
@@ -212,7 +189,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs="integration.prm.unified_normalization_summary",
                     name="create_unified_normalization_summary",
                 ),
-                node(
+                Node(
                     func=nodes.check_nodes_and_edges_matching,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
@@ -222,7 +199,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="check_merged_nodes_and_edges_consistency",
                     tags=["validation"],
                 ),
-                node(
+                Node(
                     func=nodes.compute_abox_tbox_metric,
                     inputs={
                         "edges": "integration.prm.unified_edges",
@@ -231,7 +208,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="metric_abox_tbox",
                     tags=["metrics", "ontological"],
                 ),
-                node(
+                Node(
                     func=nodes.compute_ontology_inclusion_metric,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
@@ -241,7 +218,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="compute_ontology_inclusion_metric",
                     tags=["metrics", "ontological"],
                 ),
-                ArgoNode(
+                Node(
                     func=connectivity_metrics.compute_connected_components,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
@@ -255,16 +232,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                     },
                     name="compute_connected_components",
                     tags=["metrics", "connectivity"],
-                    argo_config=ArgoResourceConfig(memory_request=96, memory_limit=96),
                 ),
-                node(
+                Node(
                     func=connectivity_metrics.compute_component_summary,
                     inputs="integration.prm.node_metrics",
                     outputs="integration.prm.connected_components",
                     name="compute_component_summary",
                     tags=["metrics", "connectivity"],
                 ),
-                node(
+                Node(
                     func=connectivity_metrics.compute_core_connectivity_metrics,
                     inputs={
                         "nodes": "integration.prm.unified_nodes",
@@ -275,7 +251,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="compute_core_connectivity_metrics",
                     tags=["metrics", "connectivity"],
                 ),
-                node(
+                Node(
                     func=nodes.combine_node_metrics,
                     inputs={
                         "node_components": "integration.prm.node_components",
@@ -285,7 +261,9 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="combine_node_metrics",
                     tags=["metrics"],
                 ),
-            ]
+            ],
+            name="integrate-sources-fused",
+            machine_type="c4-highmem-16",
         )
     )
-    return sum(pipelines)
+    return sum_pipelines(pipelines)

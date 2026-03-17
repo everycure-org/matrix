@@ -3,109 +3,22 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any, Collection, Dict, Optional, Set
+from typing import Any, Collection, Dict, Optional
 
 import fsspec
-import mlflow
 import pandas as pd
 import pyspark.sql as ps
 import termplotlib as tpl
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import hook_impl
-from kedro.framework.project import pipelines
 from kedro.io.data_catalog import DataCatalog
 from kedro.pipeline.node import Node
 from kedro_datasets.spark import SparkDataset
 from matrix_inject.inject import _parse_for_objects
-from omegaconf import OmegaConf
 
 from matrix.pipelines.data_release import last_node_name as last_data_release_node_name
 
 logger = logging.getLogger(__name__)
-
-
-class MLFlowHooks:
-    """Kedro MLFlow hook.
-
-    Mlflow supports the concept of run names, which are mapped
-    to identifiers behind the curtains. However, this name is not
-    required to be unique and hence multiple runs for the same name
-    may exist. This plugin ensures run names are mapped to single
-    a identifier. Can be removed when following issue is resolved:
-
-    https://github.com/Galileo-Galilei/kedro-mlflow/issues/579
-    """
-
-    _kedro_context: Optional[KedroContext] = None
-    _input_datasets: Optional[Set] = None
-
-    @classmethod
-    def set_context(cls, context: KedroContext) -> None:
-        """Utility class method that stores context in class as singleton."""
-        cls._kedro_context = context
-
-    @classmethod
-    def get_pipeline_inputs(cls):
-        if cls._input_datasets is None:
-            pipeline_name = cls._kedro_context._extra_params["pipeline_name"]
-            pipeline_obj = pipelines[pipeline_name]
-            inputs = {input for input in pipeline_obj.all_inputs() if not input.startswith("params:")}
-            outputs = pipeline_obj.all_outputs()
-            inputs_only = inputs - outputs
-            cls._input_datasets = inputs_only
-
-    # @hook_impl disabled due to https://github.com/everycure-org/matrix/issues/1154
-    def after_dataset_loaded(self, dataset_name, data, node):
-        """In the v1 of this feature we only log the dataset names.
-        Logging actual datasets requires extra work, due to the fact that the data has to be first
-        converted to mlflow.data.dataset.Dataset class. This works for common formats like pandas and spark
-        where the from_ functions exist, e.g.:
-
-        dataset = mlflow.data.from_pandas(data, name=dataset_name)
-        mlflow.log_input(dataset)
-
-        but our datasets are too heterogenous and can't be always parsed, e.g. matrix.datasets.graph.KnowledgeGraph
-        or would need a lot of hard-coded logic and would make this code brittle.
-        One idea is to only log select certain dataset types - pandas and spark, for other keep logging names only.
-
-        Another improvement idea for v2 would be to additionally  log the dataset paths, e.g.:
-        path = self._kedro_context.catalog.datasets[dataset_name]._get_load_path()
-        or using the url for remote datasets:
-        path = self._kedro_context.catalog.datasets[dataset_name]._url
-        """
-        if dataset_name in MLFlowHooks._input_datasets:
-            logger.info(f"Processing dataset {dataset_name}")
-            if dataset_name not in self.fetch_logged_datasets():
-                logger.info(f"Dataset {dataset_name} is not in the already logged datasets. Logging it now:")
-                dataset = mlflow.data.from_pandas(pd.DataFrame(), name=dataset_name)
-                try:
-                    mlflow.log_input(dataset)
-                except Exception as ex:
-                    logger.error(f"Error encountered when logging dataset {dataset_name}: {ex}")
-                    raise
-            else:
-                logger.info(f"Dataset {dataset_name} has already been logged as input.")
-
-    @staticmethod
-    def fetch_logged_datasets() -> set[str]:
-        run_id = MLFlowHooks._kedro_context.mlflow.tracking.run.id
-        client = mlflow.tracking.MlflowClient()
-        logged_inputs = client.get_run(run_id).inputs
-        logged_names = {dataset.dataset.name for dataset in logged_inputs.dataset_inputs}
-        logger.debug(f"These are dataset names that have already been logged for run id '{run_id}': {logged_names}")
-        return logged_names
-
-    @hook_impl
-    def after_context_created(self, context) -> None:
-        """Initialise MLFlow run.
-
-        Initialises a MLFlow run and passes it on for
-        other hooks to consume.
-        """
-        MLFlowHooks.set_context(context)
-        cfg = OmegaConf.create(context.config_loader["mlflow"])
-        mlflow.set_tracking_uri(cfg.server.mlflow_tracking_uri)
-        mlflow.start_run(run_id=cfg.tracking.run.id, nested=True)
 
 
 class SparkHooks:
@@ -147,7 +60,6 @@ class SparkHooks:
         catalog: DataCatalog,
         conf_catalog: Dict[str, Any],
         conf_creds: Dict[str, Any],
-        feed_dict: Dict[str, Any],
         save_version: str,
         load_versions: Dict[str, str],
     ) -> None:
@@ -159,7 +71,7 @@ class SparkHooks:
         if self.__class__._already_initialized:
             return
 
-        dataset = self.catalog._get_dataset(dataset_name)
+        dataset = self.catalog.get(dataset_name)
         if isinstance(dataset, SparkDataset):
             logger.info(f"SparkDataset detected: {dataset}")
             self._initialize_spark()

@@ -17,8 +17,6 @@ from matrix.pipelines.integration.filters import determine_most_specific_categor
 memory = Memory(location=".cache/nodenorm", verbose=0)
 logger = logging.getLogger(__name__)
 
-tk = toolkit.Toolkit()
-
 
 @inject_object()
 @check_output(
@@ -587,6 +585,7 @@ def compute_abox_tbox_metric(edges: ps.DataFrame) -> ps.DataFrame:
     concept_predicate = "related_to_at_concept_level"
     instance_predicate = "related_to_at_instance_level"
 
+    tk = toolkit.Toolkit()
     concept_desc = tk.get_descendants(concept_predicate, mixin=True, formatted=True, reflexive=True)
     instance_desc = tk.get_descendants(instance_predicate, mixin=True, formatted=True, reflexive=True)
 
@@ -613,6 +612,7 @@ def compute_ontology_inclusion_metric(nodes: ps.DataFrame, edges: ps.DataFrame) 
             - is_ontology_connected: True if the node has at least one
               concept-level (TBox) edge, False otherwise.
     """
+    tk = toolkit.Toolkit()
     concept_predicate = "related_to_at_concept_level"
     concept_desc = tk.get_descendants(concept_predicate, mixin=True, formatted=True, reflexive=True)
 

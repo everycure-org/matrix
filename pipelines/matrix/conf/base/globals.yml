@@ -68,12 +68,7 @@ data_sources:
     version: v0.1-ec-id
   orchard:
     version: 20250801
-# NOTE: MLflow does not like "new options" in the mlflow.yml
-# due to schema validation. Will make PR.
-mlflow_artifact_root: null
-mlflow_experiment_id: null
 
-mlflow_url: ${oc.env:MLFLOW_URL}
 paths:
   # Upstream-source versioned
   raw:             ${dev_gcs_bucket}/data/01_RAW

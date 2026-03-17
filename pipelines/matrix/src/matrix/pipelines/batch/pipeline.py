@@ -7,8 +7,8 @@ from functools import partial
 from typing import Any, Callable, Collection, Coroutine, Iterable, Iterator, Protocol, Sequence, TypeVar
 
 import pyarrow as pa
+from argo_kedro.pipeline import Node
 from kedro.pipeline import Pipeline, pipeline
-from matrix.kedro4argo_node import ArgoNode, ArgoResourceConfig
 from matrix.pipelines.batch.schemas import to_spark_schema
 from matrix_inject.inject import inject_object
 from pyspark.sql import DataFrame
@@ -101,7 +101,7 @@ def cached_api_enrichment_pipeline(
     cache_reload = f"batch.{source}.cache.reload"
 
     nodes = [
-        ArgoNode(
+        Node(
             name=f"derive_{source}_cache_misses",
             func=derive_cache_misses,
             inputs={
@@ -113,14 +113,8 @@ def cached_api_enrichment_pipeline(
                 "cache_schema": cache_schema,
             },
             outputs=cache_misses,
-            argo_config=ArgoResourceConfig(
-                cpu_request=4,
-                cpu_limit=4,
-                memory_limit=16,
-                memory_request=8,
-            ),
         ),
-        ArgoNode(
+        Node(
             name=f"resolve_{source}_cache_misses",
             func=cache_miss_resolver_wrapper,
             inputs={
@@ -130,14 +124,8 @@ def cached_api_enrichment_pipeline(
                 "cache_schema": cache_schema,
             },
             outputs=cache_out,
-            argo_config=ArgoResourceConfig(
-                cpu_request=1,
-                cpu_limit=1,
-                memory_request=64,
-                memory_limit=64,
-            ),
         ),
-        ArgoNode(
+        Node(
             name=f"lookup_{source}_from_cache",
             func=lookup_from_cache,
             inputs={
@@ -150,10 +138,11 @@ def cached_api_enrichment_pipeline(
                 "lineage_dummy": cache_out,
             },
             outputs=output,
-            tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
-            argo_config=ArgoResourceConfig(
-                ephemeral_storage_limit=1024, ephemeral_storage_request=1024, memory_request=64, memory_limit=128
-            ),
+            # tags=["argowf.fuse", f"argowf.fuse-group.{source}"],
+            # TODO: Add big machine type here
+            # argo_config=ArgoResourceConfig(
+            #     ephemeral_storage_limit=1024, ephemeral_storage_request=1024, memory_request=64, memory_limit=128
+            # ),
         ),
     ]
 
