@@ -9,6 +9,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # from pandas_viz.hooks import ProjectHooks
 # Class that manages how configuration is loaded.
 import os
+import warnings
 
 from kedro.config import OmegaConfigLoader  # noqa: E402
 
@@ -26,6 +27,18 @@ hooks = {
     "spark": matrix_hooks.SparkHooks(),
     "release": matrix_hooks.ReleaseInfoHooks(),
 }
+
+# Ignore dataset dot notations due to namespae changes
+# https://github.com/kedro-org/kedro/issues/5021
+warnings.filterwarnings(
+    "ignore",
+    message=(
+        r".*contains '\.' characters, which is not recommended as the dot notation "
+        r"is reserved for automatic namespacing in Kedro.*"
+    ),
+    category=UserWarning,
+)
+
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
 HOOKS = determine_hooks_to_execute(hooks)

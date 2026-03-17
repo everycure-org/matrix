@@ -47,11 +47,6 @@ def _create_integration_pipeline(
                 },
                 name=f"transform_{source}_nodes",
                 tags=["standardize"],
-                # TODO: Big machine type here
-                # argo_config=ArgoResourceConfig(
-                #     memory_request=128,
-                #     memory_limit=128,
-                # ),
             ),
             batch_pipeline.cached_api_enrichment_pipeline(
                 source=f"normalization_source_{source}",
@@ -89,8 +84,6 @@ def _create_integration_pipeline(
                         },
                         outputs=f"integration.int.{source}.edges.norm@spark",
                         name=f"normalize_{source}_edges",
-                        # TODO: Big machine type here
-                        # argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                     ),
                 ]
                 if has_edges
@@ -104,12 +97,11 @@ def _create_integration_pipeline(
                 },
                 outputs=f"integration.int.{source}.nodes.norm@spark",
                 name=f"normalize_{source}_nodes",
-                # TODO: Big machine type here
-                # argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
             ),
         ],
         name=f"integrate_{source}_fused",
         tags=source,
+        machine_type="c4-highmem-16",
     )
 
 
@@ -185,8 +177,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     ],
                     outputs="integration.prm.unified_edges",
                     name="create_prm_unified_edges",
-                    # TODO: Big machine type here
-                    # argo_config=ArgoResourceConfig(memory_request=72, memory_limit=72),
                 ),
                 Node(
                     func=nodes._union_datasets,
@@ -242,8 +232,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     },
                     name="compute_connected_components",
                     tags=["metrics", "connectivity"],
-                    # TODO: Big machine type here
-                    # argo_config=ArgoResourceConfig(memory_request=96, memory_limit=96),
                 ),
                 Node(
                     func=connectivity_metrics.compute_component_summary,
@@ -275,6 +263,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 ),
             ],
             name="integrate-sources-fused",
+            machine_type="c4-highmem-16",
         )
     )
     return sum_pipelines(pipelines)

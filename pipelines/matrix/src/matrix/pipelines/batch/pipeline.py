@@ -113,12 +113,6 @@ def cached_api_enrichment_pipeline(
                 "cache_schema": cache_schema,
             },
             outputs=cache_misses,
-            # argo_config=ArgoResourceConfig(
-            #     cpu_request=4,
-            #     cpu_limit=4,
-            #     memory_limit=16,
-            #     memory_request=8,
-            # ),
         ),
         Node(
             name=f"resolve_{source}_cache_misses",
@@ -130,12 +124,6 @@ def cached_api_enrichment_pipeline(
                 "cache_schema": cache_schema,
             },
             outputs=cache_out,
-            # argo_config=ArgoResourceConfig(
-            #     cpu_request=1,
-            #     cpu_limit=1,
-            #     memory_request=64,
-            #     memory_limit=64,
-            # ),
         ),
         Node(
             name=f"lookup_{source}_from_cache",
