@@ -282,15 +282,15 @@ def ingest_curated_drug_list(curated_drug_list: pd.DataFrame) -> pd.DataFrame:
     return curated_drug_list
 
 
-# @pa.check_input(
-#     pa.DataFrameSchema(
-#         parsers=pa.Parser(lambda df: df[["drugbank_id", "name"]]),
-#         columns={
-#             "drugbank_id": pa.Column(nullable=False),
-#             "name": pa.Column(nullable=False),
-#         },
-#     )
-# )
+@pa.check_input(
+    pa.DataFrameSchema(
+        parsers=pa.Parser(lambda df: df[["drugbank_id", "name"]]),
+        columns={
+            "drugbank_id": pa.Column(nullable=False),
+            "name": pa.Column(nullable=False),
+        },
+    )
+)
 @pa.check_output(
     pa.DataFrameSchema(
         columns={
