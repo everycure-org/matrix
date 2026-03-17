@@ -74,45 +74,48 @@ class BiolinkDeduplicateEdges(Filter):
                 "predicate": Column(T.StringType(), nullable=False),
                 "object": Column(T.StringType(), nullable=False),
             },
-            unique=["subject", "object", "predicate"],
         ),
     )
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        # Only cache the minimal columns needed for the self-join — avoids carrying heavy
-        # columns like source_edge_properties through an expensive shuffle.
         slim_df = (
             df.select("subject", "object", "predicate")
+            .distinct()
             .withColumn(
                 "parents",
                 sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate")),
             )
-            .cache()
         )
 
-        # Self join to find edges that are redundant
-        duplicates = (
-            slim_df.alias("A")
-            .join(
-                slim_df.alias("B"),
-                on=[
-                    (sf.col("A.subject") == sf.col("B.subject"))
-                    & (sf.col("A.object") == sf.col("B.object"))
-                    & (sf.col("A.predicate") != sf.col("B.predicate"))
-                ],
-                how="left",
-            )
+        def _find_redundant_predicates(pred_parents):
+            """Return predicates that are redundant because a more specific predicate exists.
+
+            Predicate A is redundant if there exists predicate B where A's ancestors are a
+            subset of B's ancestors — meaning B is more specific than A in the biolink hierarchy.
+            """
+            redundant = []
+            for row_a in pred_parents:
+                pred_a, parents_a = row_a["predicate"], row_a["parents"]
+                if not parents_a:
+                    continue
+                parents_a_set = set(parents_a)
+                for row_b in pred_parents:
+                    pred_b, parents_b = row_b["predicate"], row_b["parents"]
+                    if pred_a != pred_b and parents_b and parents_a_set.issubset(set(parents_b)):
+                        redundant.append(pred_a)
+                        break
+            return redundant
+
+        redundant = (
+            slim_df.groupBy(["subject", "object"])
+            .agg(sf.collect_list(sf.struct("predicate", "parents")).alias("pred_parents"))
             .withColumn(
-                "subpath",
-                sf.col("B.parents").isNotNull() & sf.expr("forall(A.parents, x -> array_contains(B.parents, x))"),
+                "redundant_predicates",
+                sf.udf(_find_redundant_predicates, T.ArrayType(T.StringType()))(sf.col("pred_parents")),
             )
-            .filter(sf.col("subpath"))
-            .select("A.subject", "A.object", "A.predicate")
-            .distinct()
+            .select("subject", "object", sf.explode("redundant_predicates").alias("predicate"))
         )
 
-        slim_df.unpersist()
-
-        return df.join(duplicates, on=["subject", "object", "predicate"], how="left_anti")
+        return df.join(redundant, on=["subject", "object", "predicate"], how="left_anti")
 
 
 class KeepRowsContaining(Filter):
