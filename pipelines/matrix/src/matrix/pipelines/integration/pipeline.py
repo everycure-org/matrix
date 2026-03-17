@@ -240,27 +240,28 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="compute_component_summary",
                     tags=["metrics", "connectivity"],
                 ),
-                Node(
-                    func=connectivity_metrics.compute_core_connectivity_metrics,
-                    inputs={
-                        "nodes": "integration.prm.unified_nodes",
-                        "core_id_mapping": "integration.int.core_node_mapping",
-                        "connected_components": "integration.prm.node_metrics",
-                    },
-                    outputs="integration.prm.metric_core_connectivity_summary",
-                    name="compute_core_connectivity_metrics",
-                    tags=["metrics", "connectivity"],
-                ),
-                Node(
-                    func=nodes.combine_node_metrics,
-                    inputs={
-                        "node_components": "integration.prm.node_components",
-                        "node_ontology": "integration.prm.node_ontology",
-                    },
-                    outputs="integration.prm.node_metrics",
-                    name="combine_node_metrics",
-                    tags=["metrics"],
-                ),
+                # NOTE: Disabled due to ambiguous joins error
+                # Node(
+                #     func=connectivity_metrics.compute_core_connectivity_metrics,
+                #     inputs={
+                #         "nodes": "integration.prm.unified_nodes",
+                #         "core_id_mapping": "integration.int.core_node_mapping",
+                #         "connected_components": "integration.prm.node_metrics",
+                #     },
+                #     outputs="integration.prm.metric_core_connectivity_summary",
+                #     name="compute_core_connectivity_metrics",
+                #     tags=["metrics", "connectivity"],
+                # ),
+                # Node(
+                #     func=nodes.combine_node_metrics,
+                #     inputs={
+                #         "node_components": "integration.prm.node_components",
+                #         "node_ontology": "integration.prm.node_ontology",
+                #     },
+                #     outputs="integration.prm.node_metrics",
+                #     name="combine_node_metrics",
+                #     tags=["metrics"],
+                # ),
             ],
             name="integrate-sources-fused",
             machine_type="c4-highmem-16",

@@ -8,6 +8,7 @@ from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
 
 logger = logging.getLogger(__name__)
+tk = toolkit.Toolkit()
 
 
 def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> List[str]:
@@ -22,7 +23,6 @@ def get_ancestors_for_category_delimited(category: str, mixin: bool = False) -> 
     Returns:
         List of ancestors in a string format
     """
-    tk = toolkit.Toolkit()
     return tk.get_ancestors(category, mixin=mixin, formatted=True, reflexive=True)
 
 
@@ -35,7 +35,6 @@ def is_valid_biolink_category(category: str) -> bool:
     Returns:
         True if category exists in biolink model, False otherwise.
     """
-    tk = toolkit.Toolkit()
     return tk.is_category(category)
 
 

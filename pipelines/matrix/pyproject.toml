@@ -89,7 +89,7 @@ dependencies = [
     "pyoxigraph>=0.4.5", # Needed for loading Mondo
     "bracex>=2.6",
     "owlready2>=0.49",
-    "argo-kedro>=0.1.39",
+    "argo-kedro>=0.1.40",
 ]
 
 

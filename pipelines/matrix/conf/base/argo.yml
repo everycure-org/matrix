@@ -125,6 +125,8 @@ template:
       value: mtrx-hub-dev-3of
     - name: RELEASE_VERSION
       value: v0.0.01 # dummy!
+    - name: SPARK_LOCAL_DIRS
+      value: /data/spark-temp
 
 
   # Custom templates to be used in the workflow
