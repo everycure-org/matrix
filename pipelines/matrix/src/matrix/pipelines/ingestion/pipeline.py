@@ -56,11 +56,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=f"ingestion.raw.{source['name']}.nodes@lazypolars",
                             outputs=f"ingestion.int.preprocessing.{source['name']}.nodes@polars",
                             tags=[f"{source['name']}"],
-                            # TODO: Pick big machine type here
-                            # argo_config=ArgoResourceConfig(
-                            #     memory_limit=256,
-                            #     memory_request=192,
-                            # ),
+                            machine_type="c4-highmem-32",
                         ),
                         Node(
                             func=lambda x: x,
@@ -107,11 +103,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                             inputs=f"ingestion.raw.{source['name']}.edges@lazypolars",
                             outputs=f"ingestion.int.preprocessing.{source['name']}.edges@polars",
                             tags=[f"{source['name']}"],
-                            # TODO: Big machine type here
-                            # argo_config=ArgoResourceConfig(
-                            #     memory_limit=128,
-                            #     memory_request=64,
-                            # ),
+                            machine_type="c4-highmem-16",
                         ),
                         Node(
                             func=lambda x: x,
@@ -151,11 +143,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     outputs=f"ingestion.int.{source['name']}.violations",
                     name=f"validate_{source['name']}",
                     tags=[f"{source['name']}"],
-                    # TODO: Big machine type here
-                    # argo_config=ArgoResourceConfig(
-                    #     memory_limit=128,
-                    #     memory_request=64,
-                    # )
+                    machine_type="c4-highmem-16",
                 )
             )
 
