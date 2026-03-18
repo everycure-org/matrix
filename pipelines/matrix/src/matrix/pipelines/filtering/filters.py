@@ -77,7 +77,7 @@ class BiolinkDeduplicateEdges(Filter):
         ),
     )
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        slim_df = (
+        edge_predicate_parents = (
             df.select("subject", "object", "predicate")
             .distinct()
             .withColumn(
@@ -106,7 +106,7 @@ class BiolinkDeduplicateEdges(Filter):
             return redundant
 
         redundant = (
-            slim_df.groupBy(["subject", "object"])
+            edge_predicate_parents.groupBy(["subject", "object"])
             .agg(sf.collect_list(sf.struct("predicate", "parents")).alias("pred_parents"))
             .withColumn(
                 "redundant_predicates",
