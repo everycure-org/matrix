@@ -32,6 +32,11 @@ raw.atc_labels:
   type: pandas.CSVDataset
   filepath: ${globals:public_gcs_bucket}/kedro/data/core-entities/raw/atc_labels.csv
 
+raw.fda_drug_list:
+  type: core_entities.datasets.json_zip_dataset.JSONZipDataset
+  url: https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip
+  member_name: drug-drugsfda-0001-of-0001.json
+
 # -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
@@ -71,6 +76,10 @@ primary.name_resolver_version:
 primary.nodenorm_version:
   type: text.TextDataset
   filepath: ${globals:paths.primary}/drug/nodenorm-version.txt
+
+primary.fda_drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-list.parquet
 
 # -------------------------------------------------------------------------
 # Release
