@@ -348,16 +348,6 @@ def ingest_fda_drug_list(fda_drug_list: dict) -> pd.DataFrame:
     return pd.DataFrame(fda_drug_list["results"])
 
 
-@pa.check_input(
-    pa.DataFrameSchema(
-        columns={
-            "id": pa.Column(nullable=False),
-            "name": pa.Column(nullable=False),
-        },
-        unique=["id"],
-        strict=True,
-    )
-)
 # ------------------------------------------------------------
 # RESOLUTION NODES
 # ------------------------------------------------------------
