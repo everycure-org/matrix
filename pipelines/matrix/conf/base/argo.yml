@@ -15,7 +15,7 @@ runner:
   # used within the fused pipeline boundary, essentially
   # indicating that catalog entries are removed, and datasets
   # are passed in-memory as a result.
-  use_memory_datasets: false
+  use_memory_datasets: true
 
 # Machine types available for use, the name of the `machine_type`
 # is used to assign resources to a Kedro node.

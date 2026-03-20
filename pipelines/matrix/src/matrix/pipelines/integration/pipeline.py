@@ -233,13 +233,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     name="compute_connected_components",
                     tags=["metrics", "connectivity"],
                 ),
-                Node(
-                    func=connectivity_metrics.compute_component_summary,
-                    inputs="integration.prm.node_metrics",
-                    outputs="integration.prm.connected_components",
-                    name="compute_component_summary",
-                    tags=["metrics", "connectivity"],
-                ),
                 # NOTE: Disabled due to ambiguous joins error
                 # Node(
                 #     func=connectivity_metrics.compute_core_connectivity_metrics,
@@ -261,6 +254,13 @@ def create_pipeline(**kwargs) -> Pipeline:
                 #     outputs="integration.prm.node_metrics",
                 #     name="combine_node_metrics",
                 #     tags=["metrics"],
+                # ),
+                # Node(
+                #     func=connectivity_metrics.compute_component_summary,
+                #     inputs="integration.prm.node_metrics",
+                #     outputs="integration.prm.connected_components",
+                #     name="compute_component_summary",
+                #     tags=["metrics", "connectivity"],
                 # ),
             ],
             name="integrate-sources-fused",

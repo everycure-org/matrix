@@ -1,21 +1,18 @@
 from kedro.pipeline import Pipeline
 
-from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
-from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
-from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
-from matrix.pipelines.preprocessing.pipeline import create_pipeline as create_preprocessing_pipeline
-
 # from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
 # from matrix.pipelines.data_publication.pipeline import create_pipeline as create_data_publication_pipeline
 # from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 # from matrix.pipelines.document_kg.pipeline import create_pipeline as create_document_kg_pipeline
 # from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
 # from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
-# from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
-# from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
+from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
+from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
+
 # from matrix.pipelines.ingest_to_N4J.pipeline import create_pipeline as create_ingest_to_N4J_pipeline
-# from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
-# from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
+from matrix.pipelines.ingestion.pipeline import create_pipeline as create_ingestion_pipeline
+from matrix.pipelines.integration.pipeline import create_pipeline as create_integration_pipeline
+
 # from matrix.pipelines.known_entity_removal.pipeline import create_pipeline as create_known_entity_removal_pipeline
 # from matrix.pipelines.matrix_generation.pipeline import (
 #     create_pipeline as create_matrix_pipeline,
@@ -35,36 +32,12 @@ def register_pipelines() -> dict[str, Pipeline]:
     Returns:
         Mapping from a pipeline name to a ``Pipeline`` object.
     """
-    # Define pipeline combinations
-    pipelines = {
-        # Individual pipelines
-        "preprocessing": create_preprocessing_pipeline(),  # Run manually for clinical trials and medical KG artifacts
-        "fabricator": create_fabricator_pipeline(),
-        "ingestion": create_ingestion_pipeline(),
-        "integration": create_integration_pipeline(),
-        # "filtering": create_filtering_pipeline(),
-        # "embeddings": create_embeddings_pipeline(),
-        # "data_release": create_data_release_pipeline(),
-        # "data_publication": create_data_publication_pipeline(),
-        # "modelling": create_modelling_pipeline(),
-        # "matrix_generation": create_matrix_pipeline(),
-        # "matrix_transformations": create_matrix_transformations_pipeline(),
-        # "pre_transformed_evaluation": create_evaluation_pipeline(
-        #     matrix_input="matrix_generation", score_col_name="treat score"
-        # ),
-        # "transformed_evaluation": create_evaluation_pipeline(
-        #     matrix_input="matrix_transformations", score_col_name="transformed_treat_score"
-        # ),
-        # "create_sample": create_create_sample_pipeline(),
-        # "ingest_to_N4J": create_ingest_to_N4J_pipeline(),
-        # "document_kg": create_document_kg_pipeline(),
-        # "sentinel_kg_release_patch": create_sentinel_pipeline(is_patch=True),
-        # "sentinel_kg_release": create_sentinel_pipeline(is_patch=False),
-        # "run_comparison": create_run_comparison_pipeline(),
-        # "known_entity_removal": create_known_entity_removal_pipeline(),
-        # # "inference": create_inference_pipeline(),  # Run manually based on medical input
-    }
-
+    pipelines = {}
+    # pipelines = find_pipelines() wait untill all pipelines are fixed for auto descovery
+    pipelines["ingestion"] = create_ingestion_pipeline()
+    pipelines["integration"] = create_integration_pipeline()
+    pipelines["filtering"] = create_filtering_pipeline()
+    pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["test"] = pipelines["fabricator"] + pipelines["ingestion"] + pipelines["integration"]
 
     # # Higher order pipelines
