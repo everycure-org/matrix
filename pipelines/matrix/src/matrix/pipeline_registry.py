@@ -1,3 +1,4 @@
+from argo_kedro.pipeline import sum_pipelines
 from kedro.pipeline import Pipeline
 
 # from matrix.pipelines.create_sample.pipeline import create_pipeline as create_create_sample_pipeline
@@ -40,7 +41,8 @@ def register_pipelines() -> dict[str, Pipeline]:
     pipelines["filtering"] = create_filtering_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
     pipelines["embeddings"] = create_embeddings_pipeline()
-    pipelines["test"] = pipelines["fabricator"] + pipelines["ingestion"] + pipelines["integration"]
+    pipelines["run"] = sum_pipelines([pipelines["filtering"], pipelines["embeddings"]])
+    pipelines["test"] = sum_pipelines([pipelines["fabricator"], pipelines["ingestion"], pipelines["integration"]])
 
     # # Higher order pipelines
     # # fmt: off
