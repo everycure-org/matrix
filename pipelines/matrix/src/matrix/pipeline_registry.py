@@ -4,7 +4,8 @@ from kedro.pipeline import Pipeline
 # from matrix.pipelines.data_publication.pipeline import create_pipeline as create_data_publication_pipeline
 # from matrix.pipelines.data_release.pipeline import create_pipeline as create_data_release_pipeline
 # from matrix.pipelines.document_kg.pipeline import create_pipeline as create_document_kg_pipeline
-# from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
+from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
+
 # from matrix.pipelines.evaluation.pipeline import create_pipeline as create_evaluation_pipeline
 from matrix.pipelines.fabricator.pipeline import create_pipeline as create_fabricator_pipeline
 from matrix.pipelines.filtering.pipeline import create_pipeline as create_filtering_pipeline
@@ -38,6 +39,7 @@ def register_pipelines() -> dict[str, Pipeline]:
     pipelines["integration"] = create_integration_pipeline()
     pipelines["filtering"] = create_filtering_pipeline()
     pipelines["fabricator"] = create_fabricator_pipeline()
+    pipelines["embeddings"] = create_embeddings_pipeline()
     pipelines["test"] = pipelines["fabricator"] + pipelines["ingestion"] + pipelines["integration"]
 
     # # Higher order pipelines
