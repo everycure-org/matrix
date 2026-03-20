@@ -11,7 +11,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             FusedPipeline(
                 [
                     *create_node_embeddings_pipeline().nodes,
-                    ArgoNode(
+                    Node(
                         func=nodes.reduce_embeddings_dimension,
                         inputs={
                             "df": "embeddings.feat.graph.node_embeddings@spark",
@@ -93,6 +93,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 name="topological_embeddings_fused",
                 tags=["embeddings"],
                 machine_type="c4-highmem-48",
+                template="neo4j",
             ),
             FusedPipeline(
                 [
