@@ -148,6 +148,62 @@ template:
           - name: mlflow_run_id
             path: /tmp/mlflow_run_id
 
+    - name: neo4j
+      container:
+        name: kedro
+        command: ["/bin/sh", "-c"]
+        env:
+          - name: NEO4J_HOST
+            value: "bolt://127.0.0.1:7687"
+        args: |
+          echo "Setting up temporary directories..."
+          mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints
+          echo "Waiting for Neo4j to be ready..."
+          until curl -s http://localhost:7474 > /dev/null; do
+            echo "Waiting..."
+            sleep 5
+          done
+          echo "Neo4j is ready. Starting main application..."
+          kedro run -p "{{inputs.parameters.pipeline}}" -e "{{inputs.parameters.environment}}" -n "{{inputs.parameters.kedro_nodes}}"
+      volumes:
+        - name: gds-key
+          secret_ref:
+            name: gds-secret
+            key: gds_key
+            path: gds-key
+      sidecars:
+        - name: neo4j
+          image: neo4j:5.21.0-enterprise
+          volume_mounts:
+            - name: gds-key
+              mount_path: /licenses
+              read_only: true
+          env:
+          - name: NEO4J_gds_enterprise_license__file
+            value: "/licenses/gds-key"
+          - name: NEO4J_apoc_export_file_enabled
+            value: "true"
+          - name: NEO4J_apoc_import_file_enabled
+            value: "true"
+          - name: NEO4J_apoc_import_file_use__neo4j__config
+            value: "true"
+          - name: NEO4J_PLUGINS
+            value: '["apoc", "graph-data-science", "apoc-extended"]'
+          - name: NEO4J_dbms_security_auth__minimum__password__length
+            value: "4"
+          - name: NEO4J_dbms_security_procedures_whitelist
+            value: "gds.*, apoc.*"
+          - name: NEO4J_dbms_security_procedures_unrestricted
+            value: "gds.*, apoc.*"
+          - name: NEO4J_db_logs_query_enabled
+            value: "OFF"
+          - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+            value: "yes"
+          - name: NEO4J_dbms_memory_heap_initial__size
+            value: "{{= sprig.int(inputs.parameters.mem) * 0.7 }}G"
+          - name: NEO4J_dbms_memory_heap_max__size
+            value: "{{= sprig.int(inputs.parameters.mem) * 0.7 }}G" 
+
   # Register templates to be executed before the main pipeline,
   # all outputs of the init templates are passed as environment
   # variables to each of the nodes of the pipeline, e.g., for the
