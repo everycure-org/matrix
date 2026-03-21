@@ -157,3 +157,50 @@ GROUP BY knowledge_level_label, agent_type_label
   }}
 />
 </div>
+
+## Connected Components
+
+```sql cc_headline
+SELECT
+  SUM(total_nodes) as total_nodes,
+  MAX(CASE WHEN size_category = 'LCC' THEN total_nodes END) as lcc_size,
+  ROUND(100.0 * MAX(CASE WHEN size_category = 'LCC' THEN total_nodes END) / SUM(total_nodes), 1) as lcc_pct,
+  SUM(num_components) as total_components
+FROM bq.connected_components
+```
+
+```sql cc_core
+SELECT
+  ROUND(100.0 * lcc_fraction, 1) as lcc_pct
+FROM bq.core_connectivity_summary
+WHERE category = 'all_core'
+```
+
+<div class="text-left text-md mt-6 mb-4">
+  Connected components measure graph cohesion — whether drugs can reach diseases through paths.
+  The Largest Connected Component (LCC) should contain nearly all nodes for effective drug
+  repurposing. Visit
+  <a class="underline text-blue-600" href="./Metrics/connected-components">Connected Components</a>
+  for the full analysis.
+</div>
+
+<Grid col=3>
+  <div class="text-center">
+    <span class="font-semibold text-2xl">
+      <Value data={cc_headline} column="lcc_pct" fmt="num1" />%
+    </span><br/>
+    LCC Coverage
+  </div>
+  <div class="text-center">
+    <span class="font-semibold text-xl">
+      <Value data={cc_headline} column="total_components" fmt="num0" />
+    </span><br/>
+    Total Components
+  </div>
+  <div class="text-center">
+    <span class="font-semibold text-2xl">
+      <Value data={cc_core} column="lcc_pct" fmt="num1" />%
+    </span><br/>
+    Core Entities in LCC
+  </div>
+</Grid>
