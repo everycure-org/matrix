@@ -54,7 +54,6 @@ def get_matrix_edge_schema() -> DataFrameSchema:
             "num_sentences": Column(T.IntegerType(), nullable=True),
             "has_confidence_score": Column(T.FloatType(), nullable=True),
         },
-        unique=["subject", "predicate", "object"],
         strict=True,
     )
 
@@ -109,6 +108,5 @@ def get_unioned_edge_schema() -> DataFrameSchema:
             "num_sentences": Column(T.IntegerType(), nullable=True),
             "has_confidence_score": Column(T.FloatType(), nullable=True),
         },
-        unique=["subject", "predicate", "object", "primary_knowledge_source", "upstream_data_source"],
         strict=True,
     )

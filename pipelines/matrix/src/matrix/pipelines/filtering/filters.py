@@ -67,17 +67,8 @@ class BiolinkDeduplicateEdges(Filter):
         Deduplicated DataFrame
     """
 
-    @check_output(
-        DataFrameSchema(
-            columns={
-                "subject": Column(T.StringType(), nullable=False),
-                "predicate": Column(T.StringType(), nullable=False),
-                "object": Column(T.StringType(), nullable=False),
-            },
-        ),
-    )
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        slim_df = (
+        edge_predicate_parents = (
             df.select("subject", "object", "predicate")
             .distinct()
             .withColumn(
@@ -106,7 +97,7 @@ class BiolinkDeduplicateEdges(Filter):
             return redundant
 
         redundant = (
-            slim_df.groupBy(["subject", "object"])
+            edge_predicate_parents.groupBy(["subject", "object"])
             .agg(sf.collect_list(sf.struct("predicate", "parents")).alias("pred_parents"))
             .withColumn(
                 "redundant_predicates",
@@ -248,6 +239,16 @@ class DeduplicateEdges(Filter):
     preserved by including them in the groupBy key; they are excluded from source_edge_properties.
     """
 
+    @check_output(
+        DataFrameSchema(
+            columns={
+                "subject": Column(T.StringType(), nullable=False),
+                "predicate": Column(T.StringType(), nullable=False),
+                "object": Column(T.StringType(), nullable=False),
+            },
+            unique=["subject", "object", "predicate"],
+        ),
+    )
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
         filtering_pipeline_cols = [c for c in df.columns if c not in _KNOWN_EDGE_SCHEMA_COLS]
 
@@ -275,9 +276,9 @@ class DeduplicateEdges(Filter):
             else:
                 return sf.collect_set(col_name).alias(col_name)
 
-        # Step 1: merge rows with same (SPO, PKS) from different upstream KGs.
-        # upstream_data_source arrays are unioned; scalar qualifier fields become arrays
-        # of all distinct observed values (collect_set ignores nulls).
+        # Step 1: merge rows with same subject, predicate, object, (SPO) primary_knowledge_source (PKS) from different
+        # upstream KGs. upstream_data_source arrays are unioned; scalar qualifier fields become arrays of all distinct
+        # observed values (collect_set ignores nulls).
         per_pks = df.groupBy(groupby_keys + ["primary_knowledge_source"]).agg(
             sf.array_distinct(sf.flatten(sf.collect_list("upstream_data_source"))).alias("upstream_data_source"),
             *[_step1_agg(c) for c in source_property_cols],
