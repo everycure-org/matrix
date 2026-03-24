@@ -94,15 +94,28 @@ ORDER BY component_size DESC
 ```
 
 ```sql minor_top20
+WITH source_agg AS (
+  SELECT
+    component_id,
+    string_agg(primary_knowledge_source, ', ' ORDER BY edge_count DESC) as knowledge_sources
+  FROM (
+    SELECT component_id, primary_knowledge_source, COUNT(*) as edge_count
+    FROM bq.component_edges
+    GROUP BY component_id, primary_knowledge_source
+  )
+  GROUP BY component_id
+)
 SELECT
-  CAST(component_id AS INT) as component_id,
-  component_size,
-  num_drugs,
-  num_diseases,
-  num_other,
-  '/Metrics/connected-components/' || CAST(CAST(component_id AS INT) AS VARCHAR) as link
-FROM bq.connected_components_detail
-ORDER BY component_size DESC
+  CAST(d.component_id AS INT) as component_id,
+  d.component_size,
+  d.num_drugs,
+  d.num_diseases,
+  d.num_other,
+  s.knowledge_sources,
+  '/Metrics/connected-components/' || CAST(CAST(d.component_id AS INT) AS VARCHAR) as link
+FROM bq.connected_components_detail d
+LEFT JOIN source_agg s ON d.component_id = s.component_id
+ORDER BY d.component_size DESC
 LIMIT 20
 ```
 
@@ -357,6 +370,38 @@ LIMIT 20
 </div>
 {/if}
 
+## Minor Components Knowledge Sources
+
+```sql minor_sources
+SELECT
+  knowledge_source,
+  edge_count,
+  component_count
+FROM bq.minor_component_sources
+ORDER BY edge_count DESC
+```
+
+```sql minor_sources_total
+SELECT
+  SUM(edge_count) as total_edges,
+  COUNT(*) as num_sources
+FROM bq.minor_component_sources
+```
+
+<div class="text-left text-md max-w-3xl mx-auto mb-6">
+  Which knowledge sources contribute edges to the disconnected minor components? If fragmentation
+  is driven by a single source, it may indicate poorly-connected data being brought in. A spread
+  across many sources suggests a more systemic integration gap.
+</div>
+
+{#if minor_sources.length > 0}
+<DataTable data={minor_sources} rows=15>
+  <Column id="knowledge_source" title="Knowledge Source" />
+  <Column id="edge_count" title="Edges" fmt="num0" contentType="bar" />
+  <Column id="component_count" title="Components" fmt="num0" />
+</DataTable>
+{/if}
+
 ## Top 20 Minor Components
 
 <div class="text-left text-md max-w-3xl mx-auto mb-6">
@@ -370,4 +415,5 @@ LIMIT 20
   <Column id="num_drugs" title="Core Drugs" fmt="num0" />
   <Column id="num_diseases" title="Core Diseases" fmt="num0" />
   <Column id="num_other" title="Other Nodes" fmt="num0" />
+  <Column id="knowledge_sources" title="Knowledge Sources" />
 </DataTable>
