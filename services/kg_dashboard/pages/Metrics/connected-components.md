@@ -80,8 +80,30 @@ FROM bq.connected_components
 ORDER BY sort_order
 ```
 
-```sql minor_components
-SELECT * FROM bq.connected_components_minor
+```sql minor_core
+SELECT
+  CAST(component_id AS INT) as component_id,
+  component_size,
+  num_drugs,
+  num_diseases,
+  num_other,
+  '/Metrics/connected-components/' || CAST(CAST(component_id AS INT) AS VARCHAR) as link
+FROM bq.connected_components_detail
+WHERE num_drugs > 0 OR num_diseases > 0
+ORDER BY component_size DESC
+```
+
+```sql minor_top20
+SELECT
+  CAST(component_id AS INT) as component_id,
+  component_size,
+  num_drugs,
+  num_diseases,
+  num_other,
+  '/Metrics/connected-components/' || CAST(CAST(component_id AS INT) AS VARCHAR) as link
+FROM bq.connected_components_detail
+ORDER BY component_size DESC
+LIMIT 20
 ```
 
 <div class="text-left text-md max-w-3xl mx-auto mb-6">
@@ -310,20 +332,42 @@ SELECT * FROM bq.connected_components_minor
   <Column id="core_diseases" title="Core Diseases" fmt="num0" />
 </DataTable>
 
-## Minor Components Detail
+## Minor Components with Core Entities
 
-<Details title="Show top 20 minor components">
-<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-  These are the largest components outside the LCC. The component hash can be used to track
-  whether a fragment persists, splits, or merges between releases.
+<div class="text-left text-md max-w-3xl mx-auto mb-6">
+  Core entities (EC-curated drugs and diseases) that are not in the LCC cannot participate in
+  path-based drug repurposing. Any minor component containing core entities represents a gap
+  in graph connectivity.
 </div>
 
-<DataTable data={minor_components} rows=20 search=true>
-  <Column id="component_id" title="Rank" />
+{#if minor_core.length > 0}
+<DataTable data={minor_core} link=link rows=20 search=true>
+  <Column id="component_id" title="Component" />
   <Column id="component_size" title="Size" fmt="num0" contentType="bar" />
   <Column id="num_drugs" title="Core Drugs" fmt="num0" />
   <Column id="num_diseases" title="Core Diseases" fmt="num0" />
-  <Column id="num_other" title="Other" fmt="num0" />
-  <Column id="component_hash" title="Hash" />
+  <Column id="num_other" title="Other Nodes" fmt="num0" />
 </DataTable>
-</Details>
+{:else}
+<div class="max-w-md mx-auto text-center mb-8 p-3 bg-green-50 rounded border border-green-200">
+  <span class="text-green-800 font-medium">All core entities are in the LCC.</span>
+  <div class="text-xs text-green-700 mt-1">
+    No drugs or diseases are stranded in disconnected fragments.
+  </div>
+</div>
+{/if}
+
+## Top 20 Minor Components
+
+<div class="text-left text-md max-w-3xl mx-auto mb-6">
+  The largest disconnected fragments outside the LCC. Click a row to inspect the nodes and
+  edges within that component.
+</div>
+
+<DataTable data={minor_top20} link=link rows=20 search=true>
+  <Column id="component_id" title="Component" />
+  <Column id="component_size" title="Size" fmt="num0" contentType="bar" />
+  <Column id="num_drugs" title="Core Drugs" fmt="num0" />
+  <Column id="num_diseases" title="Core Diseases" fmt="num0" />
+  <Column id="num_other" title="Other Nodes" fmt="num0" />
+</DataTable>
