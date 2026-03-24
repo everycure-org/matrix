@@ -3,15 +3,7 @@ title: Connected Components
 ---
 
 <script>
-  import { CATEGORY_COLORS } from '../../_lib/colors';
-
-  const drugColor = '#51AFA6';
-  const diseaseColor = '#C56492';
-  const otherColor = '#999999';
-
-  function getCategoryColor(name) {
-    return CATEGORY_COLORS[name] || otherColor;
-  }
+  import { drugColor, diseaseColor, getCategoryColor } from '../../_lib/colors';
 </script>
 
 ```sql lcc_headline
