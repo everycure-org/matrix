@@ -202,6 +202,8 @@ SELECT * FROM bq.connected_components_minor
         },
         color: [drugColor, diseaseColor],
         tooltip: {
+            position: 'right',
+            confine: true,
             formatter: function(params) {
                 const count = params.data.value.toLocaleString();
                 return `${params.name}: ${count} nodes (${params.percent}%)`;
@@ -262,6 +264,8 @@ SELECT * FROM bq.connected_components_minor
         },
         color: lcc_noncore.map(row => getCategoryColor(row.parent_category)),
         tooltip: {
+            position: 'right',
+            confine: true,
             formatter: function(params) {
                 const count = params.data.value.toLocaleString();
                 return `${params.name}: ${count} nodes (${params.percent}%)`;
