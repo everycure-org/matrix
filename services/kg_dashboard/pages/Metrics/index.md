@@ -171,7 +171,7 @@ FROM bq.connected_components
 
 ```sql cc_core
 SELECT
-  ROUND(100.0 * lcc_fraction, 1) as lcc_pct
+  ROUND(100.0 * lcc_fraction, 2) as lcc_pct
 FROM bq.core_connectivity_summary
 WHERE category = 'all_core'
 ```
@@ -199,7 +199,7 @@ WHERE category = 'all_core'
   </div>
   <div class="text-center">
     <span class="font-semibold text-2xl">
-      <Value data={cc_core} column="lcc_pct" fmt="num1" />%
+      <Value data={cc_core} column="lcc_pct" fmt="num2" />%
     </span><br/>
     Core Entities in LCC
   </div>

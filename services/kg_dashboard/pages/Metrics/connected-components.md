@@ -3,9 +3,15 @@ title: Connected Components
 ---
 
 <script>
+  import { CATEGORY_COLORS } from '../../_lib/colors';
+
   const drugColor = '#51AFA6';
   const diseaseColor = '#C56492';
   const otherColor = '#999999';
+
+  function getCategoryColor(name) {
+    return CATEGORY_COLORS[name] || otherColor;
+  }
 </script>
 
 ```sql lcc_headline
@@ -23,18 +29,44 @@ SELECT
   category,
   total_core_entities,
   core_entities_in_lcc,
-  ROUND(100.0 * lcc_fraction, 1) as lcc_pct,
+  ROUND(100.0 * lcc_fraction, 2) as lcc_pct,
   ROUND(weighted_connectivity_score, 4) as weighted_score
 FROM bq.core_connectivity_summary
 ORDER BY CASE category WHEN 'all_core' THEN 1 WHEN 'drugs' THEN 2 WHEN 'diseases' THEN 3 END
 ```
 
-```sql lcc_composition
-SELECT 'Core Drugs' as category, core_drugs as count FROM bq.connected_components WHERE size_category = 'LCC'
-UNION ALL
-SELECT 'Core Diseases', core_diseases FROM bq.connected_components WHERE size_category = 'LCC'
-UNION ALL
-SELECT 'Other Nodes', other_nodes FROM bq.connected_components WHERE size_category = 'LCC'
+```sql lcc_core
+SELECT parent_category, node_count
+FROM bq.lcc_composition
+WHERE is_core = true
+ORDER BY node_count DESC
+```
+
+```sql lcc_core_total
+SELECT SUM(node_count) as total FROM bq.lcc_composition WHERE is_core = true
+```
+
+```sql lcc_noncore
+WITH ranked AS (
+  SELECT parent_category, node_count,
+    ROW_NUMBER() OVER (ORDER BY node_count DESC) as rn
+  FROM bq.lcc_composition
+  WHERE is_core = false
+)
+SELECT
+  CASE WHEN rn <= 7 THEN parent_category ELSE 'Other' END as parent_category,
+  SUM(node_count) as node_count
+FROM ranked
+GROUP BY CASE WHEN rn <= 7 THEN parent_category ELSE 'Other' END
+ORDER BY node_count DESC
+```
+
+```sql lcc_noncore_total
+SELECT SUM(node_count) as total FROM bq.lcc_composition WHERE is_core = false
+```
+
+```sql lcc_total
+SELECT SUM(node_count) as total FROM bq.lcc_composition
 ```
 
 ```sql size_distribution
@@ -106,7 +138,7 @@ SELECT * FROM bq.connected_components_minor
 <Grid col=3 class="max-w-4xl mx-auto mb-6">
   <div class="text-center">
     <span class="font-semibold text-3xl">
-      <Value data={core_connectivity.filter(d => d.category === 'all_core')} column="lcc_pct" fmt="num1" />%
+      <Value data={core_connectivity.filter(d => d.category === 'all_core')} column="lcc_pct" fmt="num2" />%
     </span><br/>
     <span class="text-base font-medium">All Core Entities</span><br/>
     <span class="text-xs text-gray-600">
@@ -115,7 +147,7 @@ SELECT * FROM bq.connected_components_minor
   </div>
   <div class="text-center">
     <span class="font-semibold text-3xl">
-      <Value data={core_connectivity.filter(d => d.category === 'drugs')} column="lcc_pct" fmt="num1" />%
+      <Value data={core_connectivity.filter(d => d.category === 'drugs')} column="lcc_pct" fmt="num2" />%
     </span><br/>
     <span class="text-base font-medium">Core Drugs</span><br/>
     <span class="text-xs text-gray-600">
@@ -124,7 +156,7 @@ SELECT * FROM bq.connected_components_minor
   </div>
   <div class="text-center">
     <span class="font-semibold text-3xl">
-      <Value data={core_connectivity.filter(d => d.category === 'diseases')} column="lcc_pct" fmt="num1" />%
+      <Value data={core_connectivity.filter(d => d.category === 'diseases')} column="lcc_pct" fmt="num2" />%
     </span><br/>
     <span class="text-base font-medium">Core Diseases</span><br/>
     <span class="text-xs text-gray-600">
@@ -148,23 +180,27 @@ SELECT * FROM bq.connected_components_minor
 ## LCC Composition
 
 <div class="text-left text-md max-w-3xl mx-auto mb-6">
-  What makes up the LCC? The donut below shows the breakdown of core drugs, core diseases, and
-  all other node types within the largest connected component.
+  The LCC contains two kinds of nodes: the core entities we care about for drug repurposing (EC-curated
+  drugs and diseases), and all the other biological entities that connect them. Understanding what
+  makes up the non-core majority helps assess whether the graph's connective tissue is biologically
+  meaningful.
 </div>
 
-{#if lcc_composition.length > 0}
+### Core Entities
+
+{#if lcc_core.length > 0}
 <Grid col=2 class="max-w-4xl mx-auto mb-8">
   <div>
     <ECharts config={{
         title: {
-            text: 'LCC Breakdown',
+            text: 'Core Entities',
             left: 'center',
             top: 'center',
             textStyle: {
                 fontWeight: 'normal'
             }
         },
-        color: [drugColor, diseaseColor, otherColor],
+        color: [drugColor, diseaseColor],
         tooltip: {
             formatter: function(params) {
                 const count = params.data.value.toLocaleString();
@@ -173,9 +209,9 @@ SELECT * FROM bq.connected_components_minor
         },
         series: [{
             type: 'pie',
-            data: lcc_composition.map(row => ({
-              value: row.count,
-              name: row.category
+            data: lcc_core.map(row => ({
+              value: row.node_count,
+              name: row.parent_category
             })),
             radius: ['40%', '65%']
         }]
@@ -184,22 +220,73 @@ SELECT * FROM bq.connected_components_minor
   <div class="text-center flex flex-col justify-center">
     <div class="mb-3">
       <span class="font-semibold text-2xl" style="color: {drugColor};">
-        <Value data={lcc_composition.filter(d => d.category === 'Core Drugs')} column="count" fmt="num0" />
+        <Value data={lcc_core.filter(d => d.parent_category === 'Core Drugs')} column="node_count" fmt="num0" />
       </span><br/>
       <span class="text-base">Core Drugs</span>
     </div>
     <div class="mb-3">
       <span class="font-semibold text-2xl" style="color: {diseaseColor};">
-        <Value data={lcc_composition.filter(d => d.category === 'Core Diseases')} column="count" fmt="num0" />
+        <Value data={lcc_core.filter(d => d.parent_category === 'Core Diseases')} column="node_count" fmt="num0" />
       </span><br/>
       <span class="text-base">Core Diseases</span>
     </div>
     <div class="mb-3">
-      <span class="font-semibold text-2xl" style="color: {otherColor};">
-        <Value data={lcc_composition.filter(d => d.category === 'Other Nodes')} column="count" fmt="num0" />
-      </span><br/>
-      <span class="text-base">Other Nodes</span>
+      <span class="text-xs text-gray-600">
+        <Value data={lcc_core_total} column="total" fmt="num0" /> core entities of <Value data={lcc_total} column="total" fmt="num0" /> total LCC nodes
+      </span>
     </div>
+  </div>
+</Grid>
+{/if}
+
+### Non-Core Nodes by Category
+
+<div class="text-left text-md max-w-3xl mx-auto mb-6">
+  The remaining <Value data={lcc_noncore_total} column="total" fmt="num0" /> non-core nodes provide the
+  connective structure between drugs and diseases. The breakdown by biolink parent category shows what
+  kinds of biological entities form this bridge.
+</div>
+
+{#if lcc_noncore.length > 0}
+<Grid col=2 class="max-w-4xl mx-auto mb-8">
+  <div>
+    <ECharts config={{
+        title: {
+            text: 'Non-Core\nNodes',
+            left: 'center',
+            top: 'center',
+            textStyle: {
+                fontWeight: 'normal',
+                fontSize: 13
+            }
+        },
+        color: lcc_noncore.map(row => getCategoryColor(row.parent_category)),
+        tooltip: {
+            formatter: function(params) {
+                const count = params.data.value.toLocaleString();
+                return `${params.name}: ${count} nodes (${params.percent}%)`;
+            }
+        },
+        series: [{
+            type: 'pie',
+            data: lcc_noncore.map(row => ({
+              value: row.node_count,
+              name: row.parent_category
+            })),
+            radius: ['40%', '65%'],
+            label: {
+                formatter: function(params) {
+                    return params.percent >= 3 ? params.name : '';
+                }
+            }
+        }]
+    }}/>
+  </div>
+  <div>
+    <DataTable data={lcc_noncore} rows=15>
+      <Column id="parent_category" title="Category" />
+      <Column id="node_count" title="Nodes" fmt="num0" contentType="bar" />
+    </DataTable>
   </div>
 </Grid>
 {/if}
