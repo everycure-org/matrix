@@ -206,10 +206,6 @@ def ingest_edges(nodes: ps.DataFrame, edges: ps.DataFrame) -> ps.DataFrame:
             "upstream_data_source",
             "publications",
             "aggregator_knowledge_source",
-            "subject_aspect_qualifier",
-            "subject_direction_qualifier",
-            "object_aspect_qualifier",
-            "object_direction_qualifier",
         )
         .withColumn("label", ps.functions.split(ps.functions.col("predicate"), ":", limit=2).getItem(1))
         # we repartition to 1 partition here to avoid deadlocks in the edges insertion of neo4j.

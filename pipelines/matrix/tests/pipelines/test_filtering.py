@@ -1,6 +1,8 @@
+import json
+
 import pytest
 from matrix.pipelines.filtering import filters
-from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+from pyspark.sql.types import ArrayType, IntegerType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
 
 
@@ -436,3 +438,126 @@ def test_remove_rows_by_column_overlap_with_excluded_sources(spark, sample_nodes
         ),
     )
     assertDataFrameEqual(result, expected)
+
+
+def test_deduplicate_edges(spark):
+    """Test DeduplicateEdges collapses same-SPO edges and preserves per-source detail.
+
+    Given 3 edges with the same (subject, predicate, object) but different
+    primary_knowledge_source, object_direction_qualifier, knowledge_level, and publications
+    When we apply DeduplicateEdges
+    Then the output should have 1 row with:
+    - primary_knowledge_sources containing all 3 PKS values
+    - publications as the flat union of all 3 publication lists
+    - knowledge_level absent as a top-level column (moved into source_edge_properties)
+    - source_edge_properties containing one entry per PKS with the correct qualifier values
+    """
+    schema = StructType(
+        [
+            StructField("subject", StringType(), False),
+            StructField("predicate", StringType(), False),
+            StructField("object", StringType(), False),
+            StructField("primary_knowledge_source", StringType(), True),
+            StructField("primary_knowledge_sources", ArrayType(StringType()), True),
+            StructField("upstream_data_source", ArrayType(StringType()), True),
+            StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
+            StructField("publications", ArrayType(StringType()), True),
+            StructField("num_references", IntegerType(), True),
+            StructField("num_sentences", IntegerType(), True),
+            StructField("knowledge_level", StringType(), True),
+            StructField("agent_type", StringType(), True),
+            StructField("object_direction_qualifier", StringType(), True),
+            StructField("subject_aspect_qualifier", StringType(), True),
+            StructField("subject_direction_qualifier", StringType(), True),
+            StructField("object_aspect_qualifier", StringType(), True),
+        ]
+    )
+    input_df = spark.createDataFrame(
+        [
+            (
+                "CHEBI:1",
+                "biolink:regulates",
+                "MONDO:1",
+                "infores:semmeddb",
+                ["infores:semmeddb", "infores:ctd", "infores:monarch"],
+                ["semmeddb"],
+                None,
+                ["PMID:1"],
+                5,
+                2,
+                "not_provided",
+                "manual_agent",
+                "increased",
+                None,
+                None,
+                None,
+            ),
+            (
+                "CHEBI:1",
+                "biolink:regulates",
+                "MONDO:1",
+                "infores:ctd",
+                ["infores:semmeddb", "infores:ctd", "infores:monarch"],
+                ["ctd"],
+                None,
+                ["PMID:2"],
+                3,
+                1,
+                "knowledge_assertion",
+                "manual_agent",
+                "decreased",
+                None,
+                None,
+                None,
+            ),
+            (
+                "CHEBI:1",
+                "biolink:regulates",
+                "MONDO:1",
+                "infores:monarch",
+                ["infores:semmeddb", "infores:ctd", "infores:monarch"],
+                ["monarch"],
+                None,
+                ["PMID:3"],
+                1,
+                0,
+                "not_provided",
+                "automated_agent",
+                None,
+                None,
+                None,
+                None,
+            ),
+        ],
+        schema=schema,
+    )
+
+    result = filters.DeduplicateEdges().apply(input_df)
+
+    # All 3 edges collapse to 1 row
+    assert result.count() == 1
+
+    # knowledge_level is not a top-level column (moved to source_edge_properties)
+    assert "knowledge_level" not in result.columns
+
+    row = result.collect()[0]
+
+    # Cross-edge provenance contains all 3 sources
+    assert set(row["primary_knowledge_sources"]) == {"infores:semmeddb", "infores:ctd", "infores:monarch"}
+
+    # publications is the flat union of all 3 lists
+    assert set(row["publications"]) == {"PMID:1", "PMID:2", "PMID:3"}
+
+    # num_references is the max across all 3 edges
+    assert row["num_references"] == 5
+
+    # source_edge_properties is a JSON string keyed by primary_knowledge_source.
+    # Scalar qualifier fields are arrays of all distinct non-null observed values
+    # (collect_set preserves all unique values and ignores nulls).
+    props = json.loads(row["source_edge_properties"])
+    assert set(props.keys()) == {"infores:semmeddb", "infores:ctd", "infores:monarch"}
+    assert props["infores:semmeddb"]["object_direction_qualifier"] == ["increased"]
+    assert props["infores:ctd"]["object_direction_qualifier"] == ["decreased"]
+    assert props["infores:monarch"]["object_direction_qualifier"] == []
+    assert props["infores:semmeddb"]["knowledge_level"] == ["not_provided"]
+    assert props["infores:ctd"]["knowledge_level"] == ["knowledge_assertion"]

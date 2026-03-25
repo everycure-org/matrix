@@ -1,37 +1,34 @@
-# {knowledge_source_info.length > 0 ? knowledge_source_info[0].name || params.knowledge_source : params.knowledge_source}
+# {pks_meta.length > 0 ? pks_meta[0].name || params.knowledge_source : params.knowledge_source}
+
+```sql pks_meta
+SELECT *
+FROM bq.pks_metadata
+WHERE primary_knowledge_source = '${params.knowledge_source}'
+```
 
 ```sql knowledge_source_info
-SELECT 
- id,
- name,
- description,
- xref, 
- synonym,
- knowledge_level,
- agent_type
+SELECT
+ synonym
 FROM infores.catalog
 WHERE id = '${params.knowledge_source}'
 ```
 
 
-{#if knowledge_source_info.length > 0}
+{#if pks_meta.length > 0}
 
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-  <strong>Description:</strong> {knowledge_source_info[0].description || 'No description available'}
+  <strong>Description:</strong> {pks_meta[0].description || 'No description available'}
 </div>
-{#if knowledge_source_info[0].xref}
+{#if pks_meta[0].homepage_url}
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
-  <strong>Cross-references:</strong> 
-  {#each knowledge_source_info[0].xref.split(',') as xref, i}
-    <!-- Using span with window.open() instead of <a> tag to bypass Evidence router and force external links -->
-    <span 
-      class="underline text-blue-600 cursor-pointer" 
-      on:click={() => window.open(xref.trim(), '_blank')}
-    >{xref.trim()}</span>{#if i < knowledge_source_info[0].xref.split(',').length - 1}, {/if}
-  {/each}
+  <strong>Link:</strong>
+  <span
+    class="underline text-blue-600 cursor-pointer"
+    on:click={() => window.open(pks_meta[0].homepage_url, '_blank')}
+  >{pks_meta[0].homepage_url}</span>
 </div>
 {/if}
-{#if knowledge_source_info[0].synonym}
+{#if knowledge_source_info.length > 0 && knowledge_source_info[0].synonym}
 <div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700 mb-4">
   <strong>Synonyms:</strong> {knowledge_source_info[0].synonym}
 </div>
@@ -185,6 +182,72 @@ FROM scored_edges
 </div>
 {/if}
 
+## Relevancy Assessment
+
+{#if pks_meta.length > 0 && (pks_meta[0].domain_coverage_score != null || pks_meta[0].source_scope_score != null || pks_meta[0].utility_drugrepurposing_score != null)}
+
+<div class="text-left text-md max-w-3xl mx-auto mb-4">
+  Relevancy Assessment evaluates this knowledge source's expected utility for drug repurposing, based on manual expert review across three dimensions: domain coverage, source scope, and direct utility for drug-to-disease prediction.
+</div>
+
+<div class="text-center mb-6">
+  <span class="font-semibold text-4xl" style="color: #9D79D6;">
+    {pks_meta[0].label_rubric || 'Not Scored'}
+  </span><br/>
+  <span class="text-xl">Overall Relevancy (Rubric)</span><br/>
+  {#if pks_meta[0].label_manual}
+  <span class="text-sm text-gray-600">
+    Manual assessment: <span class="font-semibold">{pks_meta[0].label_manual}</span>
+  </span>
+  {/if}
+</div>
+
+<Grid col=3 class="max-w-5xl mx-auto mb-8">
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      {pks_meta[0].domain_coverage_score ?? '—'}
+    </span><br/>
+    <span class="text-lg">Domain Coverage</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      {pks_meta[0].source_scope_score ?? '—'}
+    </span><br/>
+    <span class="text-lg">Source Scope</span>
+  </div>
+  <div class="text-center text-lg">
+    <span class="font-semibold text-3xl" style="color: #7C3AED;">
+      {pks_meta[0].utility_drugrepurposing_score ?? '—'}
+    </span><br/>
+    <span class="text-lg">Drug Repurposing Utility</span>
+  </div>
+</Grid>
+
+<Details title="Reviewer Comments">
+<div class="max-w-3xl mx-auto text-sm leading-snug text-gray-700">
+  {#if pks_meta[0].reviewer}
+  <p class="mb-2"><strong>Reviewed by:</strong> <a class="underline text-blue-600" href="https://orcid.org/{pks_meta[0].reviewer.replace('https://orcid.org/', '')}" target="_blank">ORCID:{pks_meta[0].reviewer.replace('https://orcid.org/', '')}</a></p>
+  {/if}
+  {#if pks_meta[0].domain_coverage_comments}
+  <p class="mb-2"><strong>Domain Coverage:</strong> {pks_meta[0].domain_coverage_comments}</p>
+  {/if}
+  {#if pks_meta[0].source_scope_score_comment}
+  <p class="mb-2"><strong>Source Scope:</strong> {pks_meta[0].source_scope_score_comment}</p>
+  {/if}
+  {#if pks_meta[0].utility_drugrepurposing_comment}
+  <p class="mb-2"><strong>Drug Repurposing Utility:</strong> {pks_meta[0].utility_drugrepurposing_comment}</p>
+  {/if}
+</div>
+</Details>
+
+{:else}
+
+<div class="text-center text-lg text-gray-500 mb-6">
+  No relevancy assessment data available for this knowledge source.
+</div>
+
+{/if}
+
 ## Edge Type Validation
 
 ```sql ks_edge_validation
@@ -322,7 +385,7 @@ ORDER BY validation_status DESC
 
 {:else}
 <div class="text-center text-lg text-red-500 mt-10">
-  Knowledge source "{params.knowledge_source}" not found in infores catalog.
+  Knowledge source "{params.knowledge_source}" not found in metadata.
 </div>
 {/if}
 

@@ -13,16 +13,10 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 name="ingest_curated_drug_list",
             ),
             node(
-                func=nodes.ingest_drugbank_drug_list,
-                inputs="raw.drugbank_drug_list",
-                outputs="primary.drugbank_drug_list",
-                name="ingest_drugbank_drug_list",
-            ),
-            node(
-                func=nodes.ingest_drugbank_salt_list,
-                inputs="raw.drugbank_salt_list",
-                outputs="primary.drugbank_salt_list",
-                name="ingest_drugbank_salt_list",
+                func=nodes.ingest_drugbank_identifiers,
+                inputs="raw.drugbank_identifiers",
+                outputs="primary.drugbank_identifiers",
+                name="ingest_drugbank_identifiers",
             ),
             node(
                 func=nodes.ingest_atc_labels,
@@ -66,19 +60,10 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
                 name="normalize_drug_curies",
             ),
             node(
-                func=nodes.union_drugbank_lists,
-                inputs={
-                    "drugbank_drug_list": "primary.drugbank_drug_list",
-                    "drugbank_salt_list": "primary.drugbank_salt_list",
-                },
-                outputs="primary.drugbank_union_list",
-                name="union_drugbank_lists",
-            ),
-            node(
                 func=nodes.resolve_drugbank_ids,
                 inputs={
                     "curated_drug_list": "primary.curated_drug_list",
-                    "drugbank_union_list": "primary.drugbank_union_list",
+                    "drugbank_identifiers": "primary.drugbank_identifiers",
                 },
                 outputs="primary.drug_list_with_drugbank_id",
                 name="resolve_drugbank_ids",
