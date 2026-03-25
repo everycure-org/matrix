@@ -917,6 +917,11 @@ fabricator.robokop:
         type: generate_values
         sample_values:
           - 0.6128887859621844
+      extraction_confidence_score:float:
+        type: generate_values
+        sample_values:
+          - 0.9234567890123456
+          - 0.9876543210987654
       sentences:string:
         type: generate_values
         sample_values:
