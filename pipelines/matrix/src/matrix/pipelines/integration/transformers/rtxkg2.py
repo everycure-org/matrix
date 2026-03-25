@@ -191,7 +191,10 @@ def filter_semmed(
     )
     edges_filtered = edges_df.filter(~semmeddb_is_only_knowledge_source).unionByName(single_semmed_edges)
     edges_filtered.explain()
-    return edges_filtered
+    return edges_filtered.withColumn(
+        "num_references",
+        f.size(f.array_distinct(f.col("publications"))).cast(T.IntegerType()),
+    )
 
 
 def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:
