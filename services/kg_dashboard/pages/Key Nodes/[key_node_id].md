@@ -148,7 +148,11 @@ This provides a comprehensive view of the entire hierarchy under this node.
   </div>
   <div class="text-center text-lg">
     <span class="font-semibold text-2xl" style="color: #059669;">
+      {#if key_node_aggregate.length > 0}
       <Value data={key_node_aggregate} column="with_descendants_total_edges" fmt="num0" />
+      {:else}
+      N/A
+      {/if}
     </span><br/>
     <span class="text-md">Edges (with descendants)</span>
   </div>
