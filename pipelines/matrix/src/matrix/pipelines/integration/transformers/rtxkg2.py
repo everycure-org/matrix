@@ -97,6 +97,8 @@ def transform_edges_v2_7_3(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame,
           .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
           .withColumn("has_confidence_score",         f.lit(None).cast(T.FloatType()))
           .withColumn("extraction_confidence_score",  f.lit(None).cast(T.FloatType()))
+          .withColumn("affinity",                     f.lit(None).cast(T.FloatType()))
+          .withColumn("affinity_parameter",           f.lit(None).cast(T.StringType()))
           .transform(filter_semmed, curie_to_pmids, **semmed_filters)
     )
     # fmt: on
@@ -119,6 +121,8 @@ def transform_edges_v2_10_0_validated(
             .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
             .withColumn("has_confidence_score",          f.lit(None).cast(T.FloatType()))
             .withColumn("extraction_confidence_score",   f.lit(None).cast(T.FloatType()))
+            .withColumn("affinity",                      f.lit(None).cast(T.FloatType()))
+            .withColumn("affinity_parameter",            f.lit(None).cast(T.StringType()))
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
     )
     # fmt: on

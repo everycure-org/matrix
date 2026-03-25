@@ -88,6 +88,8 @@ def transform_edges_V5_7(edges_df: ps.DataFrame):
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("has_confidence_score",                     F.lit(None).cast(T.FloatType()))
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
+          .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
+          .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
           )
     # fmt: on
     return df
@@ -125,6 +127,8 @@ def transform_edges_V5_2(edges_df: ps.DataFrame):
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("has_confidence_score",                     F.lit(None).cast(T.FloatType()))
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
+          .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
+          .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
           .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
           .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
           )
