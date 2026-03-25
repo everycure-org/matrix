@@ -2,7 +2,7 @@ import json
 
 import pytest
 from matrix.pipelines.filtering import filters
-from pyspark.sql.types import ArrayType, IntegerType, StringType, StructField, StructType
+from pyspark.sql.types import ArrayType, FloatType, IntegerType, StringType, StructField, StructType
 from pyspark.testing import assertDataFrameEqual
 
 
@@ -464,6 +464,10 @@ def test_deduplicate_edges(spark):
             StructField("publications", ArrayType(StringType()), True),
             StructField("num_references", IntegerType(), True),
             StructField("num_sentences", IntegerType(), True),
+            StructField("has_confidence_score", FloatType(), True),
+            StructField("extraction_confidence_score", FloatType(), True),
+            StructField("affinity", FloatType(), True),
+            StructField("affinity_parameter", StringType(), True),
             StructField("knowledge_level", StringType(), True),
             StructField("agent_type", StringType(), True),
             StructField("object_direction_qualifier", StringType(), True),
@@ -485,6 +489,10 @@ def test_deduplicate_edges(spark):
                 ["PMID:1"],
                 5,
                 2,
+                None,
+                None,
+                None,
+                None,
                 "not_provided",
                 "manual_agent",
                 "increased",
@@ -503,6 +511,10 @@ def test_deduplicate_edges(spark):
                 ["PMID:2"],
                 3,
                 1,
+                None,
+                None,
+                None,
+                None,
                 "knowledge_assertion",
                 "manual_agent",
                 "decreased",
@@ -521,6 +533,10 @@ def test_deduplicate_edges(spark):
                 ["PMID:3"],
                 1,
                 0,
+                None,
+                None,
+                None,
+                None,
                 "not_provided",
                 "automated_agent",
                 None,
@@ -548,8 +564,8 @@ def test_deduplicate_edges(spark):
     # publications is the flat union of all 3 lists
     assert set(row["publications"]) == {"PMID:1", "PMID:2", "PMID:3"}
 
-    # num_references is the max across all 3 edges
-    assert row["num_references"] == 5
+    # num_references is the sum across all 3 edges
+    assert row["num_references"] == 9
 
     # source_edge_properties is a JSON string keyed by primary_knowledge_source.
     # Scalar qualifier fields are arrays of all distinct non-null observed values

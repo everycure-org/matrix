@@ -4,7 +4,7 @@ import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
 from pyspark.sql import functions as F
-from pyspark.sql.types import ArrayType, BooleanType, IntegerType, StringType, StructField, StructType
+from pyspark.sql.types import ArrayType, BooleanType, FloatType, IntegerType, StringType, StructField, StructType
 
 
 @pytest.fixture
@@ -83,6 +83,10 @@ def sample_edges(spark):
             StructField("upstream_data_source", ArrayType(StringType()), False),
             StructField("num_references", IntegerType(), True),
             StructField("num_sentences", IntegerType(), True),
+            StructField("has_confidence_score", FloatType(), True),
+            StructField("extraction_confidence_score", FloatType(), True),
+            StructField("affinity", FloatType(), True),
+            StructField("affinity_parameter", StringType(), True),
         ]
     )
     data = [
@@ -100,8 +104,12 @@ def sample_edges(spark):
             "aspect2",
             "decreased",
             ["source1"],
-            10,
-            10,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
         (
             "CHEBI:120688",
@@ -117,8 +125,12 @@ def sample_edges(spark):
             "aspect4",
             "increased",
             ["source2"],
-            10,
-            10,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
         (
             "CHEBI:119157",
@@ -134,8 +146,12 @@ def sample_edges(spark):
             "aspect6",
             "decreased",
             ["source3"],
-            10,
-            10,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
     ]
     return spark.createDataFrame(data, schema)
@@ -559,3 +575,7 @@ def test_unify_edges(spark, sample_edges):
     # primary_knowledge_sources carries cross-source provenance for the SPO triple on each row
     assert set(semmed_edge.primary_knowledge_sources) == {"infores:semmeddb", "infores:ubergraph"}
     assert set(ubergraph_edge.primary_knowledge_sources) == {"infores:semmeddb", "infores:ubergraph"}
+
+    # num_references is computed from unique publications — each edge has 1 publication
+    assert semmed_edge.num_references == 1
+    assert ubergraph_edge.num_references == 1
