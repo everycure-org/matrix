@@ -116,6 +116,7 @@ def transform_edges_30fd1bfc18cd5ccb(edges_df: ps.DataFrame):
           .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("has_confidence_score",                     F.col("Combined_score").cast(T.FloatType()))
+          .withColumn("extraction_confidence_score",              F.col("extraction_confidence_score").cast(T.FloatType()))
     )
     # fmt: off
     return df
@@ -137,6 +138,7 @@ def transform_edges_c5ec1f282158182f(edges_df: ps.DataFrame):
           .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
           .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
           .withColumn("has_confidence_score",                     F.col("Combined_score").cast(T.FloatType()))
+          .withColumn("extraction_confidence_score",              F.col("extraction_confidence_score").cast(T.FloatType()))
           )
     # fmt: off
     return df

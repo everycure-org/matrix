@@ -60,6 +60,7 @@ class MedicalTransformer(GraphTransformer):
             .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
             .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
             .withColumn("has_confidence_score",          f.lit(None).cast(T.FloatType()))
+            .withColumn("extraction_confidence_score",   f.lit(None).cast(T.FloatType()))
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )

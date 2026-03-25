@@ -72,6 +72,7 @@ def transform_edges_2_1(edges_df: ps.DataFrame):
           .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
           .withColumn("has_confidence_score",                     F.lit(None).cast(T.FloatType()))
+          .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
           )
     # fmt: off
     return df
