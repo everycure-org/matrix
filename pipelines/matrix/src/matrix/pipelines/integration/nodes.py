@@ -83,6 +83,16 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
     post_dedup_count = unioned_edges.count()
     logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")
 
+    # Compute num_references as the count of unique publications per edge.
+    # This overrides any source-provided value so all edges use a consistent definition.
+    unioned_edges = unioned_edges.withColumn(
+        "num_references",
+        F.when(
+            F.col("publications").isNotNull(),
+            F.size(F.array_distinct(F.col("publications"))),
+        ).otherwise(F.lit(None).cast(T.IntegerType())),
+    )
+
     # Compute primary_knowledge_sources: all PKS values asserting the same (S, P, O) triple.
     # Each edge row retains its own attributes while also carrying cross-source provenance.
     spo_pks_mapping = unioned_edges.groupBy(["subject", "predicate", "object"]).agg(
