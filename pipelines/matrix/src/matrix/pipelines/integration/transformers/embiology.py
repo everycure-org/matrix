@@ -63,5 +63,6 @@ class EmbiologyTransformer(GraphTransformer):
             .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType()))
             .withColumn("num_references",                f.cast(T.IntegerType(), f.col("num_references")))
             .withColumn("num_sentences",                 f.cast(T.IntegerType(), f.col("num_sentences")))
+            .withColumn("has_confidence_score",          f.lit(None).cast(T.FloatType()))
         )
         # fmt: on
