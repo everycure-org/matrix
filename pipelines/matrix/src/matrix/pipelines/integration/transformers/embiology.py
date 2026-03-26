@@ -67,5 +67,6 @@ class EmbiologyTransformer(GraphTransformer):
             .withColumn("extraction_confidence_score",   f.lit(None).cast(T.FloatType()))
             .withColumn("affinity",                      f.lit(None).cast(T.FloatType()))
             .withColumn("affinity_parameter",            f.lit(None).cast(T.StringType()))
+            .withColumn("supporting_study_method_type",  f.lit(None).cast(T.StringType()))
         )
         # fmt: on

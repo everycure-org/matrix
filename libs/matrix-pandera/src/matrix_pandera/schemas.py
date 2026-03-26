@@ -56,6 +56,7 @@ def get_matrix_edge_schema() -> DataFrameSchema:
             "extraction_confidence_score": Column(T.FloatType(), nullable=True),
             "affinity": Column(T.FloatType(), nullable=True),
             "affinity_parameter": Column(T.StringType(), nullable=True),
+            "supporting_study_method_type": Column(T.StringType(), nullable=True),
         },
         strict=True,
     )
@@ -113,6 +114,7 @@ def get_unioned_edge_schema() -> DataFrameSchema:
             "extraction_confidence_score": Column(T.FloatType(), nullable=True),
             "affinity": Column(T.FloatType(), nullable=True),
             "affinity_parameter": Column(T.StringType(), nullable=True),
+            "supporting_study_method_type": Column(T.StringType(), nullable=True),
         },
         strict=True,
     )

@@ -99,6 +99,7 @@ def transform_edges_v2_7_3(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame,
           .withColumn("extraction_confidence_score",  f.lit(None).cast(T.FloatType()))
           .withColumn("affinity",                     f.lit(None).cast(T.FloatType()))
           .withColumn("affinity_parameter",           f.lit(None).cast(T.StringType()))
+          .withColumn("supporting_study_method_type", f.lit(None).cast(T.StringType()))
           .transform(filter_semmed, curie_to_pmids, **semmed_filters)
     )
     # fmt: on
@@ -123,6 +124,7 @@ def transform_edges_v2_10_0_validated(
             .withColumn("extraction_confidence_score",   f.lit(None).cast(T.FloatType()))
             .withColumn("affinity",                      f.lit(None).cast(T.FloatType()))
             .withColumn("affinity_parameter",            f.lit(None).cast(T.StringType()))
+            .withColumn("supporting_study_method_type",  f.lit(None).cast(T.StringType()))
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
     )
     # fmt: on

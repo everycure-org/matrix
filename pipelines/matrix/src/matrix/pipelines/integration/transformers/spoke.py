@@ -90,6 +90,7 @@ def transform_edges_V5_7(edges_df: ps.DataFrame):
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
           .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
           .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
+          .withColumn("supporting_study_method_type",             F.lit(None).cast(T.StringType()))
           )
     # fmt: on
     return df
@@ -129,6 +130,7 @@ def transform_edges_V5_2(edges_df: ps.DataFrame):
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
           .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
           .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
+          .withColumn("supporting_study_method_type",             F.lit(None).cast(T.StringType()))
           .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
           .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
           )

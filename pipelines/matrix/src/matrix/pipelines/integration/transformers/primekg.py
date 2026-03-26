@@ -75,6 +75,7 @@ def transform_edges_2_1(edges_df: ps.DataFrame):
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
           .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
           .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
+          .withColumn("supporting_study_method_type",             F.lit(None).cast(T.StringType()))
           )
     # fmt: off
     return df
