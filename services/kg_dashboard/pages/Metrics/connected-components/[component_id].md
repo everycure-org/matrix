@@ -60,12 +60,12 @@ ORDER BY count DESC
 
 ```sql noncore_nodes
 SELECT
-  category,
+  parent_category,
   COUNT(*) as count
 FROM bq.component_nodes
 WHERE component_id = ${params.component_id}
   AND ec_core_category IS NULL
-GROUP BY category
+GROUP BY parent_category
 ORDER BY count DESC
 ```
 
@@ -80,6 +80,8 @@ ORDER BY edge_count DESC
 ```
 
 {#if component_info.length > 0}
+
+<a href="/Metrics/connected-components" class="text-sm text-blue-600 hover:text-blue-800 no-underline">&larr; Back to Connected Components</a>
 
 # Component {parseInt(params.component_id)}
 
@@ -185,7 +187,7 @@ ORDER BY edge_count DESC
                 fontSize: 13
             }
         },
-        color: noncore_nodes.map(row => getCategoryColor(row.category)),
+        color: noncore_nodes.map(row => getCategoryColor(row.parent_category)),
         tooltip: {
             position: 'right',
             confine: true,
@@ -198,7 +200,7 @@ ORDER BY edge_count DESC
             type: 'pie',
             data: noncore_nodes.map(row => ({
               value: row.count,
-              name: row.category
+              name: row.parent_category
             })),
             radius: ['40%', '65%'],
             label: {
@@ -211,7 +213,7 @@ ORDER BY edge_count DESC
   </div>
   <div>
     <DataTable data={noncore_nodes} rows=15>
-      <Column id="category" title="Category" />
+      <Column id="parent_category" title="Category" />
       <Column id="count" title="Nodes" fmt="num0" contentType="bar" />
     </DataTable>
   </div>

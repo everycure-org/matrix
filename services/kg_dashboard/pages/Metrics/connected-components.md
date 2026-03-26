@@ -368,7 +368,8 @@ LIMIT 20
 SELECT
   knowledge_source,
   edge_count,
-  component_count
+  component_count,
+  component_ids
 FROM bq.minor_component_sources
 ORDER BY edge_count DESC
 ```
@@ -391,6 +392,7 @@ FROM bq.minor_component_sources
   <Column id="knowledge_source" title="Knowledge Source" />
   <Column id="edge_count" title="Edges" fmt="num0" contentType="bar" />
   <Column id="component_count" title="Components" fmt="num0" />
+  <Column id="component_ids" title="Component IDs" />
 </DataTable>
 {/if}
 
