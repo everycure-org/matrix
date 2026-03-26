@@ -74,18 +74,33 @@ def transform_edges_V5_7(edges_df: ps.DataFrame):
     # FUTURE: need to fix de-duplication in a raw SPOKE
     df = (edges_df.dropDuplicates(subset=["subject", "object", "predicate"])
           .withColumn('predicate', F.concat(F.lit('biolink:'), F.col('predicate')))
+          # Qualifiers
+          .withColumn("qualified_predicate",                      F.lit(None).cast(T.StringType()))
+          .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
+          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+          .withColumn("subject_part_qualifier",                   F.lit(None).cast(T.StringType()))
+          .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
+          .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
+          .withColumn("object_specialization_qualifier",          F.lit(None).cast(T.StringType()))
+          .withColumn("object_part_qualifier",                    F.lit(None).cast(T.StringType()))
+          .withColumn("species_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumn("disease_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumn("frequency_qualifier",                      F.lit(None).cast(T.StringType()))
+          .withColumn("qualifiers",                               F.lit(None).cast(T.StringType()))
+          .withColumn("stage_qualifier",                          F.lit(None).cast(T.StringType()))
+          .withColumn("anatomical_context_qualifier",             F.lit(None).cast(T.StringType()))
+          .withColumn("onset_qualifier",                          F.lit(None).cast(T.StringType()))
+          .withColumn("sex_qualifier",                            F.lit(None).cast(T.StringType()))
+          # Provenance
           .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
           .withColumn("agent_type",                               F.lit(None).cast(T.StringType()))
+          .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
           .withColumn("aggregator_knowledge_source",              F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("publications",                             F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("upstream_data_source",                     F.array(F.lit("spoke")))
-          .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
-          .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
-          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-          .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
-          .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
-          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+          # Quantitative attributes
+          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
+          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
           .withColumn("has_confidence_score",                     F.lit(None).cast(T.FloatType()))
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
           .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
@@ -116,23 +131,38 @@ def transform_nodes_V5_2(nodes_df: ps.DataFrame):
 def transform_edges_V5_2(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
+          # Qualifiers
+          .withColumn("qualified_predicate",                      F.lit(None).cast(T.StringType()))
+          .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
+          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+          .withColumn("subject_part_qualifier",                   F.lit(None).cast(T.StringType()))
+          .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
+          .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
+          .withColumn("object_specialization_qualifier",          F.lit(None).cast(T.StringType()))
+          .withColumn("object_part_qualifier",                    F.lit(None).cast(T.StringType()))
+          .withColumn("species_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumn("disease_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumn("frequency_qualifier",                      F.lit(None).cast(T.StringType()))
+          .withColumn("qualifiers",                               F.lit(None).cast(T.StringType()))
+          .withColumn("stage_qualifier",                          F.lit(None).cast(T.StringType()))
+          .withColumn("anatomical_context_qualifier",             F.lit(None).cast(T.StringType()))
+          .withColumn("onset_qualifier",                          F.lit(None).cast(T.StringType()))
+          .withColumn("sex_qualifier",                            F.lit(None).cast(T.StringType()))
+          # Provenance
           .withColumn("knowledge_level",                          F.lit(None).cast(T.StringType()))
           .withColumn("agent_type",                               F.lit(None).cast(T.StringType()))
+          .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
           .withColumn("aggregator_knowledge_source",              F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("publications",                             F.lit(None).cast(T.ArrayType(T.StringType())))
           .withColumn("upstream_data_source",                     F.array(F.lit("spoke")))
-          .withColumn("primary_knowledge_source",                 F.lit(None).cast(T.StringType()))
-          .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
-          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+          # Quantitative attributes
+          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
+          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
           .withColumn("has_confidence_score",                     F.lit(None).cast(T.FloatType()))
           .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
           .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
           .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
           .withColumn("supporting_study_method_type",             F.lit(None).cast(T.StringType()))
-          .withColumn("object_aspect_qualifier",                  F.lit(None).cast(T.StringType()))
-          .withColumn("object_direction_qualifier",               F.lit(None).cast(T.StringType()))
           )
     # fmt: on
     return df

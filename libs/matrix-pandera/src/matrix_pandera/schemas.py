@@ -37,19 +37,35 @@ def get_matrix_edge_schema() -> DataFrameSchema:
     """
     return DataFrameSchema(
         columns={
+            # Core edge
             "subject": Column(T.StringType(), nullable=False),
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
+            # Qualifiers
+            "qualified_predicate": Column(T.StringType(), nullable=True),
+            "subject_aspect_qualifier": Column(T.StringType(), nullable=True),
+            "subject_direction_qualifier": Column(T.StringType(), nullable=True),
+            "subject_part_qualifier": Column(T.StringType(), nullable=True),
+            "object_aspect_qualifier": Column(T.StringType(), nullable=True),
+            "object_direction_qualifier": Column(T.StringType(), nullable=True),
+            "object_specialization_qualifier": Column(T.StringType(), nullable=True),
+            "object_part_qualifier": Column(T.StringType(), nullable=True),
+            "species_context_qualifier": Column(T.StringType(), nullable=True),
+            "disease_context_qualifier": Column(T.StringType(), nullable=True),
+            "frequency_qualifier": Column(T.StringType(), nullable=True),
+            "qualifiers": Column(T.StringType(), nullable=True),
+            "stage_qualifier": Column(T.StringType(), nullable=True),
+            "anatomical_context_qualifier": Column(T.StringType(), nullable=True),
+            "onset_qualifier": Column(T.StringType(), nullable=True),
+            "sex_qualifier": Column(T.StringType(), nullable=True),
+            # Provenance
             "knowledge_level": Column(T.StringType(), nullable=True),
             "agent_type": Column(T.StringType(), nullable=True),
             "primary_knowledge_source": Column(T.StringType(), nullable=True),
             "aggregator_knowledge_source": Column(T.ArrayType(T.StringType()), nullable=True),
             "publications": Column(T.ArrayType(T.StringType()), nullable=True),
-            "subject_aspect_qualifier": Column(T.StringType(), nullable=True),
-            "subject_direction_qualifier": Column(T.StringType(), nullable=True),
-            "object_aspect_qualifier": Column(T.StringType(), nullable=True),
-            "object_direction_qualifier": Column(T.StringType(), nullable=True),
             "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=True),
+            # Quantitative attributes
             "num_references": Column(T.IntegerType(), nullable=True),
             "num_sentences": Column(T.IntegerType(), nullable=True),
             "has_confidence_score": Column(T.FloatType(), nullable=True),
@@ -94,20 +110,36 @@ def get_unioned_edge_schema() -> DataFrameSchema:
     """
     return DataFrameSchema(
         columns={
+            # Core edge
             "primary_knowledge_sources": Column(T.ArrayType(T.StringType(), False), nullable=False),
             "subject": Column(T.StringType(), nullable=False),
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
+            # Qualifiers
+            "qualified_predicate": Column(T.StringType(), nullable=True),
+            "subject_aspect_qualifier": Column(T.StringType(), nullable=True),
+            "subject_direction_qualifier": Column(T.StringType(), nullable=True),
+            "subject_part_qualifier": Column(T.StringType(), nullable=True),
+            "object_aspect_qualifier": Column(T.StringType(), nullable=True),
+            "object_direction_qualifier": Column(T.StringType(), nullable=True),
+            "object_specialization_qualifier": Column(T.StringType(), nullable=True),
+            "object_part_qualifier": Column(T.StringType(), nullable=True),
+            "species_context_qualifier": Column(T.StringType(), nullable=True),
+            "disease_context_qualifier": Column(T.StringType(), nullable=True),
+            "frequency_qualifier": Column(T.StringType(), nullable=True),
+            "qualifiers": Column(T.StringType(), nullable=True),
+            "stage_qualifier": Column(T.StringType(), nullable=True),
+            "anatomical_context_qualifier": Column(T.StringType(), nullable=True),
+            "onset_qualifier": Column(T.StringType(), nullable=True),
+            "sex_qualifier": Column(T.StringType(), nullable=True),
+            # Provenance
             "knowledge_level": Column(T.StringType(), nullable=True),
             "agent_type": Column(T.StringType(), nullable=True),
             "primary_knowledge_source": Column(T.StringType(), nullable=True),
             "aggregator_knowledge_source": Column(T.ArrayType(T.StringType()), nullable=True),
             "publications": Column(T.ArrayType(T.StringType()), nullable=True),
-            "subject_aspect_qualifier": Column(T.StringType(), nullable=True),
-            "subject_direction_qualifier": Column(T.StringType(), nullable=True),
-            "object_aspect_qualifier": Column(T.StringType(), nullable=True),
-            "object_direction_qualifier": Column(T.StringType(), nullable=True),
             "upstream_data_source": Column(T.ArrayType(T.StringType()), nullable=True),
+            # Quantitative attributes
             "num_references": Column(T.IntegerType(), nullable=True),
             "num_sentences": Column(T.IntegerType(), nullable=True),
             "has_confidence_score": Column(T.FloatType(), nullable=True),
