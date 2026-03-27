@@ -60,7 +60,6 @@ drug_list:
     - is_fda_generic_drug
 
   fda:
-    # NOTE: This section was partially updated using AI assistance.
     curated_drug_list_columns_to_use_for_matching:
       - name
       - synonyms
