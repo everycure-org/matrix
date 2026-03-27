@@ -36,14 +36,14 @@ def _is_url_available(url: str, timeout_seconds: float = 5.0) -> bool:
         return False
 
 
-def env(key: str, default: str = None, allow_null: str = False) -> str | None:
+def env(key: str, default: str = None, allow_null: bool = False) -> str | None:
     """Load a variable from the environment.
 
     See https://omegaconf.readthedocs.io/en/latest/custom_resolvers.html#custom-resolvers
 
     Args:
         key (str): Key to load.
-        default (str): Default value to use instead of
+        default (str): Default value to use instead of None.
         allow_null (bool): Bool indicating whether null is allowed
     Returns:
         str: Value of the key
