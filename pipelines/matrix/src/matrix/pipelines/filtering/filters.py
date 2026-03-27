@@ -272,7 +272,7 @@ class DeduplicateEdges(Filter):
             if col_name in array_type_cols:
                 return sf.array_distinct(sf.flatten(sf.collect_list(col_name))).alias(col_name)
             elif col_name == "num_references":
-                return sf.sum(col_name).alias(col_name)
+                return sf.sum("num_references").alias("num_references")
             elif isinstance(df.schema[col_name].dataType, (T.IntegerType, T.LongType, T.ShortType)):
                 return sf.max(col_name).alias(col_name)
             else:
