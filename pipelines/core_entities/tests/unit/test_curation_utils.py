@@ -1,13 +1,9 @@
-import sys
-from pathlib import Path
-
 import numpy as np
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pandas as pd
 import pytest
 
+# NOTE: This file was partially generated using AI assistance.
 from core_entities.utils.curation_utils import (
     apply_patch,
     create_search_term_from_curated_drug_list,
