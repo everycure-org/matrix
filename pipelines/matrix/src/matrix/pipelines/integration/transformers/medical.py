@@ -44,21 +44,42 @@ class MedicalTransformer(GraphTransformer):
         # fmt: off
         df = (
             edges_df
-            .withColumn("subject",                       f.col("SourceId"))
-            .withColumn("object",                        f.col("TargetId"))
-            .withColumn("predicate",                     f.concat(f.lit("biolink:"), f.lit(":"), f.col("Label")))
-            .withColumn("upstream_data_source",          f.array(f.lit("ec_medical")))
-            .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-            .withColumn("agent_type",                    f.lit(None).cast(T.StringType()))
-            .withColumn("aggregator_knowledge_source",   f.array(f.lit('medical team')))
-            .withColumn("primary_knowledge_source",      f.lit('medical team').cast(T.StringType()))
-            .withColumn("publications",                  f.array(f.lit('medical team')))
-            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present
-            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present
-            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present
-            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present
-            .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
-            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
+            # Core
+            .withColumn("subject",                          f.col("SourceId"))
+            .withColumn("object",                           f.col("TargetId"))
+            .withColumn("predicate",                        f.concat(f.lit("biolink:"), f.lit(":"), f.col("Label")))
+            # Qualifiers
+            .withColumn("qualified_predicate",              f.lit(None).cast(T.StringType()))
+            .withColumn("subject_aspect_qualifier",         f.lit(None).cast(T.StringType()))
+            .withColumn("subject_direction_qualifier",      f.lit(None).cast(T.StringType()))
+            .withColumn("subject_part_qualifier",           f.lit(None).cast(T.StringType()))
+            .withColumn("object_aspect_qualifier",          f.lit(None).cast(T.StringType()))
+            .withColumn("object_direction_qualifier",       f.lit(None).cast(T.StringType()))
+            .withColumn("object_specialization_qualifier",  f.lit(None).cast(T.StringType()))
+            .withColumn("object_part_qualifier",            f.lit(None).cast(T.StringType()))
+            .withColumn("species_context_qualifier",        f.lit(None).cast(T.StringType()))
+            .withColumn("disease_context_qualifier",        f.lit(None).cast(T.StringType()))
+            .withColumn("frequency_qualifier",              f.lit(None).cast(T.StringType()))
+            .withColumn("qualifiers",                       f.lit(None).cast(T.StringType()))
+            .withColumn("stage_qualifier",                  f.lit(None).cast(T.StringType()))
+            .withColumn("anatomical_context_qualifier",     f.lit(None).cast(T.StringType()))
+            .withColumn("onset_qualifier",                  f.lit(None).cast(T.StringType()))
+            .withColumn("sex_qualifier",                    f.lit(None).cast(T.StringType()))
+            # Provenance
+            .withColumn("knowledge_level",                  f.lit(None).cast(T.StringType()))
+            .withColumn("agent_type",                       f.lit(None).cast(T.StringType()))
+            .withColumn("primary_knowledge_source",         f.lit('medical team').cast(T.StringType()))
+            .withColumn("aggregator_knowledge_source",      f.array(f.lit('medical team')))
+            .withColumn("publications",                     f.array(f.lit('medical team')))
+            .withColumn("upstream_data_source",             f.array(f.lit("ec_medical")))
+            # Quantitative attributes
+            .withColumn("num_references",                   f.lit(None).cast(T.IntegerType()))
+            .withColumn("num_sentences",                    f.lit(None).cast(T.IntegerType()))
+            .withColumn("has_confidence_score",             f.lit(None).cast(T.FloatType()))
+            .withColumn("extraction_confidence_score",      f.lit(None).cast(T.FloatType()))
+            .withColumn("affinity",                         f.lit(None).cast(T.FloatType()))
+            .withColumn("affinity_parameter",               f.lit(None).cast(T.StringType()))
+            .withColumn("supporting_study_method_type",     f.lit(None).cast(T.StringType()))
             # Filter edges we could not correctly resolve
             .filter(f.col("subject").isNotNull() & f.col("object").isNotNull())
         )

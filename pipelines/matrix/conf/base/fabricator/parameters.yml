@@ -917,6 +917,11 @@ fabricator.robokop:
         type: generate_values
         sample_values:
           - 0.6128887859621844
+      extraction_confidence_score:float:
+        type: generate_values
+        sample_values:
+          - 0.9234567890123456
+          - 0.9876543210987654
       sentences:string:
         type: generate_values
         sample_values:
@@ -979,6 +984,41 @@ fabricator.robokop:
         type: generate_values
         sample_values:
           - ''
+      subject_part_qualifier:string:
+        type: generate_values
+        sample_values:
+          - NCBIGene:1956
+          - UniProtKB:P00533
+      object_specialization_qualifier:string:
+        type: generate_values
+        sample_values:
+          - gain_of_function_variant_form
+          - loss_of_function_variant_form
+      object_part_qualifier:string:
+        type: generate_values
+        sample_values:
+          - promoter
+          - 3_prime_utr
+      stage_qualifier:string:
+        type: generate_values
+        sample_values:
+          - UBERON:0000068
+          - UBERON:0000113
+      anatomical_context_qualifier:string:
+        type: generate_values
+        sample_values:
+          - UBERON:0002048
+          - UBERON:0001987
+      onset_qualifier:string:
+        type: generate_values
+        sample_values:
+          - HP:0003577
+          - HP:0011010
+      sex_qualifier:string:
+        type: generate_values
+        sample_values:
+          - PATO:0000383
+          - PATO:0000384
       has_evidence:string[]:
         type: generate_values
         sample_values:
@@ -1031,10 +1071,6 @@ fabricator.robokop:
         type: generate_values
         sample_values:
           - ''
-      stage_qualifier:string:
-        type: generate_values
-        sample_values:
-          - ''
       primaryTarget:boolean:
         type: generate_values
         sample_values:
@@ -1043,39 +1079,11 @@ fabricator.robokop:
         type: generate_values
         sample_values:
           - ''
-      anatomical_context_qualifier:string:
-        type: generate_values
-        sample_values:
-          - ''
-      phosphorylation_sites:string[]:
-        type: generate_values
-        sample_values:
-          - ''
-      onset_qualifier:string:
-        type: generate_values
-        sample_values:
-          - ''
-      object_specialization_qualifier:string:
-        type: generate_values
-        sample_values:
-          - ''
       drugmechdb_path_id:string[]:
         type: generate_values
         sample_values:
           - ''
       complex_context:string[]:
-        type: generate_values
-        sample_values:
-          - ''
-      sex_qualifier:string:
-        type: generate_values
-        sample_values:
-          - ''
-      object_part_qualifier:string:
-        type: generate_values
-        sample_values:
-          - ''
-      subject_part_qualifier:string:
         type: generate_values
         sample_values:
           - ''
