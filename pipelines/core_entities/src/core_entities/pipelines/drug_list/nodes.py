@@ -1331,7 +1331,13 @@ def resolve_fda_drugs_that_are_otc_monograph(
         fda_drug_labels_filtered.loc[:, "is_otc_monograph"] = False
 
         enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
-        return fda_drug_labels_filtered, enriched_tsv
+        return (
+            fda_drug_labels_filtered,
+            enriched_tsv,
+            fda_drug_labels_filtered.loc[
+                fda_drug_labels_filtered["is_fda_generic_drug"], ["id", "is_fda_generic_drug"]
+            ].copy(),
+        )
 
     default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
     is_fda_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
