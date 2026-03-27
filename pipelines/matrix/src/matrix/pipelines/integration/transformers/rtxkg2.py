@@ -126,13 +126,13 @@ def transform_edges_v2_10_0_validated(
 ):
     # fmt: off
     df = (edges_df
-            # Qualifiers — v2.10 exposes qualified_predicate, qualified_object_aspect, qualified_object_direction
-            .withColumn("qualified_predicate",           f.col("qualified_predicate").cast(T.StringType()))
+            # Qualifiers — v2.10 exposes object_aspect_qualifier and object_direction_qualifier directly
+            .withColumn("qualified_predicate",           f.lit(None).cast(T.StringType()))
             .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType()))
             .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType()))
             .withColumn("subject_part_qualifier",        f.lit(None).cast(T.StringType()))
-            .withColumn("object_aspect_qualifier",       f.col("qualified_object_aspect").cast(T.StringType()))
-            .withColumn("object_direction_qualifier",    f.col("qualified_object_direction").cast(T.StringType()))
+            .withColumn("object_aspect_qualifier",       f.col("object_aspect_qualifier").cast(T.StringType()))
+            .withColumn("object_direction_qualifier",    f.col("object_direction_qualifier").cast(T.StringType()))
             .withColumn("object_specialization_qualifier", f.lit(None).cast(T.StringType()))
             .withColumn("object_part_qualifier",         f.lit(None).cast(T.StringType()))
             .withColumn("species_context_qualifier",     f.lit(None).cast(T.StringType()))
