@@ -1,18 +1,53 @@
 import asyncio
 import logging
+import multiprocessing
+import re
+from functools import partial
 
 import aiohttp
 import nest_asyncio
 import pandas as pd
 import pandera.pandas as pa
+from pandas import DataFrame
 from tenacity import retry, stop_after_attempt, wait_exponential
+from tqdm import tqdm as sync_tqdm
 from tqdm.asyncio import tqdm
 
+from core_entities.data.internal.schema.fda_drug_labels import (
+    CURATED_DRUG_LIST_FOR_FDA_MATCH_SCHEMA,
+    FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA,
+    FDA_DRUG_LABELS_BIOSIMILAR_TSV_SCHEMA,
+    FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA,
+    FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA,
+    FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA,
+    FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA,
+    FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA,
+    FDA_DRUG_LABELS_OTC_TSV_SCHEMA,
+    FDA_DRUG_LABELS_UNFILTERED_SCHEMA,
+)
+from core_entities.data.internal.schema.fda_drugs import FDA_DRUG_LIST_FOR_MATCHING_SCHEMA, FDA_DRUG_LIST_SCHEMA
 from core_entities.pipelines.drug_llm_tags.drug_atc_codes import get_drug_atc_codes
+from core_entities.utils.curation_utils import create_search_term_from_curated_drug_list, filter_dataframe_by_columns
+from core_entities.utils.fda_drugs_utils import (
+    extract_openfda_field,
+    extract_product_active_ingredients,
+    extract_product_marketing_status,
+    filter_fda_rows,
+    has_anda_application_number,
+    match_drug_to_fda_worker,
+    normalize_fda_results_to_dataframe,
+)
+from core_entities.utils.fda_labels_utils import run_sync as resolve_otc_monograph_labels
+from core_entities.utils.fda_otc_monograph_drugs_utils import add_over_the_counter_status_if_needed
+from core_entities.utils.python_utils import (
+    ensure_python_list,
+    ensure_string_list,
+)
 
 logger = logging.getLogger(__name__)
 
 nest_asyncio.apply()
+
 
 # ------------------------------------------------------------
 # INGESTION NODES
@@ -56,6 +91,7 @@ def get_boolean_column_schema(column_name: str):
                     "deleted",
                     "deleted_reason",
                     "new_id",
+                    "available_in_combo_with",
                 ]
             ]
         ),
@@ -132,6 +168,7 @@ def get_boolean_column_schema(column_name: str):
                     lambda col: col.apply(lambda x: x if isinstance(x, str) and x.strip() != "" else None)
                 ),
             ),
+            "available_in_combo_with": pa.Column(nullable=True),
         },
     )
 )
@@ -247,6 +284,19 @@ def get_boolean_column_schema(column_name: str):
             "deleted": pa.Column(dtype=bool, nullable=False),
             "deleted_reason": pa.Column(dtype=str, nullable=True),
             "new_id": pa.Column(dtype=str, nullable=True),
+            "available_in_combo_with": pa.Column(
+                nullable=True,
+                checks=[
+                    pa.Check(
+                        lambda col: col.apply(lambda x: isinstance(x, list)),
+                        title="available_in_combo_with must be a list",
+                    ),
+                    pa.Check(
+                        lambda col: col.apply(lambda x: all(item.strip().lower() == item for item in x)),
+                        title="available_in_combo_with must contain only stripped lowercase strings",
+                    ),
+                ],
+            ),
         },
         unique=["id"],
         strict=True,
@@ -268,15 +318,14 @@ def ingest_curated_drug_list(curated_drug_list: pd.DataFrame) -> pd.DataFrame:
     curated_drug_list.loc[:, "drug_function"] = curated_drug_list.loc[:, "drug_function"].apply(parse_string_column)
     curated_drug_list.loc[:, "drug_target"] = curated_drug_list.loc[:, "drug_target"].apply(parse_string_column)
 
-    curated_drug_list.loc[:, "synonyms"] = (
-        curated_drug_list["synonyms"]
-        .apply(lambda x: [] if pd.isna(x) else [xx.lower().strip() for xx in x.split(";")])
-        .apply(lambda x: None if len(x) == 0 else x)
+    curated_drug_list.loc[:, "synonyms"] = curated_drug_list["synonyms"].apply(
+        lambda x: [] if pd.isna(x) else [xx.lower().strip() for xx in x.split(";") if xx.strip() != ""]
     )
-    curated_drug_list.loc[:, "aggregated_with"] = (
-        curated_drug_list.loc[:, "aggregated_with"]
-        .apply(lambda x: [] if pd.isna(x) else [xx.strip().capitalize() for xx in x.split(";")])
-        .apply(lambda x: None if len(x) == 0 else x)
+    curated_drug_list.loc[:, "aggregated_with"] = curated_drug_list.loc[:, "aggregated_with"].apply(
+        lambda x: [] if pd.isna(x) else [xx.strip().capitalize() for xx in x.split(";") if xx.strip() != ""]
+    )
+    curated_drug_list.loc[:, "available_in_combo_with"] = curated_drug_list.loc[:, "available_in_combo_with"].apply(
+        lambda x: [] if pd.isna(x) else [xx.strip().lower() for xx in x.split(";") if xx.strip() != ""]
     )
 
     return curated_drug_list
@@ -342,6 +391,19 @@ def ingest_atc_labels(atc: pd.DataFrame) -> pd.DataFrame:
     atc["atc_label"] = atc["Preferred Label"].apply(lambda x: x.lower().capitalize())
     atc = atc.drop(columns=["Class ID", "Preferred Label"])
     return atc
+
+
+@pa.check_input(
+    FDA_DRUG_LIST_SCHEMA,
+)
+def _validate_fda_drug_list_input(fda_results_df: pd.DataFrame) -> pd.DataFrame:
+    return fda_results_df
+
+
+@pa.check_output(FDA_DRUG_LIST_SCHEMA)
+def ingest_fda_drug_list(fda_drug_list: dict) -> pd.DataFrame:
+    normalized_df = normalize_fda_results_to_dataframe(fda_drug_list)
+    return _validate_fda_drug_list_input(normalized_df)
 
 
 # ------------------------------------------------------------
@@ -910,6 +972,7 @@ def get_log_nan_check(column_name: str):
             "deleted": pa.Column(dtype=bool, nullable=False),
             "deleted_reason": pa.Column(dtype=str, nullable=True),
             "new_id": pa.Column(dtype=str, nullable=True),
+            "is_fda_generic_drug": pa.Column(dtype=bool, nullable=False),
         },
         unique=["id"],
         strict=True,
@@ -921,6 +984,7 @@ def merge_drug_lists(
     normalized_drug_curies: pd.DataFrame,
     drug_list_with_atc_codes: pd.DataFrame,
     drug_list_with_drugbank_id: pd.DataFrame,
+    drug_list_with_fda_generic_drug_info: pd.DataFrame,
     release_columns: list[str],
     drug_exception_list: list[str],
 ) -> pd.DataFrame:
@@ -930,7 +994,13 @@ def merge_drug_lists(
         curated_drug_list.merge(normalized_drug_curies, on="id", how="left")
         .merge(drug_list_with_atc_codes, on="id", how="left")
         .merge(drug_list_with_drugbank_id, on="id", how="left")
+        .merge(drug_list_with_fda_generic_drug_info, on="id", how="left")
     )
+
+    if "is_fda_generic_drug" not in df.columns:
+        df["is_fda_generic_drug"] = False
+    else:
+        df["is_fda_generic_drug"] = df["is_fda_generic_drug"].fillna(False).astype(bool)
 
     df = df[~df["name"].isin(drug_exception_list)]
     df.loc[:, "name"] = df.loc[:, "name"].apply(lambda x: x.capitalize())
@@ -949,3 +1019,397 @@ def publish_drug_list(drug_list: pd.DataFrame) -> dict:
         "drug_list_bq": drug_list,
         "drug_list_bq_latest": drug_list,
     }
+
+
+@pa.check_input(
+    CURATED_DRUG_LIST_FOR_FDA_MATCH_SCHEMA,
+    obj_getter="curated_drug_list",
+)
+@pa.check_input(
+    FDA_DRUG_LIST_FOR_MATCHING_SCHEMA,
+    obj_getter="fda_drug_list",
+)
+@pa.check_output(FDA_DRUG_LABELS_UNFILTERED_SCHEMA)
+def resolve_fda_drugs_matches_to_drug_list_unfiltered(
+    curated_drug_list: pd.DataFrame,
+    fda_drug_list: pd.DataFrame,
+    curated_drug_list_columns_to_use_for_matching: list[str],
+    fda_drug_list_columns_to_use_for_matching: list[str],
+    filter_curated_drug_list_params: dict[str, str],
+) -> pd.DataFrame:
+    """Match curated drugs to FDA drug applications.
+
+    For single-ingredient drugs, any search term matching any FDA field counts.
+    For only available with drugs (only_available_with is present), we also check whether the
+    FDA product's active_ingredients cover the aggregated set.
+    """
+
+    filtered_curated_drug_list = filter_dataframe_by_columns(curated_drug_list, filter_curated_drug_list_params)
+
+    # Build work items for multiprocessing
+    work_items = create_search_term_from_curated_drug_list(
+        filtered_curated_drug_list, curated_drug_list_columns_to_use_for_matching
+    )
+    work_items_records = work_items.to_dict(orient="records")
+
+    if len(work_items_records) == 0:
+        logger.info("No curated drugs available for FDA matching after filtering")
+        return pd.DataFrame(
+            columns=[
+                "fda_rows",
+                "fda_match_count",
+                "drug_name",
+                "id",
+                "search_terms",
+                "available_in_combo_with",
+            ]
+        )
+
+    worker_fn = partial(
+        match_drug_to_fda_worker,
+        fda_drug_list=fda_drug_list,
+        fda_drug_list_columns_to_use_for_matching=fda_drug_list_columns_to_use_for_matching,
+    )
+    num_workers = min(multiprocessing.cpu_count(), len(work_items_records))
+    chunksize = max(1, len(work_items_records) // (num_workers * 4))
+    logger.info(f"Matching {len(work_items_records)} drugs to FDA rows using {num_workers} workers")
+
+    with multiprocessing.Pool(processes=num_workers) as pool:
+        fda_raw_matches = list(
+            sync_tqdm(
+                pool.imap(worker_fn, work_items_records, chunksize=chunksize),
+                total=len(work_items_records),
+                desc="Resolving FDA matches",
+                unit="drug",
+            )
+        )
+
+    fda_raw_matches_df = pd.DataFrame(fda_raw_matches)
+    fda_raw_matches_df.loc[:, "search_terms"] = fda_raw_matches_df["search_terms"].apply(ensure_string_list)
+    fda_raw_matches_df.loc[:, "available_in_combo_with"] = fda_raw_matches_df["available_in_combo_with"].apply(
+        ensure_string_list
+    )
+
+    return fda_raw_matches_df
+
+
+@pa.check_input(FDA_DRUG_LABELS_UNFILTERED_SCHEMA)
+@pa.check_output(
+    FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA,
+    obj_getter=0,
+)
+@pa.check_output(
+    FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA,
+    obj_getter=1,
+)
+def resolve_fda_drugs_matches_to_drug_list_filtered(
+    fda_drug_labels_unfiltered: pd.DataFrame,
+) -> tuple[DataFrame, DataFrame]:
+    filtered_fda_values = fda_drug_labels_unfiltered.apply(filter_fda_rows, axis=1).apply(ensure_python_list)
+    filtered_fda_values_count = filtered_fda_values.str.len().fillna(0).astype(int)
+
+    fda_drug_labels_filtered = fda_drug_labels_unfiltered.copy()
+    fda_drug_labels_filtered.loc[:, "filtered_fda_values"] = filtered_fda_values
+    fda_drug_labels_filtered.loc[:, "filtered_fda_values_count"] = filtered_fda_values_count
+    fda_drug_labels_filtered.loc[:, "is_fda_generic_drug"] = filtered_fda_values_count.gt(0)
+    fda_drug_labels_filtered["is_biologics"] = filtered_fda_values.apply(
+        lambda rows: any(
+            str(item.get("application_number", "")).lower().startswith("bla")
+            for item in (rows or [])
+            if isinstance(item, dict)
+        )
+    )
+    fda_drug_labels_filtered.loc[:, "brand_name"] = filtered_fda_values.apply(
+        lambda rows: extract_openfda_field(rows, "brand_name")
+    )
+    fda_drug_labels_filtered.loc[:, "generic_name"] = filtered_fda_values.apply(
+        lambda rows: extract_openfda_field(rows, "generic_name")
+    )
+    fda_drug_labels_filtered.loc[:, "substance_name"] = filtered_fda_values.apply(
+        lambda rows: extract_openfda_field(rows, "substance_name")
+    )
+    fda_drug_labels_filtered.loc[:, "active_ingredients"] = filtered_fda_values.apply(
+        extract_product_active_ingredients
+    )
+    fda_drug_labels_filtered.loc[:, "marketing_status"] = filtered_fda_values.apply(extract_product_marketing_status)
+    fda_drug_labels_filtered.loc[:, "is_anda"] = filtered_fda_values.apply(has_anda_application_number)
+
+    fda_drug_labels_filtered_tsv = fda_drug_labels_filtered.drop(
+        columns=["fda_rows", "filtered_fda_values"], inplace=False
+    )
+
+    return fda_drug_labels_filtered, fda_drug_labels_filtered_tsv
+
+
+@pa.check_input(FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA)
+@pa.check_output(
+    FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA,
+    obj_getter=0,
+)
+@pa.check_output(
+    FDA_DRUG_LABELS_BIOSIMILAR_TSV_SCHEMA,
+    obj_getter=1,
+)
+def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
+    fda_drug_labels_filtered: pd.DataFrame,
+    fda_purple_book_params: dict,
+    fda_purple_book_data: DataFrame | None = None,
+) -> tuple[DataFrame, DataFrame]:
+    if fda_drug_labels_filtered.empty:
+        enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
+        return fda_drug_labels_filtered, enriched_tsv
+
+    raw_bla_types = fda_purple_book_params.get("generic_status_bla_type", None)
+    if raw_bla_types is None:
+        raw_bla_types = (fda_purple_book_params.get("fda_purple_book", {}) or {}).get("generic_status_bla_type", [])
+
+    allowed_bla_types = {
+        bla_type.lower().strip() for bla_type in ensure_string_list(raw_bla_types) if bla_type.strip() != ""
+    }
+
+    def normalize_bla_number(value: object) -> str | None:
+        raw_value = str(value).strip()
+        if raw_value == "":
+            return None
+
+        digits_only = re.sub(r"\D", "", raw_value)
+        if digits_only == "":
+            return None
+
+        return str(int(digits_only))
+
+    def extract_application_numbers_from_fda_values(fda_values: object) -> list[str]:
+        rows = ensure_python_list(fda_values) or []
+        application_numbers: list[str] = []
+
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            application_numbers.extend(ensure_string_list(row.get("application_number")))
+
+        return ensure_string_list(application_numbers)
+
+    def extract_bla_types_from_fda_values(fda_values: object) -> list[str]:
+        rows = ensure_python_list(fda_values) or []
+        extracted: list[str] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+
+            for key in ["bla_type", "BLA Type", "BLA_TYPE", "blaType"]:
+                if key in row:
+                    extracted.extend(ensure_string_list(row.get(key)))
+
+            openfda = row.get("openfda")
+            if isinstance(openfda, dict):
+                for key in ["bla_type", "BLA Type", "BLA_TYPE", "blaType"]:
+                    if key in openfda:
+                        extracted.extend(ensure_string_list(openfda.get(key)))
+
+            products = ensure_python_list(row.get("products")) or []
+            for product in products:
+                if not isinstance(product, dict):
+                    continue
+                for key in ["bla_type", "BLA Type", "BLA_TYPE", "blaType"]:
+                    if key in product:
+                        extracted.extend(ensure_string_list(product.get(key)))
+
+        return ensure_string_list(extracted)
+
+    fda_values_source = (
+        "filtered_fda_values" if "filtered_fda_values" in fda_drug_labels_filtered.columns else "fda_rows"
+    )
+
+    fda_drug_labels_filtered.loc[:, "biosimilar_bla_types"] = fda_drug_labels_filtered[fda_values_source].apply(
+        extract_bla_types_from_fda_values
+    )
+    fda_drug_labels_filtered.loc[:, "biosimilar_application_numbers"] = fda_drug_labels_filtered[
+        fda_values_source
+    ].apply(extract_application_numbers_from_fda_values)
+
+    def resolve_column_name(df: pd.DataFrame, candidates: list[str]) -> str | None:
+        normalized_name_to_column = {str(column).strip().lower(): column for column in df.columns}
+        for candidate in candidates:
+            matched = normalized_name_to_column.get(candidate.lower())
+            if matched is not None:
+                return matched
+        return None
+
+    def merge_unique_strings(values: list[object]) -> list[str]:
+        merged: list[str] = []
+        seen: set[str] = set()
+
+        for value in values:
+            for item in ensure_string_list(value):
+                normalized = item.lower().strip()
+                if normalized in seen:
+                    continue
+                seen.add(normalized)
+                merged.append(item)
+
+        return merged
+
+    if fda_purple_book_data is not None and not fda_purple_book_data.empty:
+        purple_book_df = fda_purple_book_data.copy()
+        bla_number_column = resolve_column_name(purple_book_df, ["BLA Number", "bla number", "bla_number"])
+        bla_type_column = resolve_column_name(purple_book_df, ["BLA Type", "bla type", "bla_type"])
+
+        if bla_number_column is None or bla_type_column is None:
+            logger.warning(
+                "Could not find BLA Number/BLA Type columns in purple book data. Available columns: %s",
+                list(purple_book_df.columns),
+            )
+        else:
+            purple_book_df = purple_book_df[[bla_number_column, bla_type_column]].copy()
+            purple_book_df.loc[:, "normalized_bla_number"] = purple_book_df[bla_number_column].apply(
+                normalize_bla_number
+            )
+            purple_book_df.loc[:, "normalized_bla_type"] = purple_book_df[bla_type_column].apply(
+                lambda value: str(value).strip()
+            )
+            purple_book_df = purple_book_df[
+                purple_book_df["normalized_bla_number"].notna() & (purple_book_df["normalized_bla_type"] != "")
+            ]
+
+            purple_book_lookup = (
+                purple_book_df.groupby("normalized_bla_number")["normalized_bla_type"]
+                .apply(lambda values: merge_unique_strings(values.tolist()))
+                .to_dict()
+            )
+
+            fda_drug_labels_filtered.loc[:, "biosimilar_bla_types"] = fda_drug_labels_filtered.apply(
+                lambda row: merge_unique_strings(
+                    [
+                        row.get("biosimilar_bla_types", []),
+                        [
+                            bla_type
+                            for application_number in ensure_string_list(row.get("biosimilar_application_numbers", []))
+                            for bla_type in purple_book_lookup.get(normalize_bla_number(application_number), [])
+                        ],
+                    ]
+                ),
+                axis=1,
+            )
+
+    default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
+    is_biologics = fda_drug_labels_filtered.get("is_biologics", default_false).fillna(False).astype(bool)
+
+    biosimilar_is_generic = fda_drug_labels_filtered["biosimilar_bla_types"].apply(
+        lambda types: any(bla_type.lower().strip() in allowed_bla_types for bla_type in ensure_string_list(types))
+    )
+
+    existing_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
+    fda_drug_labels_filtered.loc[:, "is_fda_generic_drug"] = existing_generic.where(
+        ~is_biologics, biosimilar_is_generic
+    )
+
+    enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
+    return fda_drug_labels_filtered, enriched_tsv
+
+
+@pa.check_input(FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA)
+@pa.check_output(
+    FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA,
+    obj_getter=0,
+)
+@pa.check_output(
+    FDA_DRUG_LABELS_OTC_TSV_SCHEMA,
+    obj_getter=1,
+)
+def resolve_fda_drugs_that_are_otc_monograph(
+    fda_drug_labels_filtered: pd.DataFrame,
+    fda_labels_params: dict,
+) -> tuple[DataFrame, DataFrame, DataFrame]:
+    if fda_drug_labels_filtered.empty:
+        fda_drug_labels_filtered.loc[:, "otc_monograph_checked"] = False
+        fda_drug_labels_filtered.loc[:, "otc_monograph_status"] = "NOT_CHECKED"
+        fda_drug_labels_filtered.loc[:, "otc_monograph_application_numbers"] = [
+            [] for _ in range(len(fda_drug_labels_filtered))
+        ]
+        fda_drug_labels_filtered.loc[:, "otc_monograph_total_matches"] = 0
+        fda_drug_labels_filtered.loc[:, "otc_monograph_error_msg"] = ""
+        fda_drug_labels_filtered.loc[:, "is_otc_monograph"] = False
+
+        enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
+        return (
+            fda_drug_labels_filtered,
+            enriched_tsv,
+            fda_drug_labels_filtered.loc[
+                fda_drug_labels_filtered["is_fda_generic_drug"], ["id", "is_fda_generic_drug"]
+            ].copy(),
+        )
+
+    default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
+    is_fda_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
+    otc_candidates_mask = ~is_fda_generic
+    otc_candidate_drug_names = (
+        fda_drug_labels_filtered.loc[otc_candidates_mask, "drug_name"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+        .unique()
+        .tolist()
+    )
+    otc_candidate_drug_names = [name for name in otc_candidate_drug_names if name]
+    otc_candidate_name_set = set(otc_candidate_drug_names)
+
+    logger.info("Checking %d drugs for OTC monograph status via openFDA labels", len(otc_candidate_drug_names))
+
+    otc_result_lookup: dict[str, dict] = {}
+    if otc_candidate_drug_names:
+        otc_results = resolve_otc_monograph_labels(
+            drugs=otc_candidate_drug_names,
+            config=fda_labels_params or {},
+        )
+        otc_result_lookup = {
+            result.drug_name: {
+                "otc_monograph_status": result.status,
+                "otc_monograph_application_numbers": ensure_string_list(result.application_numbers),
+                "otc_monograph_total_matches": int(result.total_matches),
+                "otc_monograph_error_msg": result.error_msg,
+            }
+            for result in otc_results
+        }
+
+    def get_otc_result_for_row(drug_name: object) -> dict:
+        normalized_name = str(drug_name).strip()
+        return otc_result_lookup.get(normalized_name, {})
+
+    fda_drug_labels_filtered.loc[:, "otc_monograph_checked"] = fda_drug_labels_filtered["drug_name"].apply(
+        lambda name: str(name).strip() in otc_candidate_name_set
+    )
+    fda_drug_labels_filtered.loc[:, "otc_monograph_status"] = fda_drug_labels_filtered["drug_name"].apply(
+        lambda name: get_otc_result_for_row(name).get("otc_monograph_status", "NOT_CHECKED")
+    )
+    fda_drug_labels_filtered.loc[:, "otc_monograph_application_numbers"] = fda_drug_labels_filtered["drug_name"].apply(
+        lambda name: get_otc_result_for_row(name).get("otc_monograph_application_numbers", [])
+    )
+    fda_drug_labels_filtered.loc[:, "otc_monograph_total_matches"] = fda_drug_labels_filtered["drug_name"].apply(
+        lambda name: get_otc_result_for_row(name).get("otc_monograph_total_matches", 0)
+    )
+    fda_drug_labels_filtered.loc[:, "otc_monograph_error_msg"] = fda_drug_labels_filtered["drug_name"].apply(
+        lambda name: get_otc_result_for_row(name).get("otc_monograph_error_msg", "")
+    )
+    fda_drug_labels_filtered.loc[:, "is_otc_monograph"] = fda_drug_labels_filtered["otc_monograph_status"].eq(
+        "OTC_MONOGRAPH"
+    )
+
+    fda_drug_labels_filtered.loc[:, "is_fda_generic_drug"] = (
+        is_fda_generic | fda_drug_labels_filtered["is_otc_monograph"]
+    )
+    if "marketing_status" not in fda_drug_labels_filtered.columns:
+        fda_drug_labels_filtered.loc[:, "marketing_status"] = [[] for _ in range(len(fda_drug_labels_filtered))]
+    fda_drug_labels_filtered.loc[:, "marketing_status"] = fda_drug_labels_filtered.apply(
+        lambda row: add_over_the_counter_status_if_needed(
+            row["marketing_status"],
+            row["is_otc_monograph"],
+        ),
+        axis=1,
+    )
+
+    fda_generic_drug_list_with_ec_ids = fda_drug_labels_filtered.loc[
+        fda_drug_labels_filtered["is_fda_generic_drug"], ["id", "is_fda_generic_drug"]
+    ].copy()
+
+    enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
+    return (fda_drug_labels_filtered, enriched_tsv, fda_generic_drug_list_with_ec_ids)

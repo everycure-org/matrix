@@ -57,4 +57,42 @@ drug_list:
     - deleted
     - deleted_reason
     - new_id
-    
+    - is_fda_generic_drug
+
+  fda:
+    curated_drug_list_columns_to_use_for_matching:
+      - name
+      - synonyms
+    fda_drug_list_columns_to_use_for_matching:
+      - openfda.substance_name
+      - products.active_ingredients.name
+    filter_curated_drug_list_params:
+      approved_usa: APPROVED
+
+  fda_purple_book:
+    generic_status_bla_type:
+      - "351(k) Interchangeable"
+      - "351(k) Biosimilar"
+
+  # Configuration for openFDA label queries (used by core_entities.utils.fda_labels_utils).
+  # In a future pipeline, pass this dict directly as `params:drug_list.fda_labels`.
+  fda_labels:
+    api:
+      api_url: https://api.fda.gov/drug/label.json
+      api_key_env_var: FDA_API_KEY
+      max_concurrent: 5
+      retry_attempts: 3
+      retry_backoff_seconds: [1, 3, 7]
+      request_timeout_seconds: 15
+      result_limit: 1
+
+    monograph_application_prefix: M
+
+    query:
+      substance_name_field: openfda.substance_name
+      application_number_field: openfda.application_number
+      application_number_prefix: M
+      boolean_operator: AND
+      uppercase_substance_name: true
+      # Add/remove extra query constraints without code changes.
+      additional_clauses: []

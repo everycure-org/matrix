@@ -21,6 +21,10 @@ dev = [
     "ruff",
     "pyspark>=3.5.0",
 ]
+# adding this to be able to run pytest locally
+[tool.pytest.ini_options]
+pythonpath = "src"
+addopts = ["--import-mode=importlib"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

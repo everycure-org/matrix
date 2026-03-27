@@ -193,7 +193,9 @@ ignore = [ "E501",]
 [project.entry-points."kedro.hooks"]
 
 [tool.pytest.ini_options]
-addopts = "--cov-report term-missing --cov src/core_entities -ra"
+# adding this to be able to run pytest locally
+pythonpath = "src"
+addopts = "--cov-report term-missing --cov src/core_entities -ra --import-mode=importlib"
 
 [tool.coverage.report]
 fail_under = 0
