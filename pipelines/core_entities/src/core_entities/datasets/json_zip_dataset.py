@@ -9,7 +9,7 @@ from typing import Any
 import requests
 from kedro.io.core import AbstractDataset, DatasetError
 
-# NOTE: This file was partially generated using AI assistance.
+
 class JSONZipDataset(AbstractDataset, ABC):
     """Load a JSON file embedded in a remote ZIP archive.
 

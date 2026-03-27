@@ -4,8 +4,6 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-# NOTE: This file was partially generated using AI assistance.
-
 from core_entities.utils.fda_labels_utils import (
     DEFAULT_API_KEY_ENV_VAR,
     DrugResult,

@@ -205,7 +205,7 @@ def test_filter_fda_rows_does_not_match_other_single_ingredient_products() -> No
 
 
 # FDA API sometimes returns multi-ingredient products as a single active ingredient with an "and" in the name, which should not be considered a match for either ingredient alone.
-# as we are using substring matching to find candidate FDA rows, we need to ensure that we are not including these combo expressions as matches for the individual ingredients.abs
+# as we are using substring matching to find candidate FDA rows, we need to ensure that we are not including these combo expressions as matches for the individual ingredients.
 # This ensure substring searching for a drug without we mentioning the salt (like abecivir in our system should match with abecivir hydrochloride but not with a combo product that has "abecivir and something else" as the active ingredient name).
 def test_filter_fda_rows_excludes_single_ingredient_combo_expression_with_and() -> None:
     row = pd.Series(
