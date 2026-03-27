@@ -85,10 +85,12 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
 
     # Compute num_references as the count of unique publications per edge for any source
     # that did not already set it (e.g. RTX-KG2/SemMedDB sets it in filter_semmed).
+    # Guard against -1: F.size() returns -1 for null arrays (e.g. filter_semmed sets
+    # num_references without a null guard on publications), so treat -1 as unset.
     unioned_edges = unioned_edges.withColumn(
         "num_references",
         F.coalesce(
-            F.col("num_references"),
+            F.when(F.col("num_references") > F.lit(0), F.col("num_references")),
             F.when(
                 F.col("publications").isNotNull(),
                 F.size(F.array_distinct(F.col("publications"))),

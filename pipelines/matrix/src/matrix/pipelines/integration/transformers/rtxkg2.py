@@ -225,7 +225,10 @@ def filter_semmed(
     edges_filtered.explain()
     return edges_filtered.withColumn(
         "num_references",
-        f.size(f.array_distinct(f.col("publications"))).cast(T.IntegerType()),
+        f.when(
+            f.col("publications").isNotNull(),
+            f.size(f.array_distinct(f.col("publications"))),
+        ).cast(T.IntegerType()),
     )
 
 
