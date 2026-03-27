@@ -1319,7 +1319,7 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
 def resolve_fda_drugs_that_are_otc_monograph(
     fda_drug_labels_filtered: pd.DataFrame,
     fda_labels_params: dict,
-) -> tuple[DataFrame, DataFrame]:
+) -> tuple[DataFrame, DataFrame, DataFrame]:
     if fda_drug_labels_filtered.empty:
         fda_drug_labels_filtered.loc[:, "otc_monograph_checked"] = False
         fda_drug_labels_filtered.loc[:, "otc_monograph_status"] = "NOT_CHECKED"
