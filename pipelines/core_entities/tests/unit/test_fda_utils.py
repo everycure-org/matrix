@@ -493,7 +493,7 @@ def test_resolve_filtered_adds_derived_columns_without_embedded_series_objects()
             ],
             "fda_match_count": [1, 1],
             "drug_name": ["drug x", "drug y"],
-            "drug_id": ["EC:00001", "EC:00002"],
+            "id": ["EC:00001", "EC:00002"],
             "search_terms": [["drug x"], ["drug y"]],
             "available_in_combo_with": [[], []],
         }
@@ -537,7 +537,7 @@ def test_resolve_filtered_adds_derived_columns_without_embedded_series_objects()
 def test_resolve_biosimilar_generic_overrides_only_biosimilars_using_configured_bla_types() -> None:
     df = pd.DataFrame(
         {
-            "drug_id": ["EC:00001", "EC:00002", "EC:00003"],
+            "id": ["EC:00001", "EC:00002", "EC:00003"],
             "drug_name": ["drug a", "drug b", "drug c"],
             "is_biologics": [True, True, False],
             "is_fda_generic_drug": [True, True, False],
@@ -570,7 +570,7 @@ def test_resolve_biosimilar_generic_overrides_only_biosimilars_using_configured_
 def test_resolve_biosimilar_generic_supports_nested_param_shape() -> None:
     df = pd.DataFrame(
         {
-            "drug_id": ["EC:00001"],
+            "id": ["EC:00001"],
             "drug_name": ["drug a"],
             "is_biologics": [True],
             "is_fda_generic_drug": [False],
@@ -593,7 +593,7 @@ def test_resolve_biosimilar_generic_supports_nested_param_shape() -> None:
 def test_resolve_biosimilar_generic_uses_purple_book_bla_number_lookup() -> None:
     df = pd.DataFrame(
         {
-            "drug_id": ["EC:00001"],
+            "id": ["EC:00001"],
             "drug_name": ["adalimumab"],
             "is_biologics": [True],
             "is_fda_generic_drug": [False],
@@ -1256,7 +1256,7 @@ def test_match_drug_to_fda_worker_returns_expected_keys() -> None:
     assert "fda_rows" in result
     assert "fda_match_count" in result
     assert "drug_name" in result
-    assert "drug_id" in result
+    assert "id" in result
     assert "search_terms" in result
     assert "available_in_combo_with" in result
 
@@ -1270,7 +1270,7 @@ def test_match_drug_to_fda_worker_returns_expected_keys() -> None:
         ],
         "fda_match_count": 1,
         "drug_name": "alpha drug",
-        "drug_id": "EC:00001",
+        "id": "EC:00001",
         "search_terms": ["alpha"],
         "available_in_combo_with": [],
     }
@@ -1307,7 +1307,7 @@ def test_match_drug_to_fda_worker_finds_matching_row() -> None:
     assert result["fda_match_count"] == 1
     assert result["fda_rows"][0]["application_number"] == "ANDA111111"
     assert result["drug_name"] == "metformin drug"
-    assert result["drug_id"] == "EC:00002"
+    assert result["id"] == "EC:00002"
     assert result["search_terms"] == ["metformin"]
 
 

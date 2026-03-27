@@ -27,11 +27,6 @@ def _is_non_negative_integer(series: pa.typing.Series) -> pa.typing.Series:
     return series.apply(lambda x: isinstance(x, Integral) and x >= 0)
 
 
-def _is_non_negative_integer(series: pa.typing.Series) -> pa.typing.Series:
-    """Each cell must be a non-negative integer."""
-    return series.apply(lambda x: isinstance(x, Integral) and x >= 0)
-
-
 def _is_bool(series: pa.typing.Series) -> pa.typing.Series:
     """Each cell must be a bool."""
     return series.apply(lambda x: isinstance(x, bool))
