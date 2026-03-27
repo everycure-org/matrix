@@ -109,11 +109,11 @@ primary.fda_drugs_filtered_biosimilar_tsv:
 
 primary.fda_drug_labels_filtered_including_otc_monograph_parquet:
   <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-inlcuding-monograph.parquet
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-including-monograph.parquet
 
 primary.fda_drug_labels_filtered_including_otc_monograph_tsv:
     <<: [*_pandas_tsv]
-    filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-inlcuding-monograph.tsv
+    filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-including-monograph.tsv
 
 primary.fda_generic_drug_list:
   <<: [*_pandas_parquet]
