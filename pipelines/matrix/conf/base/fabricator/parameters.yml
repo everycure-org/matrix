@@ -164,7 +164,7 @@ fabricator.rtx_kg2:
           - 195959
           - 5059595
   drug_list:
-    num_rows: 20
+    num_rows: 110
     columns:
       id:
         type: generate_unique_id
@@ -233,7 +233,7 @@ fabricator.rtx_kg2:
           False: 0.9
 
   disease_list:
-    num_rows: 20
+    num_rows: 110
     columns:
       id:
         type: copy_column
