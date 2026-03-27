@@ -1,8 +1,23 @@
 import logging
 
+import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+
+def _expand_search_term(term: str) -> set[str]:
+    normalized_term = term.strip()
+    if normalized_term == "":
+        return set()
+
+    search_terms = {normalized_term}
+    words = normalized_term.split()
+    if len(words) == 2:
+        search_terms.add(f"{words[0]}, {words[1]}")
+        search_terms.add(f"{words[1]}, {words[0]}")
+
+    return search_terms
 
 
 def apply_patch(df: pd.DataFrame, patch_df: pd.DataFrame, patch_columns: list[str], merge_on: str) -> pd.DataFrame:
@@ -63,3 +78,64 @@ def _log_merge_statistics(
         if secondary_only_ids:
             sample_secondary_only = list(secondary_only_ids)[:5]  # Show first 5
             logger.warning(f"  - Sample {secondary_name}-only IDs: {sample_secondary_only}")
+
+
+def filter_dataframe_by_columns(df: pd.DataFrame, filter_columns: dict[str, str]) -> pd.DataFrame:
+    """
+    Filter a DataFrame by requiring each specified column to equal its expected value.
+
+    Columns listed in `filter_columns` that are not present in `df` are skipped with
+    a warning rather than raising an error, so callers can pass a superset of possible
+    filter keys without needing to guard against missing columns.
+
+    Args:
+        df: The dataframe to filter.
+        filter_columns: A mapping of column name → expected value. Rows are kept only
+            when every present column matches its expected value.
+
+    Returns:
+        A new dataframe containing only the rows that satisfy all filter conditions.
+    """
+
+    for col, expected_value in filter_columns.items():
+        if col in df.columns:
+            df = df[df[col] == expected_value]
+        else:
+            logger.warning(f"Filter column {col} not found in dataframe")
+    return df
+
+
+def create_search_term_from_curated_drug_list(
+    curated_drug_list: pd.DataFrame, curated_drug_list_columns_to_use_for_matching: list[str]
+) -> pd.DataFrame:
+    """
+    Create a dataframe with search terms for each drug based on specified columns.
+    Args:
+    curated_drug_list: The dataframe containing curated drugs
+    curated_drug_list_columns_to_use_for_matching: List of column names to use for generating
+        search terms (e.g., "name", "synonyms", "brand_names")
+
+    Returns:
+        A dataframe with columns "name", "id", "search_terms", and "available_in_combo_with", where "search_terms" is a set of terms generated from the specified columns for each drug
+    """
+    work_items = []
+    for _, row in curated_drug_list.iterrows():
+        search_terms = set()
+        for col in curated_drug_list_columns_to_use_for_matching:
+            value = row[col]
+            if isinstance(value, (list, np.ndarray)):
+                for item in value:
+                    if isinstance(item, str):
+                        search_terms.update(_expand_search_term(item))
+            elif isinstance(value, str):
+                search_terms.update(_expand_search_term(value))
+
+        work_items.append(
+            {
+                "name": row["name"],
+                "id": row["id"],
+                "search_terms": search_terms,
+                "available_in_combo_with": row["available_in_combo_with"],
+            }
+        )
+    return pd.DataFrame(work_items)

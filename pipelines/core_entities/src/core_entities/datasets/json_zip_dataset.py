@@ -3,13 +3,14 @@
 import io
 import json
 import zipfile
+from abc import ABC
 from typing import Any
 
 import requests
 from kedro.io.core import AbstractDataset, DatasetError
 
 
-class JSONZipDataset(AbstractDataset):
+class JSONZipDataset(AbstractDataset, ABC):
     """Load a JSON file embedded in a remote ZIP archive.
 
     Example catalog entry:

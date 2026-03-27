@@ -38,6 +38,54 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
             node(
+                func=nodes.resolve_fda_drugs_matches_to_drug_list_unfiltered,
+                inputs={
+                    "curated_drug_list": "primary.curated_drug_list",
+                    "fda_drug_list": "primary.fda_drug_list",
+                    "curated_drug_list_columns_to_use_for_matching": "params:drug_list.fda.curated_drug_list_columns_to_use_for_matching",
+                    "fda_drug_list_columns_to_use_for_matching": "params:drug_list.fda.fda_drug_list_columns_to_use_for_matching",
+                    "filter_curated_drug_list_params": "params:drug_list.fda.filter_curated_drug_list_params",
+                },
+                outputs="primary.fda_drug_labels_unfiltered",
+                name="resolve_fda_drugs_matches_to_drug_list_unfiltered",
+            ),
+            node(
+                func=nodes.resolve_fda_drugs_matches_to_drug_list_filtered,
+                inputs={
+                    "fda_drug_labels_unfiltered": "primary.fda_drug_labels_unfiltered",
+                },
+                outputs=[
+                    "primary.fda_drug_labels_filtered_parquet",
+                    "primary.fda_drug_labels_filtered_tsv",
+                ],
+                name="resolve_fda_drugs_matches_to_drug_list_filtered",
+            ),
+            node(
+                func=nodes.resolve_fda_drugs_that_are_biosimilar_and_are_generic,
+                inputs={
+                    "fda_drug_labels_filtered": "primary.fda_drug_labels_filtered_parquet",
+                    "fda_purple_book_params": "params:drug_list.fda_purple_book",
+                    "fda_purple_book_data": "raw.fda_purple_book_data",
+                },
+                outputs=[
+                    "primary.fda_drugs_filtered_biosimilar_parquet",
+                    "primary.fda_drugs_filtered_biosimilar_tsv",
+                ],
+                name="resolve_fda_drugs_that_are_biosimilar_and_are_generic",
+            ),
+            node(
+                func=nodes.resolve_fda_drugs_that_are_otc_monograph,
+                inputs={
+                    "fda_drug_labels_filtered": "primary.fda_drugs_filtered_biosimilar_parquet",
+                    "fda_labels_params": "params:drug_list.fda_labels",
+                },
+                outputs=[
+                    "primary.fda_drug_labels_filtered_including_otc_monograph_parquet",
+                    "primary.fda_drug_labels_filtered_including_otc_monograph_tsv",
+                ],
+                name="resolve_fda_drugs_that_are_otc_monograph",
+            ),
+            node(
                 func=nodes.resolve_drug_curies,
                 inputs={
                     "curated_drug_list": "primary.curated_drug_list",

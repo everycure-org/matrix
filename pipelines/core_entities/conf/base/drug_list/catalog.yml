@@ -37,6 +37,12 @@ raw.fda_drug_list:
   url: https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip
   member_name: drug-drugsfda-0001-of-0001.json
 
+raw.fda_purple_book_data:
+  type: pandas.CSVDataset
+  filepath: ${purple_book_url:}
+  load_args:
+    skiprows: 3
+
 # -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
@@ -80,6 +86,34 @@ primary.nodenorm_version:
 primary.fda_drug_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/fda-drug-list.parquet
+
+primary.fda_drug_labels_unfiltered:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-unfiltered.parquet
+
+primary.fda_drug_labels_filtered_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered.parquet
+
+primary.fda_drug_labels_filtered_tsv:
+    <<: [*_pandas_tsv]
+    filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered.tsv
+
+primary.fda_drugs_filtered_biosimilar_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drugs-filtered-biosimilar.parquet
+
+primary.fda_drugs_filtered_biosimilar_tsv:
+    <<: [*_pandas_tsv]
+    filepath: ${globals:paths.primary}/drug/fda-drugs-filtered-biosimilar.tsv
+
+primary.fda_drug_labels_filtered_including_otc_monograph_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-inlcuding-monograph.parquet
+
+primary.fda_drug_labels_filtered_including_otc_monograph_tsv:
+    <<: [*_pandas_tsv]
+    filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-inlcuding-monograph.tsv
 
 # -------------------------------------------------------------------------
 # Release
