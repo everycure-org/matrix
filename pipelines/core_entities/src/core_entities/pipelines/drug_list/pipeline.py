@@ -82,6 +82,7 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
                 outputs=[
                     "primary.fda_drug_labels_filtered_including_otc_monograph_parquet",
                     "primary.fda_drug_labels_filtered_including_otc_monograph_tsv",
+                    "primary.fda_generic_drug_list",
                 ],
                 name="resolve_fda_drugs_that_are_otc_monograph",
             ),
@@ -146,6 +147,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "drug_list_with_drugbank_id": "primary.drug_list_with_drugbank_id",
                     "release_columns": "params:drug_list.release_columns",
                     "drug_exception_list": "params:drug_list.drug_exception_list",
+                    "drug_list_with_fda_generic_drug_info": "primary.fda_generic_drug_list",
                 },
                 outputs=[
                     "primary.release.drug_list_parquet",

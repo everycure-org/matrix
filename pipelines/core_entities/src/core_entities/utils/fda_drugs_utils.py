@@ -242,7 +242,7 @@ def match_drug_to_fda_worker(
         "fda_rows": matching_fda_rows,
         "fda_match_count": len(matching_fda_rows),
         "drug_name": work_item["name"],
-        "drug_id": work_item["id"],
+        "id": work_item["id"],
         "search_terms": sorted(search_terms),
         "available_in_combo_with": work_item["available_in_combo_with"],
     }

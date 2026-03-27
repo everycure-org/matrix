@@ -57,6 +57,7 @@ drug_list:
     - deleted
     - deleted_reason
     - new_id
+    - is_fda_generic_drug
 
   fda:
     curated_drug_list_columns_to_use_for_matching:

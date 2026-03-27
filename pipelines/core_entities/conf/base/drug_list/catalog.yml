@@ -115,6 +115,10 @@ primary.fda_drug_labels_filtered_including_otc_monograph_tsv:
     <<: [*_pandas_tsv]
     filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-inlcuding-monograph.tsv
 
+primary.fda_generic_drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-generic-drug-list.parquet
+
 # -------------------------------------------------------------------------
 # Release
 # -------------------------------------------------------------------------

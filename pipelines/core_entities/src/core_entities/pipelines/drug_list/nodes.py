@@ -972,6 +972,7 @@ def get_log_nan_check(column_name: str):
             "deleted": pa.Column(dtype=bool, nullable=False),
             "deleted_reason": pa.Column(dtype=str, nullable=True),
             "new_id": pa.Column(dtype=str, nullable=True),
+            "is_fda_generic_drug": pa.Column(dtype=bool, nullable=False),
         },
         unique=["id"],
         strict=True,
@@ -983,6 +984,7 @@ def merge_drug_lists(
     normalized_drug_curies: pd.DataFrame,
     drug_list_with_atc_codes: pd.DataFrame,
     drug_list_with_drugbank_id: pd.DataFrame,
+    drug_list_with_fda_generic_drug_info: pd.DataFrame,
     release_columns: list[str],
     drug_exception_list: list[str],
 ) -> pd.DataFrame:
@@ -992,7 +994,13 @@ def merge_drug_lists(
         curated_drug_list.merge(normalized_drug_curies, on="id", how="left")
         .merge(drug_list_with_atc_codes, on="id", how="left")
         .merge(drug_list_with_drugbank_id, on="id", how="left")
+        .merge(drug_list_with_fda_generic_drug_info, on="id", how="left")
     )
+
+    if "is_fda_generic_drug" not in df.columns:
+        df["is_fda_generic_drug"] = False
+    else:
+        df["is_fda_generic_drug"] = df["is_fda_generic_drug"].fillna(False).astype(bool)
 
     df = df[~df["name"].isin(drug_exception_list)]
     df.loc[:, "name"] = df.loc[:, "name"].apply(lambda x: x.capitalize())
@@ -1051,7 +1059,7 @@ def resolve_fda_drugs_matches_to_drug_list_unfiltered(
                 "fda_rows",
                 "fda_match_count",
                 "drug_name",
-                "drug_id",
+                "id",
                 "search_terms",
                 "available_in_combo_with",
             ]
@@ -1393,5 +1401,9 @@ def resolve_fda_drugs_that_are_otc_monograph(
         axis=1,
     )
 
+    fda_generic_drug_list_with_ec_ids = fda_drug_labels_filtered.loc[
+        fda_drug_labels_filtered["is_fda_generic_drug"], ["id", "is_fda_generic_drug"]
+    ].copy()
+
     enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
-    return fda_drug_labels_filtered, enriched_tsv
+    return (fda_drug_labels_filtered, enriched_tsv, fda_generic_drug_list_with_ec_ids)

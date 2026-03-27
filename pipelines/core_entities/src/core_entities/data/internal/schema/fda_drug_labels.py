@@ -71,7 +71,7 @@ FDA_DRUG_LABELS_UNFILTERED_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "drug_name": pa.Column(nullable=False),
-        "drug_id": pa.Column(nullable=False),
+        "id": pa.Column(nullable=False),
         "search_terms": pa.Column(
             nullable=True,
             checks=[pa.Check(_is_list, title="search_terms must be a list")],
@@ -106,7 +106,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "drug_name": pa.Column(nullable=False),
-        "drug_id": pa.Column(nullable=False),
+        "id": pa.Column(nullable=False),
         "search_terms": pa.Column(
             nullable=True,
             checks=[pa.Check(_is_list, title="search_terms must be a list")],
@@ -197,7 +197,7 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "drug_name": pa.Column(nullable=False),
-        "drug_id": pa.Column(nullable=False),
+        "id": pa.Column(nullable=False),
         "search_terms": pa.Column(
             nullable=True,
             checks=[pa.Check(_is_list, title="search_terms must be a list")],
