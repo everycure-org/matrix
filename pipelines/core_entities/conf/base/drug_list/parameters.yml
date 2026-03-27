@@ -60,11 +60,10 @@ drug_list:
     - is_fda_generic_drug
 
   fda:
+    # NOTE: This section was partially updated using AI assistance.
     curated_drug_list_columns_to_use_for_matching:
       - name
       - synonyms
-    curated_drug_list_columns_to_use_for_matching_for_multiple_ingredient_or_substance_drugs:
-      - available_in_combo_with
     fda_drug_list_columns_to_use_for_matching:
       - openfda.substance_name
       - products.active_ingredients.name
