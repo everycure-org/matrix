@@ -9,13 +9,13 @@ from typing import Any
 import requests
 from kedro.io.core import AbstractDataset, DatasetError
 
-
+# NOTE: This file was partially generated using AI assistance.
 class JSONZipDataset(AbstractDataset, ABC):
     """Load a JSON file embedded in a remote ZIP archive.
 
     Example catalog entry:
         raw.fda_drug_list:
-          type: core_entities.datasets.fda.JSONZipDataset
+          type: core_entities.datasets.json_zip_dataset.JSONZipDataset
           url: https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip
           member_name: drug-drugsfda-0001-of-0001.json
     """
