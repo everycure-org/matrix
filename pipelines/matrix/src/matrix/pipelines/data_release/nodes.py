@@ -20,11 +20,11 @@ def join_array_columns(df: ps.DataFrame, cols: List[str], sep: str = SEPARATOR) 
             "subject": Column(T.StringType(), nullable=False),
             "predicate": Column(T.StringType(), nullable=False),
             "object": Column(T.StringType(), nullable=False),
+            "primary_knowledge_source": Column(T.StringType(), nullable=True),
             "upstream_data_source": Column(T.StringType(), nullable=False),
             "aggregator_knowledge_source": Column(T.StringType(), nullable=True),
             "publications": Column(T.StringType(), nullable=True),
         },
-        unique=["subject", "predicate", "object"],
     ),
     pass_columns=True,
 )

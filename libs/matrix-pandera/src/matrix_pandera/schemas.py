@@ -53,7 +53,6 @@ def get_matrix_edge_schema() -> DataFrameSchema:
             "num_references": Column(T.IntegerType(), nullable=True),
             "num_sentences": Column(T.IntegerType(), nullable=True),
         },
-        unique=["subject", "predicate", "object"],
         strict=True,
     )
 
@@ -107,6 +106,5 @@ def get_unioned_edge_schema() -> DataFrameSchema:
             "num_references": Column(T.IntegerType(), nullable=True),
             "num_sentences": Column(T.IntegerType(), nullable=True),
         },
-        unique=["subject", "predicate", "object"],
         strict=True,
     )

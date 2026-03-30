@@ -25,7 +25,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                 memory_request=75,
             ),
         ),
-        node(
+        ArgoNode(
             func=nodes.filter_unified_kg_edges,
             inputs=[
                 "filtering.prm.prefiltered_nodes",
@@ -38,6 +38,10 @@ def create_pipeline(**kwargs) -> Pipeline:
                 "argowf.fuse",
                 "argowf.fuse-group.filtering",
             ],
+            argo_config=ArgoResourceConfig(
+                memory_limit=96,
+                memory_request=96,
+            ),
         ),
         node(
             func=nodes.filter_nodes_without_edges,
