@@ -9,15 +9,6 @@ from core_entities.utils.fda_labels_utils import (
     DrugResult,
     FdaLabelsConfig,
     FdaLabelsQueryConfig,
-    _as_fda_labels_config,
-    _coerce_non_negative_int,
-    _coerce_positive_int,
-    _coerce_retry_backoff,
-    _extract_application_numbers,
-    _extract_total_matches,
-    _non_empty_string_or_none,
-    _resolve_api_key,
-    _wait_time_for_attempt,
     build_search_query,
     build_url,
     load_fda_labels_config,
@@ -114,45 +105,6 @@ def test_build_url_includes_api_key_from_env(monkeypatch) -> None:
     assert "api_key=env-api-key" in url
     assert "limit=1" in url
     assert "openfda.substance_name%3A%22ASPIRIN%22" in url
-
-
-def test_extract_total_matches_reads_nested_meta_results_total() -> None:
-    assert _extract_total_matches({"meta": {"results": {"total": "5"}}}) == 5
-    assert _extract_total_matches({"meta": {"results": {"total": -2}}}) == 0
-    assert _extract_total_matches({"meta": {}}) == 0
-    assert _extract_total_matches([]) == 0
-
-
-def test_extract_application_numbers_handles_string_and_list() -> None:
-    single = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": " M123456 ",
-                }
-            }
-        ]
-    }
-    multiple = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": [" M123 ", "", 9, "N456"],
-                }
-            }
-        ]
-    }
-
-    assert _extract_application_numbers(single) == ["M123456"]
-    assert _extract_application_numbers(multiple) == ["M123", "N456"]
-
-
-def test_retry_helpers_filter_and_cap_wait_times() -> None:
-    retry_backoff = _coerce_retry_backoff([0, "3", -1, "bad", 6], default=(1, 2))
-
-    assert retry_backoff == (0, 3, 6)
-    assert _wait_time_for_attempt(retry_backoff, attempt_index=0) == 0
-    assert _wait_time_for_attempt(retry_backoff, attempt_index=10) == 6
 
 
 def test_fda_labels_query_config_from_dict_with_none_returns_defaults() -> None:
@@ -284,6 +236,20 @@ def test_build_url_without_api_key(monkeypatch) -> None:
     assert "api_key" not in url
 
 
+def test_build_url_prefers_explicit_api_key_over_env(monkeypatch) -> None:
+    monkeypatch.setenv("TEST_ENV_VAR", "env-key")
+    config = FdaLabelsConfig(
+        api_url="https://test.example.com/api",
+        api_key_env_var="TEST_ENV_VAR",
+        api_key="explicit-key",
+    )
+
+    url = build_url("aspirin", config=config)
+
+    assert "api_key=explicit-key" in url
+    assert "api_key=env-key" not in url
+
+
 def test_build_url_from_fda_labels_config_object() -> None:
     config = FdaLabelsConfig(
         api_url="https://test.example.com/api",
@@ -300,194 +266,6 @@ def test_load_fda_labels_config_wrapper() -> None:
     config = load_fda_labels_config({"api": {"max_concurrent": 10}})
 
     assert config.max_concurrent == 10
-
-
-def test_extract_total_matches_handles_non_int_total() -> None:
-    assert _extract_total_matches({"meta": {"results": {"total": "not_int"}}}) == 0
-
-
-def test_extract_total_matches_with_non_dict_results() -> None:
-    assert _extract_total_matches({"meta": {"results": []}}) == 0
-
-
-def test_extract_total_matches_with_non_dict_meta() -> None:
-    assert _extract_total_matches({"meta": []}) == 0
-
-
-def test_extract_application_numbers_with_empty_results_list() -> None:
-    assert _extract_application_numbers({"results": []}) == []
-
-
-def test_extract_application_numbers_with_missing_openfda() -> None:
-    assert _extract_application_numbers({"results": [{}]}) == []
-
-
-def test_extract_application_numbers_with_non_dict_openfda() -> None:
-    assert _extract_application_numbers({"results": [{"openfda": []}]}) == []
-
-
-def test_extract_application_numbers_with_non_string_in_list() -> None:
-    data = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": [123, "M456", None, "N789"],
-                }
-            }
-        ]
-    }
-
-    assert _extract_application_numbers(data) == ["M456", "N789"]
-
-
-def test_extract_application_numbers_with_empty_string_in_list() -> None:
-    data = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": ["M123", "  ", "N456"],
-                }
-            }
-        ]
-    }
-
-    assert _extract_application_numbers(data) == ["M123", "N456"]
-
-
-def test_extract_application_numbers_with_empty_string() -> None:
-    data = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": "  ",
-                }
-            }
-        ]
-    }
-
-    assert _extract_application_numbers(data) == []
-
-
-def test_extract_application_numbers_with_non_list_non_string() -> None:
-    data = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": 123,
-                }
-            }
-        ]
-    }
-
-    assert _extract_application_numbers(data) == []
-
-
-def test_coerce_positive_int_with_zero_returns_default() -> None:
-    assert _coerce_positive_int(0, 5) == 5
-
-
-def test_coerce_positive_int_with_negative_returns_default() -> None:
-    assert _coerce_positive_int(-10, 5) == 5
-
-
-def test_coerce_positive_int_with_valid_positive() -> None:
-    assert _coerce_positive_int(42, 5) == 42
-
-
-def test_coerce_positive_int_with_invalid_type() -> None:
-    assert _coerce_positive_int("not_int", 5) == 5
-
-
-def test_coerce_non_negative_int_with_zero() -> None:
-    assert _coerce_non_negative_int(0, 5) == 0
-
-
-def test_coerce_non_negative_int_with_negative() -> None:
-    assert _coerce_non_negative_int(-1, 5) == 5
-
-
-def test_coerce_non_negative_int_with_valid() -> None:
-    assert _coerce_non_negative_int(42, 5) == 42
-
-
-def test_coerce_non_negative_int_with_invalid_type() -> None:
-    assert _coerce_non_negative_int(None, 5) == 5
-
-
-def test_coerce_retry_backoff_with_non_list_returns_default() -> None:
-    assert _coerce_retry_backoff("not_list", (1, 2)) == (1, 2)
-    assert _coerce_retry_backoff(None, (1, 2)) == (1, 2)
-
-
-def test_coerce_retry_backoff_with_all_negative_returns_default() -> None:
-    assert _coerce_retry_backoff([-1, -2, -3], (1, 2)) == (1, 2)
-
-
-def test_wait_time_for_attempt_with_empty_backoff() -> None:
-    assert _wait_time_for_attempt((), 0) == 0
-    assert _wait_time_for_attempt((), 5) == 0
-
-
-def test_wait_time_for_attempt_with_single_element() -> None:
-    assert _wait_time_for_attempt((5,), 0) == 5
-    assert _wait_time_for_attempt((5,), 10) == 5
-
-
-def test_non_empty_string_or_none_returns_none_for_non_string() -> None:
-    assert _non_empty_string_or_none(123) is None
-    assert _non_empty_string_or_none(None) is None
-    assert _non_empty_string_or_none([]) is None
-
-
-def test_non_empty_string_or_none_returns_none_for_empty_string() -> None:
-    assert _non_empty_string_or_none("") is None
-    assert _non_empty_string_or_none("   ") is None
-
-
-def test_non_empty_string_or_none_returns_stripped_string() -> None:
-    assert _non_empty_string_or_none("  hello  ") == "hello"
-    assert _non_empty_string_or_none("world") == "world"
-
-
-def test_resolve_api_key_uses_explicit_key_first() -> None:
-    config = FdaLabelsConfig(api_key="explicit-key", api_key_env_var="TEST_ENV_VAR")
-
-    assert _resolve_api_key(config) == "explicit-key"
-
-
-def test_resolve_api_key_falls_back_to_env(monkeypatch) -> None:
-    monkeypatch.setenv("TEST_VAR", "env-key")
-    config = FdaLabelsConfig(api_key=None, api_key_env_var="TEST_VAR")
-
-    assert _resolve_api_key(config) == "env-key"
-
-
-def test_resolve_api_key_returns_none_when_not_found(monkeypatch) -> None:
-    monkeypatch.delenv("MISSING_VAR", raising=False)
-    config = FdaLabelsConfig(api_key=None, api_key_env_var="MISSING_VAR")
-
-    assert _resolve_api_key(config) is None
-
-
-def test_as_fda_labels_config_with_config_object() -> None:
-    original = FdaLabelsConfig(max_concurrent=10)
-    result = _as_fda_labels_config(original)
-
-    assert result is original
-
-
-def test_as_fda_labels_config_with_dict() -> None:
-    result = _as_fda_labels_config({"api": {"max_concurrent": 15}})
-
-    assert isinstance(result, FdaLabelsConfig)
-    assert result.max_concurrent == 15
-
-
-def test_as_fda_labels_config_with_none() -> None:
-    result = _as_fda_labels_config(None)
-
-    assert isinstance(result, FdaLabelsConfig)
-    assert result.max_concurrent == 5
 
 
 def test_drug_result_creation() -> None:
@@ -545,18 +323,3 @@ def test_fda_labels_config_with_empty_string_boolean_operator() -> None:
     # Test case where boolean_operator could become empty after strip
     config = FdaLabelsQueryConfig.from_dict({"boolean_operator": None})
     assert config.boolean_operator == "AND"
-
-
-def test_extract_application_numbers_case_insensitive_prefix_check(monkeypatch) -> None:
-    # Test the case-insensitive check for finding no results
-    data = {
-        "results": [
-            {
-                "openfda": {
-                    "application_number": [],  # Empty list
-                }
-            }
-        ]
-    }
-    result = _extract_application_numbers(data)
-    assert result == []

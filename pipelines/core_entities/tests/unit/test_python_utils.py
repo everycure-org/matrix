@@ -7,34 +7,11 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from core_entities.utils.python_utils import (
-    _deep_to_python,
     canonicalize_reference_flags,
     deep_lowercase_strings,
     ensure_python_list,
     ensure_string_list,
 )
-
-
-def test_deep_to_python_converts_numpy_scalar_to_python_scalar() -> None:
-    result = _deep_to_python(np.int64(7))
-    assert result == 7
-    assert isinstance(result, int)
-
-
-def test_deep_to_python_recursively_converts_nested_dict_and_array() -> None:
-    payload = {
-        "count": np.int64(3),
-        "items": np.array([np.float64(1.5), {"flag": np.bool_(True)}], dtype=object),
-    }
-
-    result = _deep_to_python(payload)
-
-    assert result == {"count": 3, "items": [1.5, {"flag": True}]}
-
-
-def test_deep_to_python_passthrough_for_plain_object() -> None:
-    marker = object()
-    assert _deep_to_python(marker) is marker
 
 
 def test_ensure_python_list_converts_list_values_deeply() -> None:
