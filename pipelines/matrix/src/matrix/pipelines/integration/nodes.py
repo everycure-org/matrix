@@ -68,27 +68,43 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
         .drop("core_id")
     )
 
-    unioned_dataset = (
-        unioned_edges.groupBy(["subject", "predicate", "object"])
-        .agg(
-            F.flatten(F.collect_set("upstream_data_source")).alias("upstream_data_source"),
-            # TODO: we shouldn't just take the first one but collect these values from multiple upstream sources
-            F.first("knowledge_level", ignorenulls=True).alias("knowledge_level"),
-            F.first("agent_type", ignorenulls=True).alias("agent_type"),
-            F.first("subject_aspect_qualifier", ignorenulls=True).alias("subject_aspect_qualifier"),
-            F.first("subject_direction_qualifier", ignorenulls=True).alias("subject_direction_qualifier"),
-            F.first("object_direction_qualifier", ignorenulls=True).alias("object_direction_qualifier"),
-            F.first("object_aspect_qualifier", ignorenulls=True).alias("object_aspect_qualifier"),
-            F.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
-            F.flatten(F.collect_set("aggregator_knowledge_source")).alias("aggregator_knowledge_source"),
-            F.collect_set(F.col("primary_knowledge_source")).alias("primary_knowledge_sources"),
-            F.flatten(F.collect_set("publications")).alias("publications"),
-            F.max("num_references").cast(T.IntegerType()).alias("num_references"),
-            F.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
-        )
-        .select(*cols)
+    pre_dedup_count = unioned_edges.count()
+    logger.info(f"union_edges: {pre_dedup_count} total edges before dedup")
+
+    # Dedup on subject, predicate, object (SPO), primary_knowledge_source (PKS) and upstream_data_source: preserves rows that
+    # genuinely differ in qualifiers or publications, while dropping exact duplicates within the same upstream KG.
+    # Same-PKS edges from different upstream KGs (e.g. rtxkg2 and robokop both carrying
+    # infores:bindingDB) are kept as separate rows here; DeduplicateEdges in the filtering
+    # pipeline merges their upstream_data_source arrays when collapsing by SPO.
+    unioned_edges = unioned_edges.dropDuplicates(
+        ["subject", "predicate", "object", "primary_knowledge_source", "upstream_data_source"]
     )
-    return unioned_dataset
+
+    post_dedup_count = unioned_edges.count()
+    logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")
+
+    # Compute num_references as the count of unique publications per edge for any source
+    # that did not already set it (e.g. RTX-KG2/SemMedDB sets it in filter_semmed).
+    # Guard against -1: F.size() returns -1 for null arrays (e.g. filter_semmed sets
+    # num_references without a null guard on publications), so treat -1 as unset.
+    unioned_edges = unioned_edges.withColumn(
+        "num_references",
+        F.coalesce(
+            F.when(F.col("num_references") > F.lit(0), F.col("num_references")),
+            F.when(
+                F.col("publications").isNotNull(),
+                F.size(F.array_distinct(F.col("publications"))),
+            ).otherwise(F.lit(None).cast(T.IntegerType())),
+        ),
+    )
+
+    # Compute primary_knowledge_sources: all PKS values asserting the same (S, P, O) triple.
+    # Each edge row retains its own attributes while also carrying cross-source provenance.
+    spo_pks_mapping = unioned_edges.groupBy(["subject", "predicate", "object"]).agg(
+        F.collect_set("primary_knowledge_source").alias("primary_knowledge_sources")
+    )
+
+    return unioned_edges.join(spo_pks_mapping, on=["subject", "predicate", "object"], how="left").select(*cols)
 
 
 def unify_ground_truth(*edges) -> ps.DataFrame:
@@ -219,11 +235,8 @@ def normalize_edges(
     edges = edges.withColumnsRenamed({"subject": "original_subject", "object": "original_object"})
     edges = edges.withColumnsRenamed({"subject_normalized": "subject", "object_normalized": "object"})
 
-    dedup_cols = ["subject", "predicate", "object"]
-    if "primary_knowledge_source" in edges.columns:
-        dedup_cols.append("primary_knowledge_source")
-
-    edges = edges.dropDuplicates(subset=dedup_cols)
+    edges = edges.dropDuplicates()
+    logger.info(f"normalize_edges: {edges.count()} edges after normalization and exact-row dedup")
 
     return edges
 

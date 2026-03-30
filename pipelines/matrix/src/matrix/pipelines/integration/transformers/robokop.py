@@ -108,33 +108,79 @@ def transform_nodes_30fd1bfc18cd5ccb(nodes_df: ps.DataFrame):
 def transform_edges_30fd1bfc18cd5ccb(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
+          # Qualifiers
+          .withColumn("qualified_predicate",                      F.col("qualified_predicate").cast(T.StringType()))
+          .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
+          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+          .withColumn("subject_part_qualifier",                   F.col("subject_part_qualifier").cast(T.StringType()))
+          .withColumn("object_aspect_qualifier",                  F.col("object_aspect_qualifier").cast(T.StringType()))
+          .withColumn("object_direction_qualifier",               F.col("object_direction_qualifier").cast(T.StringType()))
+          .withColumn("object_specialization_qualifier",          F.col("object_specialization_qualifier").cast(T.StringType()))
+          .withColumn("object_part_qualifier",                    F.col("object_part_qualifier").cast(T.StringType()))
+          .withColumn("species_context_qualifier",                F.col("species_context_qualifier").cast(T.StringType()))
+          .withColumn("disease_context_qualifier",                F.col("disease_context_qualifier").cast(T.StringType()))
+          .withColumn("frequency_qualifier",                      F.col("frequency_qualifier").cast(T.StringType()))
+          .withColumn("qualifiers",                               F.col("qualifiers").cast(T.StringType()))
+          .withColumn("stage_qualifier",                          F.col("stage_qualifier").cast(T.StringType()))
+          .withColumn("anatomical_context_qualifier",             F.col("anatomical_context_qualifier").cast(T.StringType()))
+          .withColumn("onset_qualifier",                          F.col("onset_qualifier").cast(T.StringType()))
+          .withColumn("sex_qualifier",                            F.col("sex_qualifier").cast(T.StringType()))
+          # Provenance
           .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), ROBOKOP_SEPARATOR))
           .withColumn("publications",                             F.split(F.col("publications"), ROBOKOP_SEPARATOR))
           .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
-          .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
-          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+          # Quantitative attributes
+          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
+          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
+          .withColumn("has_confidence_score",                     F.col("Combined_score").cast(T.FloatType()))  # From STRING-DB
+          .withColumn("extraction_confidence_score",              F.col("tmkp_confidence_score").cast(T.FloatType()))  # From Text-mining Knowledge Provider
+          .withColumn("affinity",                                 F.col("affinity").cast(T.FloatType()))  # Affinity measurement type (ie pKd, pIC50, pKs)
+          .withColumn("affinity_parameter",                       F.col("affinity_parameter").cast(T.StringType()))  # Affinity measurement value
+          .withColumn("supporting_study_method_type",             F.col("detection_method").cast(T.StringType()))  # From IntAct
     )
-    # fmt: off
+    # fmt: on
     return df
 
 
 def transform_edges_c5ec1f282158182f(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
+          # Core — legacy version uses annotated column names
           .withColumnRenamed("subject:START_ID",                  "subject")
           .withColumnRenamed("predicate:TYPE",                    "predicate")
           .withColumnRenamed("object:END_ID",                     "object")
-          .withColumnRenamed("knowledge_level:string",            "knowledge_level")
-          .withColumnRenamed("primary_knowledge_source:string",   "primary_knowledge_source")
-          .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
-          .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
-          .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
-          .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
-          .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
+          # Qualifiers — rename annotated source cols; columns absent from source are null
+          .withColumnRenamed("qualified_predicate:string",        "qualified_predicate")
           .withColumn("subject_aspect_qualifier",                 F.lit(None).cast(T.StringType()))
           .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
-    )
-    # fmt: off
+          .withColumn("subject_part_qualifier",                   F.lit(None).cast(T.StringType()))
+          .withColumnRenamed("object_aspect_qualifier:string",    "object_aspect_qualifier")
+          .withColumnRenamed("object_direction_qualifier:string", "object_direction_qualifier")
+          .withColumn("object_specialization_qualifier",          F.lit(None).cast(T.StringType()))
+          .withColumn("object_part_qualifier",                    F.lit(None).cast(T.StringType()))
+          .withColumnRenamed("species_context_qualifier:string",  "species_context_qualifier")
+          .withColumn("disease_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumnRenamed("frequency_qualifier:string",        "frequency_qualifier")
+          .withColumn("qualifiers",                               F.lit(None).cast(T.StringType()))
+          .withColumnRenamed("stage_qualifier:string",            "stage_qualifier")
+          .withColumn("anatomical_context_qualifier",             F.lit(None).cast(T.StringType()))
+          .withColumnRenamed("onset_qualifier:string",            "onset_qualifier")
+          .withColumnRenamed("sex_qualifier:string",              "sex_qualifier")
+          # Provenance — legacy version uses annotated column names
+          .withColumnRenamed("knowledge_level:string",            "knowledge_level")
+          .withColumnRenamed("agent_type:string",                 "agent_type")
+          .withColumnRenamed("primary_knowledge_source:string",   "primary_knowledge_source")
+          .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source:string[]"), ROBOKOP_SEPARATOR))
+          .withColumn("publications",                             F.split(F.col("publications:string[]"), ROBOKOP_SEPARATOR))
+          .withColumn("upstream_data_source",                     F.array(F.lit("robokop")))
+          # Quantitative attributes
+          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
+          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
+          .withColumn("has_confidence_score",                     F.col("Combined_score:string").cast(T.FloatType()))
+          .withColumn("extraction_confidence_score",              F.col("tmkp_confidence_score:float").cast(T.FloatType()))
+          .withColumn("affinity",                                 F.col("supporting_affinities:float[affinity:float").cast(T.FloatType()))
+          .withColumnRenamed("affinity_parameter:string",         "affinity_parameter")
+          .withColumn("supporting_study_method_type",             F.col("detection_method:string").cast(T.StringType()))
+          )
+    # fmt: on
     return df

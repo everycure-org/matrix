@@ -4,7 +4,7 @@ import pyspark.sql as ps
 import pytest
 from matrix.pipelines.integration import nodes
 from pyspark.sql import functions as F
-from pyspark.sql.types import ArrayType, BooleanType, IntegerType, StringType, StructField, StructType
+from pyspark.sql.types import ArrayType, BooleanType, FloatType, IntegerType, StringType, StructField, StructType
 
 
 @pytest.fixture
@@ -71,18 +71,35 @@ def sample_edges(spark):
             StructField("subject", StringType(), False),
             StructField("predicate", StringType(), False),
             StructField("object", StringType(), False),
+            StructField("qualified_predicate", StringType(), True),
+            StructField("subject_aspect_qualifier", StringType(), True),
+            StructField("subject_direction_qualifier", StringType(), True),
+            StructField("subject_part_qualifier", StringType(), True),
+            StructField("object_aspect_qualifier", StringType(), True),
+            StructField("object_direction_qualifier", StringType(), True),
+            StructField("object_specialization_qualifier", StringType(), True),
+            StructField("object_part_qualifier", StringType(), True),
+            StructField("species_context_qualifier", StringType(), True),
+            StructField("disease_context_qualifier", StringType(), True),
+            StructField("frequency_qualifier", StringType(), True),
+            StructField("qualifiers", StringType(), True),
+            StructField("stage_qualifier", StringType(), True),
+            StructField("anatomical_context_qualifier", StringType(), True),
+            StructField("onset_qualifier", StringType(), True),
+            StructField("sex_qualifier", StringType(), True),
             StructField("knowledge_level", StringType(), True),
             StructField("agent_type", StringType(), True),
             StructField("primary_knowledge_source", StringType(), True),
             StructField("aggregator_knowledge_source", ArrayType(StringType()), True),
             StructField("publications", ArrayType(StringType()), True),
-            StructField("subject_aspect_qualifier", StringType(), True),
-            StructField("subject_direction_qualifier", StringType(), True),
-            StructField("object_aspect_qualifier", StringType(), True),
-            StructField("object_direction_qualifier", StringType(), True),
             StructField("upstream_data_source", ArrayType(StringType()), False),
             StructField("num_references", IntegerType(), True),
             StructField("num_sentences", IntegerType(), True),
+            StructField("has_confidence_score", FloatType(), True),
+            StructField("extraction_confidence_score", FloatType(), True),
+            StructField("affinity", FloatType(), True),
+            StructField("affinity_parameter", StringType(), True),
+            StructField("supporting_study_method_type", StringType(), True),
         ]
     )
     data = [
@@ -90,52 +107,103 @@ def sample_edges(spark):
             "CHEBI:119157",
             "biolink:treats",
             "MONDO:0005148",
+            None,
+            "aspect1",
+            "increased",
+            None,
+            "aspect2",
+            "decreased",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             "knowledge_assertion",
             "manual_agent",
             "infores:semmeddb",
             ["infores:aggregator1"],
             ["PMID:12345678"],
-            "aspect1",
-            "increased",
-            "aspect2",
-            "decreased",
             ["source1"],
-            10,
-            10,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
         (
             "CHEBI:120688",
             "biolink:interacts_with",
             "CHEBI:119157",
+            None,
+            "aspect3",
+            "decreased",
+            None,
+            "aspect4",
+            "increased",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             "prediction",
             "computational_model",
             "infores:gtex",
             ["infores:aggregator2"],
             ["PMID:23456789"],
-            "aspect3",
-            "decreased",
-            "aspect4",
-            "increased",
             ["source2"],
-            10,
-            10,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
         (
             "CHEBI:119157",
             "biolink:treats",
             "MONDO:0005148",
+            None,
+            "aspect5",
+            "increased",
+            None,
+            "aspect6",
+            "decreased",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             "knowledge_assertion",
             "manual_agent",
             "infores:ubergraph",
             ["infores:aggregator3"],
             ["PMID:34567890"],
-            "aspect5",
-            "increased",
-            "aspect6",
-            "decreased",
             ["source3"],
-            10,
-            10,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
         ),
     ]
     return spark.createDataFrame(data, schema)
@@ -538,15 +606,28 @@ def test_unify_edges(spark, sample_edges):
     # Call the unify_edges function
     result = nodes.union_edges(core_id_mapping, edges1, edges2)
 
-    # Check the result
+    # Edges from different PKS are preserved as separate rows — no cross-source collapse
     assert isinstance(result, ps.DataFrame)
-    assert result.count() == 2  # Should have deduplicated
+    assert result.count() == 3
 
-    # Check if the properties are combined correctly for the duplicated edge
-    treat_edge = result.filter((result.subject == "CHEBI:119157") & (result.object == "MONDO:0005148")).collect()[0]
-    assert treat_edge.knowledge_level == "knowledge_assertion"
-    assert treat_edge.agent_type == "manual_agent"
-    assert treat_edge.primary_knowledge_source == "infores:semmeddb"
-    assert set(treat_edge.aggregator_knowledge_source) == {"infores:aggregator1", "infores:aggregator3"}
-    assert set(treat_edge.publications) == {"PMID:12345678", "PMID:34567890"}
-    assert set(treat_edge.upstream_data_source) == {"source1", "source3"}
+    # Each treat edge retains its own per-source attributes
+    treat_edges = result.filter((result.subject == "CHEBI:119157") & (result.object == "MONDO:0005148"))
+    assert treat_edges.count() == 2
+
+    semmed_edge = treat_edges.filter(treat_edges.primary_knowledge_source == "infores:semmeddb").collect()[0]
+    assert semmed_edge.knowledge_level == "knowledge_assertion"
+    assert semmed_edge.agent_type == "manual_agent"
+    assert semmed_edge.publications == ["PMID:12345678"]
+    assert semmed_edge.upstream_data_source == ["source1"]
+
+    ubergraph_edge = treat_edges.filter(treat_edges.primary_knowledge_source == "infores:ubergraph").collect()[0]
+    assert ubergraph_edge.publications == ["PMID:34567890"]
+    assert ubergraph_edge.upstream_data_source == ["source3"]
+
+    # primary_knowledge_sources carries cross-source provenance for the SPO triple on each row
+    assert set(semmed_edge.primary_knowledge_sources) == {"infores:semmeddb", "infores:ubergraph"}
+    assert set(ubergraph_edge.primary_knowledge_sources) == {"infores:semmeddb", "infores:ubergraph"}
+
+    # num_references is computed from unique publications — each edge has 1 publication
+    assert semmed_edge.num_references == 1
+    assert ubergraph_edge.num_references == 1

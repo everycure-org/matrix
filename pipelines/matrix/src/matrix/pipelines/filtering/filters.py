@@ -6,6 +6,7 @@ from typing import List, Optional
 import pyspark.sql as ps
 import pyspark.sql.functions as sf
 from bmt import toolkit
+from matrix_pandera.schemas import get_unioned_edge_schema
 from matrix_pandera.validator import Column, DataFrameSchema, check_output
 from pyspark.sql import types as T
 
@@ -66,49 +67,46 @@ class BiolinkDeduplicateEdges(Filter):
         Deduplicated DataFrame
     """
 
-    @check_output(
-        DataFrameSchema(
-            columns={
-                "subject": Column(T.StringType(), nullable=False),
-                "predicate": Column(T.StringType(), nullable=False),
-                "object": Column(T.StringType(), nullable=False),
-            },
-            unique=["subject", "object", "predicate"],
-        ),
-    )
     def apply(self, df: ps.DataFrame) -> ps.DataFrame:
-        # Enrich edges with path to predicates in biolink hierarchy
-        edges_df = df.withColumn(
-            "parents", sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate"))
-        ).cache()
-
-        # Self join to find edges that are redundant
-        duplicates = (
-            edges_df.alias("A")
-            .join(
-                edges_df.alias("B"),
-                on=[
-                    (sf.col("A.subject") == sf.col("B.subject"))
-                    & (sf.col("A.object") == sf.col("B.object"))
-                    & (sf.col("A.predicate") != sf.col("B.predicate"))
-                ],
-                how="left",
-            )
-            .withColumn(
-                "subpath",
-                sf.col("B.parents").isNotNull() & sf.expr("forall(A.parents, x -> array_contains(B.parents, x))"),
-            )
-            .filter(sf.col("subpath"))
-            .select("A.*")
-            .select("subject", "object", "predicate")
+        edge_predicate_parents = (
+            df.select("subject", "object", "predicate")
             .distinct()
+            .withColumn(
+                "parents",
+                sf.udf(get_ancestors_for_category_delimited, T.ArrayType(T.StringType()))(sf.col("predicate")),
+            )
         )
 
-        return (
-            edges_df.alias("edges")
-            .join(duplicates, on=["subject", "object", "predicate"], how="left_anti")
-            .select("edges.*")
+        def _find_redundant_predicates(pred_parents):
+            """Return predicates that are redundant because a more specific predicate exists.
+
+            Predicate A is redundant if there exists predicate B where A's ancestors are a
+            subset of B's ancestors — meaning B is more specific than A in the biolink hierarchy.
+            """
+            redundant = []
+            for row_a in pred_parents:
+                pred_a, parents_a = row_a["predicate"], row_a["parents"]
+                if not parents_a:
+                    continue
+                parents_a_set = set(parents_a)
+                for row_b in pred_parents:
+                    pred_b, parents_b = row_b["predicate"], row_b["parents"]
+                    if pred_a != pred_b and parents_b and parents_a_set.issubset(set(parents_b)):
+                        redundant.append(pred_a)
+                        break
+            return redundant
+
+        redundant = (
+            edge_predicate_parents.groupBy(["subject", "object"])
+            .agg(sf.collect_list(sf.struct("predicate", "parents")).alias("pred_parents"))
+            .withColumn(
+                "redundant_predicates",
+                sf.udf(_find_redundant_predicates, T.ArrayType(T.StringType()))(sf.col("pred_parents")),
+            )
+            .select("subject", "object", sf.explode("redundant_predicates").alias("predicate"))
         )
+
+        return df.join(redundant, on=["subject", "object", "predicate"], how="left_anti")
 
 
 class KeepRowsContaining(Filter):
@@ -215,3 +213,98 @@ class TriplePattern(Filter):
                 sf.col("upstream_data_source"), sf.lit(self.excluded_sources)
             )
         return df.filter(filter_condition)
+
+
+# All columns in the unioned_edges
+_KNOWN_EDGE_SCHEMA_COLS = frozenset(get_unioned_edge_schema().columns.keys())
+
+# Excluded from source_edge_properties column, keep at top level
+_EXCLUDED_FROM_MAP = frozenset(
+    {"subject", "predicate", "object", "primary_knowledge_source", "primary_knowledge_sources", "upstream_data_source"}
+)
+
+
+class DeduplicateEdges(Filter):
+    """Collapses duplicate (subject, predicate, object) triples into a single edge.
+
+    Qualifier and evidence fields (knowledge_level, agent_type, qualifiers, publications,
+    num_references, num_sentences) are captured in source_edge_properties — a JSON string
+    encoding a map keyed by primary_knowledge_source — preserving per-source detail instead
+    of using F.first().
+
+    publications, num_references, and num_sentences also remain as flat top-level aggregations
+    for convenience.
+
+    Columns added by the filtering pipeline (e.g. subject_category, object_category) are
+    preserved by including them in the groupBy key; they are excluded from source_edge_properties.
+    """
+
+    @check_output(
+        DataFrameSchema(
+            columns={
+                "subject": Column(T.StringType(), nullable=False),
+                "predicate": Column(T.StringType(), nullable=False),
+                "object": Column(T.StringType(), nullable=False),
+            },
+            unique=["subject", "object", "predicate"],
+        ),
+    )
+    def apply(self, df: ps.DataFrame) -> ps.DataFrame:
+        filtering_pipeline_cols = [c for c in df.columns if c not in _KNOWN_EDGE_SCHEMA_COLS]
+
+        source_property_cols = [
+            c for c in df.columns if c not in _EXCLUDED_FROM_MAP and c not in filtering_pipeline_cols
+        ]
+
+        groupby_keys = ["subject", "predicate", "object"] + filtering_pipeline_cols
+
+        array_type_cols = {
+            f.name for f in df.schema.fields if isinstance(f.dataType, T.ArrayType) and f.name in source_property_cols
+        }
+
+        def _step1_agg(col_name):
+            """Aggregate a source_property column within (subject, predicate, object, primary-knowledge-source).
+
+            Arrays are flattened and deduplicated. Integers take the max.
+            Scalar strings are collected into a set of all distinct non-null values,
+            so qualifier values from different upstream KGs are preserved.
+            """
+            if col_name in array_type_cols:
+                return sf.array_distinct(sf.flatten(sf.collect_list(col_name))).alias(col_name)
+            elif col_name == "num_references":
+                return sf.sum("num_references").alias("num_references")
+            elif isinstance(df.schema[col_name].dataType, (T.IntegerType, T.LongType, T.ShortType)):
+                return sf.max(col_name).alias(col_name)
+            else:
+                return sf.collect_set(col_name).alias(col_name)
+
+        # Step 1: merge rows with same subject, predicate, object, (SPO) primary_knowledge_source (PKS) from different
+        # upstream KGs. upstream_data_source arrays are unioned; scalar qualifier fields become arrays of all distinct
+        # observed values (collect_set ignores nulls).
+        per_pks = df.groupBy(groupby_keys + ["primary_knowledge_source"]).agg(
+            sf.array_distinct(sf.flatten(sf.collect_list("upstream_data_source"))).alias("upstream_data_source"),
+            *[_step1_agg(c) for c in source_property_cols],
+        )
+
+        # Step 2: collapse by SPO. PKS keys are now unique so map_from_entries is safe.
+        return per_pks.groupBy(groupby_keys).agg(
+            sf.array_distinct(sf.flatten(sf.collect_list("upstream_data_source"))).alias("upstream_data_source"),
+            sf.first("primary_knowledge_source", ignorenulls=True).alias("primary_knowledge_source"),
+            sf.collect_set("primary_knowledge_source").alias("primary_knowledge_sources"),
+            sf.array_distinct(sf.flatten(sf.collect_list("aggregator_knowledge_source"))).alias(
+                "aggregator_knowledge_source"
+            ),
+            sf.array_distinct(sf.flatten(sf.collect_list("publications"))).alias("publications"),
+            sf.sum("num_references").cast(T.IntegerType()).alias("num_references"),
+            sf.max("num_sentences").cast(T.IntegerType()).alias("num_sentences"),
+            sf.to_json(
+                sf.map_from_entries(
+                    sf.collect_list(
+                        sf.struct(
+                            sf.col("primary_knowledge_source").alias("key"),
+                            sf.struct(*[sf.col(c) for c in source_property_cols]).alias("value"),
+                        )
+                    )
+                )
+            ).alias("source_edge_properties"),
+        )
