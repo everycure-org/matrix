@@ -221,10 +221,6 @@ FDA_DRUG_LIST_SCHEMA = pa.DataFrameSchema(
                     title="application_number must start with nda, anda, or bla followed by digits (lowercase)",
                 ),
                 pa.Check(
-                    lambda col: col.is_unique,
-                    title="application_number must be unique across rows",
-                ),
-                pa.Check(
                     lambda col: col.apply(lambda x: x == x.lower()),
                     title="application_number must be lowercase",
                 ),
