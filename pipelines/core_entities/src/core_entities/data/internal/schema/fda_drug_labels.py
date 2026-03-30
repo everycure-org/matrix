@@ -27,11 +27,6 @@ def _is_non_negative_integer(series: pa.typing.Series) -> pa.typing.Series:
     return series.apply(lambda x: isinstance(x, Integral) and x >= 0)
 
 
-def _is_bool(series: pa.typing.Series) -> pa.typing.Series:
-    """Each cell must be a bool."""
-    return series.apply(lambda x: isinstance(x, bool))
-
-
 CURATED_DRUG_LIST_FOR_FDA_MATCH_SCHEMA = pa.DataFrameSchema(
     columns={
         "id": pa.Column(nullable=False),
@@ -135,11 +130,11 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "is_biologics": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_biologics must be a boolean")],
+            dtype=bool,
         ),
         "brand_name": pa.Column(
             nullable=True,
@@ -173,7 +168,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "is_anda": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_anda must be a boolean")],
+            dtype=bool,
         ),
     },
     strict=True,
@@ -217,11 +212,11 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
         ),
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "is_biologics": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_biologics must be a boolean")],
+            dtype=bool,
         ),
         "brand_name": pa.Column(
             nullable=True,
@@ -255,7 +250,7 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
         ),
         "is_anda": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_anda must be a boolean")],
+            dtype=bool,
         ),
     },
     strict=True,
@@ -266,11 +261,11 @@ FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_biologics": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_biologics must be a boolean")],
+            dtype=bool,
         ),
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "filtered_fda_values": pa.Column(
             required=False,
@@ -307,7 +302,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "biosimilar_bla_types": pa.Column(
             nullable=True,
@@ -351,7 +346,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_TSV_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "biosimilar_bla_types": pa.Column(
             nullable=True,
@@ -382,7 +377,7 @@ FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA = pa.DataFrameSchema(
         "is_fda_generic_drug": pa.Column(
             required=False,
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "marketing_status": pa.Column(
             required=False,
@@ -423,11 +418,11 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "otc_monograph_checked": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="otc_monograph_checked must be a boolean")],
+            dtype=bool,
         ),
         "otc_monograph_status": pa.Column(nullable=False),
         "otc_monograph_application_numbers": pa.Column(
@@ -451,7 +446,7 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
         "otc_monograph_error_msg": pa.Column(nullable=False),
         "is_otc_monograph": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_otc_monograph must be a boolean")],
+            dtype=bool,
         ),
         "marketing_status": pa.Column(
             required=False,
@@ -487,11 +482,11 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_fda_generic_drug must be a boolean")],
+            dtype=bool,
         ),
         "otc_monograph_checked": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="otc_monograph_checked must be a boolean")],
+            dtype=bool,
         ),
         "otc_monograph_status": pa.Column(nullable=False),
         "otc_monograph_application_numbers": pa.Column(
@@ -515,7 +510,7 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
         "otc_monograph_error_msg": pa.Column(nullable=False),
         "is_otc_monograph": pa.Column(
             nullable=True,
-            checks=[pa.Check(_is_bool, title="is_otc_monograph must be a boolean")],
+            dtype=bool,
         ),
         "marketing_status": pa.Column(
             required=False,
