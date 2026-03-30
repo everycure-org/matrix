@@ -28,11 +28,12 @@ def _is_non_negative_integer(series: pa.typing.Series) -> pa.typing.Series:
 
 
 CURATED_DRUG_LIST_FOR_FDA_MATCH_SCHEMA = pa.DataFrameSchema(
+    parsers=pa.Parser(lambda df: df[["id", "name", "available_in_combo_with", "synonyms"]]),
     columns={
         "id": pa.Column(nullable=False),
         "name": pa.Column(nullable=False),
         "available_in_combo_with": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -40,19 +41,28 @@ CURATED_DRUG_LIST_FOR_FDA_MATCH_SCHEMA = pa.DataFrameSchema(
                 )
             ],
         ),
+        "synonyms": pa.Column(
+            nullable=False,
+            checks=[
+                pa.Check(
+                    _is_list,
+                    title="synonyms must be a list",
+                )
+            ],
+        ),
     },
-    strict=False,
+    strict=True,
 )
 
 
 FDA_DRUG_LABELS_UNFILTERED_SCHEMA = pa.DataFrameSchema(
     columns={
         "fda_rows": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="fda_rows must be a list")],
         ),
         "fda_match_count": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -63,11 +73,11 @@ FDA_DRUG_LABELS_UNFILTERED_SCHEMA = pa.DataFrameSchema(
         "drug_name": pa.Column(nullable=False),
         "id": pa.Column(nullable=False),
         "search_terms": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="search_terms must be a list")],
         ),
         "available_in_combo_with": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -83,11 +93,11 @@ FDA_DRUG_LABELS_UNFILTERED_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
     columns={
         "fda_rows": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="fda_rows must be a list")],
         ),
         "fda_match_count": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -98,11 +108,11 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
         "drug_name": pa.Column(nullable=False),
         "id": pa.Column(nullable=False),
         "search_terms": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="search_terms must be a list")],
         ),
         "available_in_combo_with": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -111,7 +121,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "filtered_fda_values": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -120,7 +130,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "filtered_fda_values_count": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -137,19 +147,19 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             dtype=bool,
         ),
         "brand_name": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="brand_name must be a list")],
         ),
         "generic_name": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="generic_name must be a list")],
         ),
         "substance_name": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="substance_name must be a list")],
         ),
         "active_ingredients": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -158,7 +168,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "marketing_status": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -178,7 +188,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
     columns={
         "fda_match_count": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -189,11 +199,11 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
         "drug_name": pa.Column(nullable=False),
         "id": pa.Column(nullable=False),
         "search_terms": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="search_terms must be a list")],
         ),
         "available_in_combo_with": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -202,7 +212,7 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "filtered_fda_values_count": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -219,19 +229,19 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
             dtype=bool,
         ),
         "brand_name": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="brand_name must be a list")],
         ),
         "generic_name": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="generic_name must be a list")],
         ),
         "substance_name": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="substance_name must be a list")],
         ),
         "active_ingredients": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -240,7 +250,7 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "marketing_status": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -269,7 +279,7 @@ FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA = pa.DataFrameSchema(
         ),
         "filtered_fda_values": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -279,7 +289,7 @@ FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA = pa.DataFrameSchema(
         ),
         "fda_rows": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -305,7 +315,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA = pa.DataFrameSchema(
             dtype=bool,
         ),
         "biosimilar_bla_types": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -314,7 +324,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "biosimilar_application_numbers": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -324,12 +334,12 @@ FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "fda_rows": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="fda_rows must be a list when present")],
         ),
         "filtered_fda_values": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -349,7 +359,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_TSV_SCHEMA = pa.DataFrameSchema(
             dtype=bool,
         ),
         "biosimilar_bla_types": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -358,7 +368,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "biosimilar_application_numbers": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -381,7 +391,7 @@ FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA = pa.DataFrameSchema(
         ),
         "marketing_status": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -391,7 +401,7 @@ FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA = pa.DataFrameSchema(
         ),
         "fda_rows": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -401,7 +411,7 @@ FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA = pa.DataFrameSchema(
         ),
         "filtered_fda_values": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -426,7 +436,7 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "otc_monograph_status": pa.Column(nullable=False),
         "otc_monograph_application_numbers": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -435,7 +445,7 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "otc_monograph_total_matches": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -450,7 +460,7 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "marketing_status": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -460,12 +470,12 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "fda_rows": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[pa.Check(_is_list, title="fda_rows must be a list when present")],
         ),
         "filtered_fda_values": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -490,7 +500,7 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
         ),
         "otc_monograph_status": pa.Column(nullable=False),
         "otc_monograph_application_numbers": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
@@ -499,7 +509,7 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "otc_monograph_total_matches": pa.Column(
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_non_negative_integer,
@@ -514,7 +524,7 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
         ),
         "marketing_status": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             checks=[
                 pa.Check(
                     _is_list,
