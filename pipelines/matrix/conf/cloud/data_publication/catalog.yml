@@ -14,3 +14,11 @@ data_publication.prm.kg_nodes_hf_published:
   dataframe_type: spark
   data_dir: data/nodes
   tag: ${globals:versions.release}
+
+data_publication.prm.matrix_scores_hf_published:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/matrix-scores
+  split: train
+  dataframe_type: spark
+  data_dir: data/scores
+  tag: ${globals:versions.release}
