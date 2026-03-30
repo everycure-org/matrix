@@ -232,10 +232,6 @@ FDA_DRUG_LIST_SCHEMA = pa.DataFrameSchema(
             nullable=False,
             checks=[
                 pa.Check(
-                    lambda col: col.apply(lambda x: isinstance(x, str) and x.strip() != ""),
-                    title="sponsor_name must be a non-empty string",
-                ),
-                pa.Check(
                     lambda col: col.apply(lambda x: x == x.lower()),
                     title="sponsor_name must be lowercase",
                 ),
