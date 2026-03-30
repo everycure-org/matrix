@@ -2,7 +2,7 @@
 
 This document describes how the drug list pipeline computes `is_fda_generic_drug` and which three FDA-related data sources are used.
 
-![FDA generic data flow](../images/drug_list/fda_generic_data_flow.svg)
+![FDA generic data flow](../images/drug_list/kedro_viz_fda_generic_data_flow.jpeg)
 
 ## Three FDA Data Sources
 
