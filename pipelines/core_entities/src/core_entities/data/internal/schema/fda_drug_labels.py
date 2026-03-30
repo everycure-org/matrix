@@ -129,11 +129,11 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "is_biologics": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "brand_name": pa.Column(
@@ -167,7 +167,7 @@ FDA_DRUG_LABELS_FILTERED_PARQUET_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "is_anda": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
     },
@@ -211,11 +211,11 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "is_biologics": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "brand_name": pa.Column(
@@ -249,7 +249,7 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
             ],
         ),
         "is_anda": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
     },
@@ -260,11 +260,11 @@ FDA_DRUG_LABELS_FILTERED_TSV_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_biologics": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "filtered_fda_values": pa.Column(
@@ -301,7 +301,7 @@ FDA_DRUG_LABELS_FOR_BIOSIMILAR_INPUT_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "biosimilar_bla_types": pa.Column(
@@ -345,7 +345,7 @@ FDA_DRUG_LABELS_BIOSIMILAR_PARQUET_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_BIOSIMILAR_TSV_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "biosimilar_bla_types": pa.Column(
@@ -376,7 +376,7 @@ FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA = pa.DataFrameSchema(
         "drug_name": pa.Column(nullable=False),
         "is_fda_generic_drug": pa.Column(
             required=False,
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "marketing_status": pa.Column(
@@ -417,11 +417,11 @@ FDA_DRUG_LABELS_FOR_OTC_INPUT_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "otc_monograph_checked": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "otc_monograph_status": pa.Column(nullable=False),
@@ -445,7 +445,7 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
         ),
         "otc_monograph_error_msg": pa.Column(nullable=False),
         "is_otc_monograph": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "marketing_status": pa.Column(
@@ -481,11 +481,11 @@ FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA = pa.DataFrameSchema(
 FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
     columns={
         "is_fda_generic_drug": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "otc_monograph_checked": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "otc_monograph_status": pa.Column(nullable=False),
@@ -509,7 +509,7 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
         ),
         "otc_monograph_error_msg": pa.Column(nullable=False),
         "is_otc_monograph": pa.Column(
-            nullable=True,
+            nullable=False,
             dtype=bool,
         ),
         "marketing_status": pa.Column(
