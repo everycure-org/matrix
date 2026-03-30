@@ -1316,6 +1316,17 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
     FDA_DRUG_LABELS_OTC_TSV_SCHEMA,
     obj_getter=1,
 )
+@pa.check_output(
+    pa.DataFrameSchema(
+        columns={
+            "id": pa.Column(nullable=False),
+            "is_fda_generic_drug": pa.Column(dtype=bool, nullable=False),
+        },
+        unique=["id"],
+        strict=True,
+    ),
+    obj_getter=2,
+)
 def resolve_fda_drugs_that_are_otc_monograph(
     fda_drug_labels_filtered: pd.DataFrame,
     fda_labels_params: dict,
