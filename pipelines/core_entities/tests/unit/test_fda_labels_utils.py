@@ -21,7 +21,6 @@ from core_entities.utils.fda_labels_utils import (
     build_search_query,
     build_url,
     load_fda_labels_config,
-    load_suspect_drugs,
     run_sync,
 )
 
@@ -115,23 +114,6 @@ def test_build_url_includes_api_key_from_env(monkeypatch) -> None:
     assert "api_key=env-api-key" in url
     assert "limit=1" in url
     assert "openfda.substance_name%3A%22ASPIRIN%22" in url
-
-
-def test_load_suspect_drugs_filters_only_expected_rows(tmp_path) -> None:
-    tsv_path = tmp_path / "drugs.tsv"
-    tsv_path.write_text(
-        "drug_name\tis_anda\tis_biologics\tmarketing_status\tis_fda_generic_drug\n"
-        "Drug A\tfalse\tfalse\t[]\tfalse\n"
-        "Drug B\ttrue\tfalse\t[]\tfalse\n"
-        "Drug C\tfalse\tfalse\t['Prescription']\tfalse\n"
-        "Drug D\tfalse\tfalse\t[]\ttrue\n"
-        "\tfalse\tfalse\t[]\tfalse\n",
-        encoding="utf-8",
-    )
-
-    suspects = load_suspect_drugs(str(tsv_path))
-
-    assert suspects == ["Drug A"]
 
 
 def test_extract_total_matches_reads_nested_meta_results_total() -> None:
@@ -318,34 +300,6 @@ def test_load_fda_labels_config_wrapper() -> None:
     config = load_fda_labels_config({"api": {"max_concurrent": 10}})
 
     assert config.max_concurrent == 10
-
-
-def test_load_suspect_drugs_parses_valid_list_values(tmp_path) -> None:
-    tsv_path = tmp_path / "drugs.tsv"
-    tsv_path.write_text(
-        "drug_name\tis_anda\tis_biologics\tmarketing_status\tis_fda_generic_drug\n"
-        "Drug E\tfalse\tfalse\t['Prescription', 'OTC']\tfalse\n",
-        encoding="utf-8",
-    )
-
-    suspects = load_suspect_drugs(str(tsv_path))
-
-    assert suspects == []
-
-
-def test_load_suspect_drugs_handles_unparseable_list_values(tmp_path) -> None:
-    tsv_path = tmp_path / "drugs.tsv"
-    tsv_path.write_text(
-        "drug_name\tis_anda\tis_biologics\tmarketing_status\tis_fda_generic_drug\n"
-        "Drug F\tfalse\tfalse\tinvalid_syntax[\tfalse\n"
-        "Drug G\tfalse\tfalse\t[]\tfalse\n",
-        encoding="utf-8",
-    )
-
-    suspects = load_suspect_drugs(str(tsv_path))
-
-    # Both are included because unparseable defaults to empty list, and both have no marketing status
-    assert suspects == ["Drug F", "Drug G"]
 
 
 def test_extract_total_matches_handles_non_int_total() -> None:

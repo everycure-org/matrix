@@ -5,9 +5,7 @@ All API/query behaviour is parameter-driven, so this utility can be reused by fu
 
 from __future__ import annotations
 
-import ast
 import asyncio
-import csv
 import logging
 import os
 import time
@@ -132,34 +130,6 @@ class DrugResult:
     application_numbers: list[str] = field(default_factory=list)
     total_matches: int = 0
     error_msg: str = ""
-
-
-def load_suspect_drugs(tsv_path: str) -> list[str]:
-    """Return drugs with no marketing data, no ANDA, no BLA, and no generic flags."""
-
-    def parse_list(value: str | None) -> list:
-        if not value or value == "[]":
-            return []
-        try:
-            parsed = ast.literal_eval(value)
-        except (ValueError, SyntaxError):
-            logger.warning("Unable to parse list value: %r", value)
-            return []
-        return parsed if isinstance(parsed, list) else []
-
-    def parse_bool(value: str | None) -> bool:
-        return str(value).strip().lower() == "true"
-
-    suspects: list[str] = []
-    with open(tsv_path, newline="") as tsv_file:
-        for row in csv.DictReader(tsv_file, delimiter="\t"):
-            is_anda = parse_bool(row.get("is_anda"))
-            is_biosim = parse_bool(row.get("is_biologics"))
-            marketing = parse_list(row.get("marketing_status"))
-            is_generic = parse_bool(row.get("is_fda_generic_drug"))
-            if not marketing and not is_anda and not is_biosim and not is_generic:
-                suspects.append(str(row.get("drug_name", "")).strip())
-    return [name for name in suspects if name]
 
 
 def load_fda_labels_config(parameters: Mapping[str, object] | None = None) -> FdaLabelsConfig:
