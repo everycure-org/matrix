@@ -83,6 +83,21 @@ def union_edges(core_id_mapping: ps.DataFrame, *edges, cols: list[str]) -> ps.Da
     post_dedup_count = unioned_edges.count()
     logger.info(f"union_edges: {post_dedup_count} edges after dedup, removed {pre_dedup_count - post_dedup_count}")
 
+    # Compute num_references as the count of unique publications per edge for any source
+    # that did not already set it (e.g. RTX-KG2/SemMedDB sets it in filter_semmed).
+    # Guard against -1: F.size() returns -1 for null arrays (e.g. filter_semmed sets
+    # num_references without a null guard on publications), so treat -1 as unset.
+    unioned_edges = unioned_edges.withColumn(
+        "num_references",
+        F.coalesce(
+            F.when(F.col("num_references") > F.lit(0), F.col("num_references")),
+            F.when(
+                F.col("publications").isNotNull(),
+                F.size(F.array_distinct(F.col("publications"))),
+            ).otherwise(F.lit(None).cast(T.IntegerType())),
+        ),
+    )
+
     # Compute primary_knowledge_sources: all PKS values asserting the same (S, P, O) triple.
     # Each edge row retains its own attributes while also carrying cross-source provenance.
     spo_pks_mapping = unioned_edges.groupBy(["subject", "predicate", "object"]).agg(
