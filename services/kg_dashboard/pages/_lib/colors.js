@@ -11,6 +11,11 @@ export const sourceColorMap = {
   "drug_list": "#51AFA6",
 };
 
+// Core entity colors
+export const drugColor = '#51AFA6';
+export const diseaseColor = '#C56492';
+export const otherColor = '#999999';
+
 // Color palette for different biolink categories
 export const CATEGORY_COLORS = {
   'ChemicalEntity': '#51AFA6',      // teal - drugs/chemicals
@@ -28,6 +33,10 @@ export const CATEGORY_COLORS = {
   'Population': '#C56492',          // mauve - populations
   'Other': '#999999'                // gray - other
 };
+
+export function getCategoryColor(name) {
+  return CATEGORY_COLORS[name] || otherColor;
+}
 
 // Fallback color palette for unknown sources
 export const fallbackColors = [

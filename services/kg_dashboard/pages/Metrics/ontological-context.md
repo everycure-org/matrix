@@ -177,3 +177,106 @@ ORDER BY t.total_edges DESC
   <Column id="undefined" title="Undefined" fmt="num0" />
   <Column id="total_edges" title="Total Edges" fmt="num0" />
 </DataTable>
+
+## Node-Level Ontological Connectivity
+
+```sql ontology_node_aggregate
+SELECT
+  SUM(node_count) as total_nodes,
+  SUM(CASE WHEN is_ontology_connected THEN node_count ELSE 0 END) as connected_count,
+  SUM(CASE WHEN NOT is_ontology_connected THEN node_count ELSE 0 END) as not_connected_count,
+  ROUND(100.0 * SUM(CASE WHEN is_ontology_connected THEN node_count ELSE 0 END) / SUM(node_count), 1) as connected_pct
+FROM bq.node_metrics
+```
+
+```sql ontology_node_chart
+SELECT
+  'Connected' as status,
+  SUM(CASE WHEN is_ontology_connected THEN node_count ELSE 0 END) as count
+FROM bq.node_metrics
+UNION ALL
+SELECT
+  'Not Connected',
+  SUM(CASE WHEN NOT is_ontology_connected THEN node_count ELSE 0 END)
+FROM bq.node_metrics
+```
+
+```sql ontology_node_by_category
+SELECT
+  CASE
+    WHEN category = 'drug' THEN 'Drugs'
+    WHEN category = 'disease' THEN 'Diseases'
+    ELSE 'Other'
+  END as node_type,
+  SUM(node_count) as total,
+  SUM(CASE WHEN is_ontology_connected THEN node_count ELSE 0 END) as connected,
+  ROUND(100.0 * SUM(CASE WHEN is_ontology_connected THEN node_count ELSE 0 END) / SUM(node_count), 1) as connected_pct
+FROM bq.node_metrics
+GROUP BY node_type
+ORDER BY total DESC
+```
+
+<div class="text-left text-md max-w-3xl mx-auto mb-6">
+  Beyond classifying edges as ABox or TBox, we can measure how many individual nodes have at least
+  one direct connection to an ontology term (a TBox edge). This gives a node-level view of how well
+  entities in the graph are grounded in formal ontological structure.
+</div>
+
+{#if ontology_node_aggregate.length > 0}
+<Grid col=2 class="max-w-4xl mx-auto mb-8 mt-6">
+  <div>
+    <ECharts config={{
+        title: {
+            text: 'Ontology\nConnected',
+            left: 'center',
+            top: 'center',
+            textStyle: {
+                fontWeight: 'normal'
+            }
+        },
+        color: ['#6287D3', '#AAAAAA'],
+        tooltip: {
+            formatter: function(params) {
+                const count = params.data.value.toLocaleString();
+                return `${params.name}: ${count} nodes (${params.percent}%)`;
+            }
+        },
+        series: [{
+            type: 'pie',
+            data: ontology_node_chart.map(row => ({
+              value: row.count,
+              name: row.status
+            })),
+            radius: ['40%', '65%']
+        }]
+    }}/>
+  </div>
+  <div class="text-center flex flex-col justify-center">
+    <div class="mb-3">
+      <span class="font-semibold text-2xl" style="color: #6287D3;">
+        <Value data={ontology_node_aggregate} column="connected_count" fmt="num0" />
+      </span><br/>
+      <span class="text-base">Ontology-Connected Nodes</span><br/>
+      <span class="text-xs text-gray-600">
+        (<Value data={ontology_node_aggregate} column="connected_pct" fmt="num1" />%)
+      </span>
+    </div>
+    <div class="mb-3">
+      <span class="font-semibold text-2xl" style="color: #AAAAAA;">
+        <Value data={ontology_node_aggregate} column="not_connected_count" fmt="num0" />
+      </span><br/>
+      <span class="text-base">Not Connected</span><br/>
+      <span class="text-xs text-gray-600">
+        (<Value data={ontology_node_aggregate} column="total_nodes" fmt="num0" /> total)
+      </span>
+    </div>
+  </div>
+</Grid>
+{/if}
+
+<DataTable data={ontology_node_by_category} rows=10>
+  <Column id="node_type" title="Node Type" />
+  <Column id="total" title="Total Nodes" fmt="num0" />
+  <Column id="connected" title="Ontology-Connected" fmt="num0" />
+  <Column id="connected_pct" title="Connected %" fmt="num1" contentType="colorscale" scaleColor="#6287D3" />
+</DataTable>
