@@ -1044,6 +1044,8 @@ def resolve_fda_drugs_matches_to_drug_list_unfiltered(
     FDA product's active_ingredients cover the aggregated set.
     """
 
+    # Apply filtering to the curated drug list before matching to reduce the number of comparisons and improve performance.
+    # We filter out drugs that are not approved in the USA (as defined in the parameters file) etc.
     filtered_curated_drug_list = filter_dataframe_by_columns(curated_drug_list, filter_curated_drug_list_params)
 
     # Build work items for multiprocessing
@@ -1105,13 +1107,19 @@ def resolve_fda_drugs_matches_to_drug_list_unfiltered(
 def resolve_fda_drugs_matches_to_drug_list_filtered(
     fda_drug_labels_unfiltered: pd.DataFrame,
 ) -> tuple[DataFrame, DataFrame]:
+    """
+    Filter the unfiltered FDA drug matches to determine which drugs are considered FDA generic drugs (according to the criteria), and to extract relevant information from the matched FDA rows for those drugs.
+    """
+    # we make sure that the filtered_fda_values column contains lists (even if empty) to avoid issues with downstream processing where we expect lists.
     filtered_fda_values = fda_drug_labels_unfiltered.apply(filter_fda_rows, axis=1).apply(ensure_python_list)
+    # Count the number of matched FDA rows for each drug after filtering, which will be used to determine whether the drug is an FDA generic drug or not.
     filtered_fda_values_count = filtered_fda_values.str.len().fillna(0).astype(int)
 
     fda_drug_labels_filtered = fda_drug_labels_unfiltered.copy()
     fda_drug_labels_filtered.loc[:, "filtered_fda_values"] = filtered_fda_values
     fda_drug_labels_filtered.loc[:, "filtered_fda_values_count"] = filtered_fda_values_count
     fda_drug_labels_filtered.loc[:, "is_fda_generic_drug"] = filtered_fda_values_count.gt(0)
+    # We consider a drug to be a biologic if any of the matched FDA rows have an application number that starts with "BLA" (Biologics License Application).
     fda_drug_labels_filtered["is_biologics"] = filtered_fda_values.apply(
         lambda rows: any(
             str(item.get("application_number", "")).lower().startswith("bla")
@@ -1131,7 +1139,10 @@ def resolve_fda_drugs_matches_to_drug_list_filtered(
     fda_drug_labels_filtered.loc[:, "active_ingredients"] = filtered_fda_values.apply(
         extract_product_active_ingredients
     )
+    # We determine the marketing status of the drug based on the information in the matched FDA rows, such as the presence of specific fields or values that indicate whether the drug is currently marketed, discontinued, etc.
     fda_drug_labels_filtered.loc[:, "marketing_status"] = filtered_fda_values.apply(extract_product_marketing_status)
+    # We determine whether the drug is an ANDA (Abbreviated New Drug Application) generic drug based on the presence of an application number that starts with "ANDA" in any of the matched FDA rows,
+    # which indicates that the drug is a generic version of a previously approved drug.
     fda_drug_labels_filtered.loc[:, "is_anda"] = filtered_fda_values.apply(has_anda_application_number)
 
     fda_drug_labels_filtered_tsv = fda_drug_labels_filtered.drop(
@@ -1155,10 +1166,16 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
     fda_purple_book_params: dict,
     fda_purple_book_data: DataFrame | None = None,
 ) -> tuple[DataFrame, DataFrame]:
+    """
+    From the filtered FDA drug matches, we want to determine which drugs are biosimilars (a specific type of generic drug that is similar to biologic drugs) and to extract relevant information about the biosimilar drugs.
+    We determine whether a drug is a biosimilar based on the presence of specific information in the matched FDA rows, such as the BLA status as defined in the params.fda_purple_book_params and the application numbers.
+    We also cross-reference with the FDA Purple Book data, if available, to enhance our identification of biosimilars.
+    """
+
     if fda_drug_labels_filtered.empty:
         enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
         return fda_drug_labels_filtered, enriched_tsv
-
+    # We first determine which BLA types are relevant for identifying biosimilars based on the provided parameters. We normalise the BLA types to ensure consistent comparison later on.
     raw_bla_types = fda_purple_book_params.get("generic_status_bla_type", None)
     if raw_bla_types is None:
         raw_bla_types = (fda_purple_book_params.get("fda_purple_book", {}) or {}).get("generic_status_bla_type", [])
@@ -1168,6 +1185,9 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
     }
 
     def normalize_bla_number(value: object) -> str | None:
+        """
+        Normalise BLA numbers by stripping whitespace, removing non-digit characters, and converting to a consistent string format. If the resulting string is empty or contains no digits, return None.
+        """
         raw_value = str(value).strip()
         if raw_value == "":
             return None
@@ -1179,6 +1199,9 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
         return str(int(digits_only))
 
     def extract_application_numbers_from_fda_values(fda_values: object) -> list[str]:
+        """
+        Extract application numbers from the FDA values. We look for application numbers in the main FDA rows, as well as in the openfda field and the products field, as the relevant information can be present in different places depending on the specific drug and how the data is structured.
+        """
         rows = ensure_python_list(fda_values) or []
         application_numbers: list[str] = []
 
@@ -1190,6 +1213,9 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
         return ensure_string_list(application_numbers)
 
     def extract_bla_types_from_fda_values(fda_values: object) -> list[str]:
+        """
+        Extract BLA types from the FDA values. We look for BLA types in the main FDA rows, as well as in the openfda field and the products field, as the relevant information can be present in different places depending on the specific drug and how the data is structured.
+        """
         rows = ensure_python_list(fda_values) or []
         extracted: list[str] = []
         for row in rows:
@@ -1216,18 +1242,26 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
 
         return ensure_string_list(extracted)
 
+    # Depending on the structure of the FDA drug labels data, the relevant information for identifying biosimilars may be present in either the "filtered_fda_values" column (which contains the FDA rows after filtering) or the original "fda_rows" column.
+    # We check which column is available and use it as the source for extracting BLA types and application numbers.
     fda_values_source = (
         "filtered_fda_values" if "filtered_fda_values" in fda_drug_labels_filtered.columns else "fda_rows"
     )
-
+    # We extract the BLA types and application numbers from the FDA values using the defined functions.
+    # This information will be used to determine which drugs are biosimilars and to enrich the data with relevant details about the biosimilar drugs.
     fda_drug_labels_filtered.loc[:, "biosimilar_bla_types"] = fda_drug_labels_filtered[fda_values_source].apply(
         extract_bla_types_from_fda_values
     )
+    # We extract the application numbers from the FDA values,
+    # as the presence of specific application numbers (e.g., those starting with "BLA") can be an important indicator for identifying biosimilars.
     fda_drug_labels_filtered.loc[:, "biosimilar_application_numbers"] = fda_drug_labels_filtered[
         fda_values_source
     ].apply(extract_application_numbers_from_fda_values)
 
     def resolve_column_name(df: pd.DataFrame, candidates: list[str]) -> str | None:
+        """
+        Resolve the column name in the given DataFrame that matches any of the candidate names (case-insensitive, ignoring leading/trailing whitespace). This is useful for handling variations in column naming conventions across different datasets. If a match is found, the actual column name from the DataFrame is returned; otherwise, None is returned.
+        """
         normalized_name_to_column = {str(column).strip().lower(): column for column in df.columns}
         for candidate in candidates:
             matched = normalized_name_to_column.get(candidate.lower())
@@ -1236,6 +1270,9 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
         return None
 
     def merge_unique_strings(values: list[object]) -> list[str]:
+        """
+        Merge a list of values into a list of unique strings, normalizing each string by stripping whitespace and converting to lowercase.
+        """
         merged: list[str] = []
         seen: set[str] = set()
 
@@ -1249,6 +1286,10 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
 
         return merged
 
+    # If the FDA Purple Book data is available and not empty, we use it to enhance our identification of biosimilars.
+    # We look for the relevant columns in the Purple Book data that contain the BLA numbers and BLA types,
+    # normalise the BLA numbers, and create a lookup dictionary to map normalised BLA numbers to their corresponding BLA types.
+    # We then use this lookup to enrich our FDA drug labels data with biosimilar information based on the application numbers extracted from the FDA values.
     if fda_purple_book_data is not None and not fda_purple_book_data.empty:
         purple_book_df = fda_purple_book_data.copy()
         bla_number_column = resolve_column_name(purple_book_df, ["BLA Number", "bla number", "bla_number"])
@@ -1261,6 +1302,7 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
             )
         else:
             purple_book_df = purple_book_df[[bla_number_column, bla_type_column]].copy()
+            # We normalise the BLA numbers and BLA types in the Purple Book data to ensure consistent comparison later on when we enrich our FDA drug labels data with biosimilar information.
             purple_book_df.loc[:, "normalized_bla_number"] = purple_book_df[bla_number_column].apply(
                 normalize_bla_number
             )
@@ -1276,7 +1318,10 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
                 .apply(lambda values: merge_unique_strings(values.tolist()))
                 .to_dict()
             )
-
+            # We enrich our FDA drug labels data with biosimilar information based on the application numbers extracted from the FDA values
+            # and the lookup dictionary created from the Purple Book data. For each drug, we look at the application numbers extracted from the FDA values,
+            # normalise them, and check if they match any BLA numbers in the Purple Book lookup. If a match is found,
+            # we merge the corresponding BLA types from the Purple Book data into our FDA drug labels data for that drug.
             fda_drug_labels_filtered.loc[:, "biosimilar_bla_types"] = fda_drug_labels_filtered.apply(
                 lambda row: merge_unique_strings(
                     [
@@ -1293,12 +1338,16 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
 
     default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
     is_biologics = fda_drug_labels_filtered.get("is_biologics", default_false).fillna(False).astype(bool)
-
+    # We determine whether a drug is a biosimilar generic drug based on the presence of relevant BLA types in the FDA values.
+    # If any of the BLA types extracted from the FDA values for a drug match the allowed BLA types defined in the parameters,
+    # We consider that drug to be a biosimilar and therefore a type of generic drug.
     biosimilar_is_generic = fda_drug_labels_filtered["biosimilar_bla_types"].apply(
         lambda types: any(bla_type.lower().strip() in allowed_bla_types for bla_type in ensure_string_list(types))
     )
 
     existing_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
+    # We update the "is_fda_generic_drug" column to include drugs that are identified as biosimilars based on the BLA types,
+    # while ensuring that we do not classify biologic drugs as generic drugs.
     fda_drug_labels_filtered.loc[:, "is_fda_generic_drug"] = existing_generic.where(
         ~is_biologics, biosimilar_is_generic
     )
@@ -1353,6 +1402,8 @@ def resolve_fda_drugs_that_are_otc_monograph(
     default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
     is_fda_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
     otc_candidates_mask = ~is_fda_generic
+    # We consider drugs that are not already identified as FDA generic drugs as candidates for OTC monograph status,
+    # as OTC monograph drugs are a specific category of drugs that can be marketed without a prescription and are not typically classified as generic drugs.
     otc_candidate_drug_names = (
         fda_drug_labels_filtered.loc[otc_candidates_mask, "drug_name"]
         .dropna()
