@@ -39,7 +39,5 @@ locals {
   # Common binding members (dynamically resolved in usage)
   binding_members = [
     google_service_account.sa["internal_data_science"].member,
-    google_service_account.sa["external_subcon_standard"].member,
-    google_service_account.sa["external_subcon_embiology"].member,
   ]
 }
