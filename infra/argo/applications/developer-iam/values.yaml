@@ -15,7 +15,3 @@ argo:
     groups:
       - matrix-all@everycure.org
       - data-science@everycure.org
-      - ext.subcontractors@everycure.org
-      - data-science@everycure.org
-      - ext.subcontractors.standard@everycure.org
-      - ext.subcontractors.embiology@everycure.org
