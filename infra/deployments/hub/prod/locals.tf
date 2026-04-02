@@ -5,7 +5,6 @@ locals {
   dev_bucket_name                    = "mtrx-us-central1-hub-dev-storage"
   orchard_dev_project_id             = "ec-orchard-dev"
   orchard_prod_project_id            = "ec-orchard-prod"
-  prod_k8s_sas                       = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"         # Kubernetes node SA for cluster workloads
   matrix_hub_dev_github_sa_rw_member = "serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com" # GitHub Actions RW SA for dev
 
 
