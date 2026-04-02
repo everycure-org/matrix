@@ -32,6 +32,19 @@ raw.atc_labels:
   type: pandas.CSVDataset
   filepath: ${globals:public_gcs_bucket}/kedro/data/core-entities/raw/atc_labels.csv
 
+raw.fda_drug_json:
+  type: core_entities.datasets.json_zip_dataset.JSONZipDataset
+  url: https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip
+  member_name: drug-drugsfda-0001-of-0001.json
+
+raw.fda_purple_book_data:
+  type: pandas.CSVDataset
+  filepath: ${purple_book_url:}
+  fs_args:
+    User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36
+  load_args:
+    skiprows: 3
+
 # -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
@@ -71,6 +84,42 @@ primary.name_resolver_version:
 primary.nodenorm_version:
   type: text.TextDataset
   filepath: ${globals:paths.primary}/drug/nodenorm-version.txt
+
+primary.fda_drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-list.parquet
+
+primary.fda_drug_labels_unfiltered:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-unfiltered.parquet
+
+primary.fda_drug_labels_filtered_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered.parquet
+
+primary.fda_drug_labels_filtered_tsv:
+    <<: [*_pandas_tsv]
+    filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered.tsv
+
+primary.fda_drugs_filtered_biosimilar_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drugs-filtered-biosimilar.parquet
+
+primary.fda_drugs_filtered_biosimilar_tsv:
+    <<: [*_pandas_tsv]
+    filepath: ${globals:paths.primary}/drug/fda-drugs-filtered-biosimilar.tsv
+
+primary.fda_drug_labels_filtered_including_otc_monograph_parquet:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-including-monograph.parquet
+
+primary.fda_drug_labels_filtered_including_otc_monograph_tsv:
+    <<: [*_pandas_tsv]
+    filepath: ${globals:paths.primary}/drug/fda-drug-labels-filtered-including-monograph.tsv
+
+primary.fda_generic_drug_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-generic-drug-list.parquet
 
 # -------------------------------------------------------------------------
 # Release
