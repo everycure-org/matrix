@@ -9,13 +9,6 @@ resource "google_storage_bucket_iam_member" "object_user" {
   }
 }
 
-# Add a new binding for the specific service account
-resource "google_storage_bucket_iam_member" "prod_sa_access" {
-  bucket = var.storage_bucket_name
-  role   = "roles/storage.objectViewer"
-  member = "serviceAccount:sa-k8s-node@mtrx-hub-prod-sms.iam.gserviceaccount.com"
-}
-
 # ------ Permission for people to read from Storage via SA ------
 
 # Create the service account
@@ -100,13 +93,6 @@ resource "google_storage_bucket_iam_member" "compute_engine_default_ordchard_pro
   bucket = var.storage_bucket_name
   role   = "roles/storage.bucketViewer"
   member = local.orchard_prod_compute_service_account
-}
-
-# Add IAM binding for the custom Cloud Build service account from prod
-resource "google_storage_bucket_iam_member" "custom_cloud_build_sa_access" {
-  bucket = var.storage_bucket_name
-  role   = "roles/storage.admin"
-  member = "serviceAccount:custom-cloud-build-sa@mtrx-hub-prod-sms.iam.gserviceaccount.com"
 }
 
 # add a new binding for the compute engine default service account for Orchard dev

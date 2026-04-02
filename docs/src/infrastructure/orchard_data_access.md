@@ -72,8 +72,8 @@ For local development, users should:
 
 1. Ensure they are members of the appropriate Google Groups:
    - `data-science@everycure.org` (for internal team)
-   - `ext.subcontractors.standard@everycure.org` (for standard contractors)
-   - `ext.subcontractors.embiology@everycure.org` (for embiology contractors)
+   - `ext.subcontractors.standard@everycure.org` (for standard contractors) [Deprecated]
+   - `ext.subcontractors.embiology@everycure.org` (for embiology contractors) [Deprecated]
 
 2. Set up service account impersonation in their local environment:
    ```bash
