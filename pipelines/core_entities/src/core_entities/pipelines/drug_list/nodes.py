@@ -996,12 +996,9 @@ def merge_drug_lists(
         .merge(drug_list_with_drugbank_id, on="id", how="left")
         .merge(drug_list_with_fda_generic_drug_info, on="id", how="left")
     )
-
-    if "is_fda_generic_drug" not in df.columns:
-        df["is_fda_generic_drug"] = False
-    else:
-        df["is_fda_generic_drug"] = df["is_fda_generic_drug"].fillna(False).astype(bool)
-
+    # fill nan values in the is_fda_generic_drug column with False
+    df["is_fda_generic_drug"] = df["is_fda_generic_drug"].fillna(False).astype(bool)
+    # filter out drugs in the drug_exception_list (these are drugs that we want to keep in the curated drug list for completeness.
     df = df[~df["name"].isin(drug_exception_list)]
     df.loc[:, "name"] = df.loc[:, "name"].apply(lambda x: x.capitalize())
     df.loc[:, "synonyms"] = df.loc[:, "synonyms"].apply(
