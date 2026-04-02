@@ -401,8 +401,8 @@ def _validate_fda_drug_list_input(fda_results_df: pd.DataFrame) -> pd.DataFrame:
 
 
 @pa.check_output(FDA_DRUG_LIST_SCHEMA)
-def ingest_fda_drug_list(fda_drug_list: dict) -> pd.DataFrame:
-    normalized_df = normalize_fda_results_to_dataframe(fda_drug_list)
+def ingest_fda_drug_json(fda_json: dict) -> pd.DataFrame:
+    normalized_df = normalize_fda_results_to_dataframe(fda_json)
     return _validate_fda_drug_list_input(normalized_df)
 
 
