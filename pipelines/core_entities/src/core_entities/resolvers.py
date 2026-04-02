@@ -3,7 +3,13 @@ from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-_PURPLE_BOOK_BASE_URL = "https://purplebooksearch.fda.gov/files"
+_PURPLE_BOOK_BASE_URL = "https://www.accessdata.fda.gov/drugsatfda_docs/PurpleBook"
+# if we don't provide a user-agent, the FDA server returns 404 NOT FOUND,
+# even for HEAD requests, so we need to mimic a browser.
+_BROWSER_LIKE_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 
 
 def _resolve_now_utc() -> datetime:
@@ -11,12 +17,12 @@ def _resolve_now_utc() -> datetime:
 
 
 def _purple_book_url_for_month(target_month_utc: datetime) -> str:
-    month_slug = target_month_utc.strftime("%B").lower()
+    month_slug = target_month_utc.strftime("%B")
     return f"{_PURPLE_BOOK_BASE_URL}/{target_month_utc.year}/purplebook-search-{month_slug}-data-download.csv"
 
 
 def _is_url_available(url: str, timeout_seconds: float = 5.0) -> bool:
-    request = Request(url, method="HEAD")
+    request = Request(url, method="HEAD", headers={"User-Agent": _BROWSER_LIKE_USER_AGENT})
     try:
         with urlopen(request, timeout=timeout_seconds) as response:
             status_code = getattr(response, "status", 200)
@@ -24,7 +30,13 @@ def _is_url_available(url: str, timeout_seconds: float = 5.0) -> bool:
     except HTTPError as exc:
         # Some endpoints may reject HEAD; try a tiny ranged GET before deciding unavailable.
         if exc.code == 405:
-            get_request = Request(url, headers={"Range": "bytes=0-0"})
+            get_request = Request(
+                url,
+                headers={
+                    "Range": "bytes=0-0",
+                    "User-Agent": _BROWSER_LIKE_USER_AGENT,
+                },
+            )
             try:
                 with urlopen(get_request, timeout=timeout_seconds) as response:
                     status_code = getattr(response, "status", 200)
@@ -75,8 +87,10 @@ def purple_book_url(year: str | None = None, month: str | None = None) -> str:
         now_utc = _resolve_now_utc()
         last_month_utc = now_utc.replace(day=1) - timedelta(days=1)
         resolved_year = (year or env_year or str(last_month_utc.year)).strip()
-        resolved_month = (month or env_month or last_month_utc.strftime("%B").lower()).strip().lower()
-        return f"{_PURPLE_BOOK_BASE_URL}/{resolved_year}/purplebook-search-{resolved_month}-data-download.csv"
+        resolved_month = month or env_month or last_month_utc.strftime("%B")
+        return (
+            f"{_PURPLE_BOOK_BASE_URL}/{resolved_year}/purplebook-search-{resolved_month.capitalize()}-data-download.csv"
+        )
 
     now_utc = _resolve_now_utc()
     last_month_utc = now_utc.replace(day=1) - timedelta(days=1)
