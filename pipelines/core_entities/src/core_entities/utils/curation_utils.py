@@ -101,7 +101,7 @@ def filter_dataframe_by_columns(df: pd.DataFrame, filter_columns: dict[str, str]
         if col in df.columns:
             df = df[df[col] == expected_value]
         else:
-            logger.warning(f"Filter column {col} not found in dataframe")
+            logger.error(f"Filter column {col} not found in dataframe")
     return df
 
 
