@@ -1377,25 +1377,6 @@ def resolve_fda_drugs_that_are_otc_monograph(
     fda_drug_labels_filtered: pd.DataFrame,
     fda_labels_params: dict,
 ) -> tuple[DataFrame, DataFrame, DataFrame]:
-    if fda_drug_labels_filtered.empty:
-        fda_drug_labels_filtered.loc[:, "otc_monograph_checked"] = False
-        fda_drug_labels_filtered.loc[:, "otc_monograph_status"] = "NOT_CHECKED"
-        fda_drug_labels_filtered.loc[:, "otc_monograph_application_numbers"] = [
-            [] for _ in range(len(fda_drug_labels_filtered))
-        ]
-        fda_drug_labels_filtered.loc[:, "otc_monograph_total_matches"] = 0
-        fda_drug_labels_filtered.loc[:, "otc_monograph_error_msg"] = ""
-        fda_drug_labels_filtered.loc[:, "is_otc_monograph"] = False
-
-        enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
-        return (
-            fda_drug_labels_filtered,
-            enriched_tsv,
-            fda_drug_labels_filtered.loc[
-                fda_drug_labels_filtered["is_fda_generic_drug"], ["id", "is_fda_generic_drug"]
-            ].copy(),
-        )
-
     default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
     is_fda_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
     otc_candidates_mask = ~is_fda_generic
