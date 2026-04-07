@@ -30,6 +30,12 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.fda_drug_list",
                 name="ingest_fda_drug_json",
             ),
+            node(
+                func=nodes.ingest_fda_purple_book_data,
+                inputs="raw.fda_purple_book_data",
+                outputs="primary.fda_purple_book_data",
+                name="ingest_fda_purple_book_data",
+            ),
         ]
     )
 
@@ -65,7 +71,7 @@ def create_resolution_pipeline(**kwargs) -> Pipeline:
                 inputs={
                     "fda_drug_labels_filtered": "primary.fda_drug_labels_filtered_parquet",
                     "fda_purple_book_params": "params:drug_list.fda_purple_book",
-                    "fda_purple_book_data": "raw.fda_purple_book_data",
+                    "fda_purple_book_data": "primary.fda_purple_book_data",
                 },
                 outputs=[
                     "primary.fda_drugs_filtered_biosimilar_parquet",

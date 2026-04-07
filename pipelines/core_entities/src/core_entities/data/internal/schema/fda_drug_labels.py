@@ -535,3 +535,27 @@ FDA_DRUG_LABELS_OTC_TSV_SCHEMA = pa.DataFrameSchema(
     },
     strict=False,
 )
+
+FDA_PURPLE_BOOK_SCHEMA = pa.DataFrameSchema(
+    columns={
+        "bla_number": pa.Column(
+            nullable=False,
+            checks=[
+                pa.Check(
+                    lambda col: col.apply(lambda x: isinstance(x, str) and x.strip() != ""),
+                    title="bla_number must be a non-empty string",
+                ),
+            ],
+        ),
+        "bla_type": pa.Column(
+            nullable=False,
+            checks=[
+                pa.Check(
+                    lambda col: col.apply(lambda x: isinstance(x, str) and x.strip() != ""),
+                    title="bla_type must be a non-empty string",
+                ),
+            ],
+        ),
+    },
+    strict=True,
+)

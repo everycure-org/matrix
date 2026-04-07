@@ -11,6 +11,9 @@ from core_entities.utils.python_utils import (
     deep_lowercase_strings,
     ensure_python_list,
     ensure_string_list,
+    merge_unique_strings,
+    normalize_bla_number,
+    resolve_column_name,
 )
 
 
@@ -158,3 +161,37 @@ def test_canonicalize_reference_flags_returns_scalar_unchanged() -> None:
 
 def test_ensure_string_list_returns_empty_for_pandas_na_scalar() -> None:
     assert ensure_string_list(pd.NA) == []
+
+
+def test_resolve_column_name_matches_case_insensitive_trimmed_names() -> None:
+    df = pd.DataFrame(columns=[" BLA Number ", "BLA Type", "Other"])
+    result = resolve_column_name(df, ["bla number", "bla_number"])
+    assert result == " BLA Number "
+
+
+def test_resolve_column_name_returns_none_when_no_candidate_matches() -> None:
+    df = pd.DataFrame(columns=["foo", "bar"])
+    assert resolve_column_name(df, ["baz", "qux"]) is None
+
+
+def test_normalize_bla_number_extracts_digits_and_removes_leading_zeros() -> None:
+    assert normalize_bla_number(" BLA 000761071 ") == "761071"
+    assert normalize_bla_number(761071) == "761071"
+
+
+def test_normalize_bla_number_returns_none_for_empty_or_non_digit_values() -> None:
+    assert normalize_bla_number("") is None
+    assert normalize_bla_number("   ") is None
+    assert normalize_bla_number("BLA") is None
+
+
+def test_merge_unique_strings_deduplicates_case_insensitive_and_preserves_first_seen() -> None:
+    values = [["A", " a ", "B"], "b", ["C", "c"], None, [1, "D"]]
+    assert merge_unique_strings(values) == ["A", "B", "C", "D"]
+
+
+def test_merge_unique_strings_supports_mixed_list_like_values() -> None:
+    values = [("x", "Y", 1), {"y", "Z"}, np.array(["z", "W"], dtype=object)]
+    result = merge_unique_strings(values)
+    assert set(result) == {"x", "Y", "Z", "W"}
+    assert len(result) == 4

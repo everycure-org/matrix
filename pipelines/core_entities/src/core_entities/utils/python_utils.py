@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pandas as pd
 
@@ -87,3 +89,55 @@ def canonicalize_reference_flags(obj):
         return value
 
     return _walk(_deep_to_python(obj))
+
+
+def resolve_column_name(df: pd.DataFrame, candidates: list[str]) -> str | None:
+    """Resolve the column name in the given DataFrame that matches any of the candidate names.
+
+    Matching is case-insensitive and ignores leading/trailing whitespace. If a match
+    is found, the actual column name from the DataFrame is returned; otherwise, None
+    is returned.
+    """
+    normalized_name_to_column = {str(column).strip().lower(): column for column in df.columns}
+    for candidate in candidates:
+        matched = normalized_name_to_column.get(candidate.lower())
+        if matched is not None:
+            return matched
+    return None
+
+
+def normalize_bla_number(value: object) -> str | None:
+    """Normalise BLA numbers by stripping whitespace, removing non-digit characters,
+    and converting to a consistent string format.
+
+    If the resulting string is empty or contains no digits, return None.
+    """
+    raw_value = str(value).strip()
+    if raw_value == "":
+        return None
+
+    digits_only = re.sub(r"\D", "", raw_value)
+    if digits_only == "":
+        return None
+
+    return str(int(digits_only))
+
+
+def merge_unique_strings(values: list[object]) -> list[str]:
+    """Merge a list of values into a list of unique strings.
+
+    Each string is normalised by stripping whitespace and converting to lowercase
+    for deduplication, but the original casing is preserved in the output.
+    """
+    merged: list[str] = []
+    seen: set[str] = set()
+
+    for value in values:
+        for item in ensure_string_list(value):
+            normalized = item.lower().strip()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            merged.append(item)
+
+    return merged

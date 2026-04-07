@@ -3,10 +3,14 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pandera.pandas as pa
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from core_entities.pipelines.drug_list.nodes import (
+    ingest_fda_drug_json,
+    ingest_fda_purple_book_data,
     resolve_fda_drugs_matches_to_drug_list_filtered,
     resolve_fda_drugs_that_are_biosimilar_and_are_generic,
 )
@@ -17,6 +21,7 @@ from core_entities.utils.fda_drugs_utils import (
     filter_fda_rows,
     has_anda_application_number,
     match_drug_to_fda_worker,
+    normalize_fda_results_to_dataframe,
 )
 
 
@@ -610,9 +615,8 @@ def test_resolve_biosimilar_generic_uses_purple_book_bla_number_lookup() -> None
 
     purple_book_df = pd.DataFrame(
         {
-            "BLA Number": [761071],
-            "BLA Type": ["351(k) Interchangeable"],
-            "Proper Name": ["adalimumab"],
+            "bla_number": ["761071"],
+            "bla_type": ["351(k) Interchangeable"],
         }
     )
     params = {"generic_status_bla_type": ["351(k) Interchangeable"]}
@@ -622,6 +626,78 @@ def test_resolve_biosimilar_generic_uses_purple_book_bla_number_lookup() -> None
     assert result_parquet["biosimilar_application_numbers"].tolist() == [["bla761071"]]
     assert result_parquet["biosimilar_bla_types"].tolist() == [["351(k) Interchangeable"]]
     assert result_parquet["is_fda_generic_drug"].tolist() == [True]
+
+
+def test_ingest_fda_purple_book_data_normalizes_and_deduplicates_rows() -> None:
+    raw_purple_book_df = pd.DataFrame(
+        {
+            "BLA Number": [761071, "BLA 761071", "761071", ""],
+            "BLA Type": ["351(k) Interchangeable", "351(k) Interchangeable", "351(k) Biosimilar", "ignored"],
+            "Proper Name": ["adalimumab", "adalimumab", "adalimumab", "invalid"],
+        }
+    )
+
+    ingested = ingest_fda_purple_book_data(raw_purple_book_df)
+
+    assert list(ingested.columns) == ["bla_number", "bla_type"]
+    assert ingested.to_dict(orient="records") == [
+        {"bla_number": "761071", "bla_type": "351(k) Interchangeable"},
+        {"bla_number": "761071", "bla_type": "351(k) Biosimilar"},
+    ]
+
+
+def test_normalize_fda_results_to_dataframe_normalizes_openfda_known_list_fields() -> None:
+    fda_json = {
+        "results": [
+            {
+                "application_number": "ANDA123456",
+                "sponsor_name": "Acme Pharma",
+                "submissions": [],
+                "openfda": {
+                    "brand_name": " Brand X ",
+                    "generic_name": np.array(["Drug X", "Drug X", ""], dtype=object),
+                    "route": "ORAL",
+                },
+                "products": [],
+            }
+        ]
+    }
+
+    normalized_df = normalize_fda_results_to_dataframe(fda_json)
+    normalized_openfda = normalized_df.loc[0, "openfda"]
+
+    assert normalized_df.loc[0, "application_number"] == "anda123456"
+    assert normalized_df.loc[0, "sponsor_name"] == "acme pharma"
+    assert normalized_openfda["brand_name"] == ["brand x"]
+    assert normalized_openfda["generic_name"] == ["drug x"]
+    assert normalized_openfda["route"] == ["oral"]
+
+
+def test_ingest_fda_drug_json_validates_input_and_returns_normalized_dataframe() -> None:
+    fda_json_df = pd.DataFrame(
+        [
+            {
+                "application_number": "ANDA123456",
+                "sponsor_name": "Acme Pharma",
+                "submissions": [],
+                "openfda": {"brand_name": " Brand X "},
+                "products": [],
+            }
+        ]
+    )
+
+    result = ingest_fda_drug_json(fda_json_df)
+
+    assert result.loc[0, "application_number"] == "anda123456"
+    assert result.loc[0, "sponsor_name"] == "acme pharma"
+    assert result.loc[0, "openfda"]["brand_name"] == ["brand x"]
+
+
+def test_ingest_fda_drug_json_raises_schema_error_for_invalid_input() -> None:
+    invalid_fda_json_df = pd.DataFrame([{"sponsor_name": "Acme Pharma", "openfda": {}, "products": []}])
+
+    with pytest.raises(pa.errors.SchemaError):
+        ingest_fda_drug_json(invalid_fda_json_df)
 
 
 # Tests for _extract_openfda_field
@@ -648,6 +724,12 @@ def test_extract_openfda_field_handles_string_value() -> None:
     rows = [{"openfda": {"generic_name": "aspirin"}}]
     result = extract_openfda_field(rows, "generic_name")
     assert result == ["aspirin"]
+
+
+def test_extract_openfda_field_handles_numpy_array_values() -> None:
+    rows = [{"openfda": {"brand_name": np.array(["Brand X", "Brand X"], dtype=object)}}]
+    result = extract_openfda_field(rows, "brand_name")
+    assert result == ["Brand X"]
 
 
 def test_extract_openfda_field_missing_field_returns_empty() -> None:

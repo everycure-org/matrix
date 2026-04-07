@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import multiprocessing
-import re
 from functools import partial
 
 import aiohttp
@@ -24,8 +23,13 @@ from core_entities.data.internal.schema.fda_drug_labels import (
     FDA_DRUG_LABELS_OTC_PARQUET_SCHEMA,
     FDA_DRUG_LABELS_OTC_TSV_SCHEMA,
     FDA_DRUG_LABELS_UNFILTERED_SCHEMA,
+    FDA_PURPLE_BOOK_SCHEMA,
 )
-from core_entities.data.internal.schema.fda_drugs import FDA_DRUG_LIST_FOR_MATCHING_SCHEMA, FDA_DRUG_LIST_SCHEMA
+from core_entities.data.internal.schema.fda_drugs import (
+    FDA_DRUG_JSON_INPUT_SCHEMA,
+    FDA_DRUG_LIST_FOR_MATCHING_SCHEMA,
+    FDA_DRUG_LIST_SCHEMA,
+)
 from core_entities.pipelines.drug_llm_tags.drug_atc_codes import get_drug_atc_codes
 from core_entities.utils.curation_utils import create_search_term_from_curated_drug_list, filter_dataframe_by_columns
 from core_entities.utils.fda_drugs_utils import (
@@ -42,6 +46,9 @@ from core_entities.utils.fda_otc_monograph_drugs_utils import add_over_the_count
 from core_entities.utils.python_utils import (
     ensure_python_list,
     ensure_string_list,
+    merge_unique_strings,
+    normalize_bla_number,
+    resolve_column_name,
 )
 
 logger = logging.getLogger(__name__)
@@ -393,17 +400,41 @@ def ingest_atc_labels(atc: pd.DataFrame) -> pd.DataFrame:
     return atc
 
 
-@pa.check_input(
-    FDA_DRUG_LIST_SCHEMA,
-)
-def _validate_fda_drug_list_input(fda_results_df: pd.DataFrame) -> pd.DataFrame:
-    return fda_results_df
-
-
+@pa.check_input(FDA_DRUG_JSON_INPUT_SCHEMA)
 @pa.check_output(FDA_DRUG_LIST_SCHEMA)
-def ingest_fda_drug_json(fda_json: dict) -> pd.DataFrame:
-    normalized_df = normalize_fda_results_to_dataframe(fda_json)
-    return _validate_fda_drug_list_input(normalized_df)
+def ingest_fda_drug_json(fda_json: pd.DataFrame) -> pd.DataFrame:
+    normalized_df = normalize_fda_results_to_dataframe({"results": fda_json.to_dict(orient="records")})
+    return normalized_df
+
+
+@pa.check_output(FDA_PURPLE_BOOK_SCHEMA)
+def ingest_fda_purple_book_data(fda_purple_book_data: pd.DataFrame) -> pd.DataFrame:
+    """Ingest and normalise FDA Purple Book data.
+
+    Resolves varying column names for BLA Number and BLA Type, normalises
+    BLA numbers (digits-only string) and BLA types (stripped whitespace),
+    and drops rows with missing values. Returns a clean two-column DataFrame
+    with ``bla_number`` and ``bla_type``.
+    """
+    purple_book_df = fda_purple_book_data.copy()
+    bla_number_column = resolve_column_name(purple_book_df, ["BLA Number", "bla number", "bla_number"])
+    bla_type_column = resolve_column_name(purple_book_df, ["BLA Type", "bla type", "bla_type"])
+
+    if bla_number_column is None or bla_type_column is None:
+        logger.warning(
+            "Could not find BLA Number/BLA Type columns in purple book data. Available columns: %s",
+            list(purple_book_df.columns),
+        )
+        return pd.DataFrame(columns=["bla_number", "bla_type"])
+
+    purple_book_df = purple_book_df[[bla_number_column, bla_type_column]].copy()
+    purple_book_df.loc[:, "bla_number"] = purple_book_df[bla_number_column].apply(normalize_bla_number)
+    purple_book_df.loc[:, "bla_type"] = purple_book_df[bla_type_column].apply(lambda value: str(value).strip())
+    purple_book_df = purple_book_df[purple_book_df["bla_number"].notna() & (purple_book_df["bla_type"] != "")]
+    purple_book_df = purple_book_df.drop_duplicates(subset=["bla_number", "bla_type"])
+    purple_book_df = purple_book_df[["bla_number", "bla_type"]]
+
+    return purple_book_df
 
 
 # ------------------------------------------------------------
@@ -1163,15 +1194,14 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
     fda_purple_book_params: dict,
     fda_purple_book_data: DataFrame | None = None,
 ) -> tuple[DataFrame, DataFrame]:
-    """
-    From the filtered FDA drug matches, we want to determine which drugs are biosimilars (a specific type of generic drug that is similar to biologic drugs) and to extract relevant information about the biosimilar drugs.
-    We determine whether a drug is a biosimilar based on the presence of specific information in the matched FDA rows, such as the BLA status as defined in the params.fda_purple_book_params and the application numbers.
-    We also cross-reference with the FDA Purple Book data, if available, to enhance our identification of biosimilars.
-    """
+    """Determine which drugs are biosimilars and update generic drug status.
 
-    if fda_drug_labels_filtered.empty:
-        enriched_tsv = fda_drug_labels_filtered.drop(columns=["fda_rows", "filtered_fda_values"], errors="ignore")
-        return fda_drug_labels_filtered, enriched_tsv
+    We determine whether a drug is a biosimilar based on the presence of specific
+    information in the matched FDA rows, such as the BLA status as defined in
+    ``fda_purple_book_params`` and the application numbers.  We also cross-reference
+    with the ingested FDA Purple Book data, if available, to enhance our
+    identification of biosimilars.
+    """
     # We first determine which BLA types are relevant for identifying biosimilars based on the provided parameters. We normalise the BLA types to ensure consistent comparison later on.
     raw_bla_types = fda_purple_book_params.get("generic_status_bla_type", None)
     if raw_bla_types is None:
@@ -1181,23 +1211,13 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
         bla_type.lower().strip() for bla_type in ensure_string_list(raw_bla_types) if bla_type.strip() != ""
     }
 
-    def normalize_bla_number(value: object) -> str | None:
-        """
-        Normalise BLA numbers by stripping whitespace, removing non-digit characters, and converting to a consistent string format. If the resulting string is empty or contains no digits, return None.
-        """
-        raw_value = str(value).strip()
-        if raw_value == "":
-            return None
-
-        digits_only = re.sub(r"\D", "", raw_value)
-        if digits_only == "":
-            return None
-
-        return str(int(digits_only))
-
     def extract_application_numbers_from_fda_values(fda_values: object) -> list[str]:
-        """
-        Extract application numbers from the FDA values. We look for application numbers in the main FDA rows, as well as in the openfda field and the products field, as the relevant information can be present in different places depending on the specific drug and how the data is structured.
+        """Extract application numbers from the FDA values.
+
+        We look for application numbers in the main FDA rows, as well as in
+        the openfda field and the products field, as the relevant information
+        can be present in different places depending on the specific drug and
+        how the data is structured.
         """
         rows = ensure_python_list(fda_values) or []
         application_numbers: list[str] = []
@@ -1210,8 +1230,12 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
         return ensure_string_list(application_numbers)
 
     def extract_bla_types_from_fda_values(fda_values: object) -> list[str]:
-        """
-        Extract BLA types from the FDA values. We look for BLA types in the main FDA rows, as well as in the openfda field and the products field, as the relevant information can be present in different places depending on the specific drug and how the data is structured.
+        """Extract BLA types from the FDA values.
+
+        We look for BLA types in the main FDA rows, as well as in the openfda
+        field and the products field, as the relevant information can be present
+        in different places depending on the specific drug and how the data is
+        structured.
         """
         rows = ensure_python_list(fda_values) or []
         extracted: list[str] = []
@@ -1255,83 +1279,32 @@ def resolve_fda_drugs_that_are_biosimilar_and_are_generic(
         fda_values_source
     ].apply(extract_application_numbers_from_fda_values)
 
-    def resolve_column_name(df: pd.DataFrame, candidates: list[str]) -> str | None:
-        """
-        Resolve the column name in the given DataFrame that matches any of the candidate names (case-insensitive, ignoring leading/trailing whitespace). This is useful for handling variations in column naming conventions across different datasets. If a match is found, the actual column name from the DataFrame is returned; otherwise, None is returned.
-        """
-        normalized_name_to_column = {str(column).strip().lower(): column for column in df.columns}
-        for candidate in candidates:
-            matched = normalized_name_to_column.get(candidate.lower())
-            if matched is not None:
-                return matched
-        return None
-
-    def merge_unique_strings(values: list[object]) -> list[str]:
-        """
-        Merge a list of values into a list of unique strings, normalizing each string by stripping whitespace and converting to lowercase.
-        """
-        merged: list[str] = []
-        seen: set[str] = set()
-
-        for value in values:
-            for item in ensure_string_list(value):
-                normalized = item.lower().strip()
-                if normalized in seen:
-                    continue
-                seen.add(normalized)
-                merged.append(item)
-
-        return merged
-
-    # If the FDA Purple Book data is available and not empty, we use it to enhance our identification of biosimilars.
-    # We look for the relevant columns in the Purple Book data that contain the BLA numbers and BLA types,
-    # normalise the BLA numbers, and create a lookup dictionary to map normalised BLA numbers to their corresponding BLA types.
-    # We then use this lookup to enrich our FDA drug labels data with biosimilar information based on the application numbers extracted from the FDA values.
+    # If the ingested Purple Book data is available, use it to enrich biosimilar BLA types.
+    # The Purple Book data has already been normalised by ingest_fda_purple_book_data with
+    # consistent ``bla_number`` and ``bla_type`` columns.
     if fda_purple_book_data is not None and not fda_purple_book_data.empty:
-        purple_book_df = fda_purple_book_data.copy()
-        bla_number_column = resolve_column_name(purple_book_df, ["BLA Number", "bla number", "bla_number"])
-        bla_type_column = resolve_column_name(purple_book_df, ["BLA Type", "bla type", "bla_type"])
-
-        if bla_number_column is None or bla_type_column is None:
-            logger.warning(
-                "Could not find BLA Number/BLA Type columns in purple book data. Available columns: %s",
-                list(purple_book_df.columns),
-            )
-        else:
-            purple_book_df = purple_book_df[[bla_number_column, bla_type_column]].copy()
-            # We normalise the BLA numbers and BLA types in the Purple Book data to ensure consistent comparison later on when we enrich our FDA drug labels data with biosimilar information.
-            purple_book_df.loc[:, "normalized_bla_number"] = purple_book_df[bla_number_column].apply(
-                normalize_bla_number
-            )
-            purple_book_df.loc[:, "normalized_bla_type"] = purple_book_df[bla_type_column].apply(
-                lambda value: str(value).strip()
-            )
-            purple_book_df = purple_book_df[
-                purple_book_df["normalized_bla_number"].notna() & (purple_book_df["normalized_bla_type"] != "")
-            ]
-
-            purple_book_lookup = (
-                purple_book_df.groupby("normalized_bla_number")["normalized_bla_type"]
-                .apply(lambda values: merge_unique_strings(values.tolist()))
-                .to_dict()
-            )
-            # We enrich our FDA drug labels data with biosimilar information based on the application numbers extracted from the FDA values
-            # and the lookup dictionary created from the Purple Book data. For each drug, we look at the application numbers extracted from the FDA values,
-            # normalise them, and check if they match any BLA numbers in the Purple Book lookup. If a match is found,
-            # we merge the corresponding BLA types from the Purple Book data into our FDA drug labels data for that drug.
-            fda_drug_labels_filtered.loc[:, "biosimilar_bla_types"] = fda_drug_labels_filtered.apply(
-                lambda row: merge_unique_strings(
+        purple_book_lookup: dict[str, list[str]] = (
+            fda_purple_book_data.groupby("bla_number")["bla_type"]
+            .apply(lambda values: merge_unique_strings(values.tolist()))
+            .to_dict()
+        )
+        # We enrich our FDA drug labels data with biosimilar information based on the application numbers extracted from the FDA values
+        # and the lookup dictionary created from the Purple Book data. For each drug, we look at the application numbers extracted from the FDA values,
+        # normalise them, and check if they match any BLA numbers in the Purple Book lookup. If a match is found,
+        # we merge the corresponding BLA types from the Purple Book data into our FDA drug labels data for that drug.
+        fda_drug_labels_filtered.loc[:, "biosimilar_bla_types"] = fda_drug_labels_filtered.apply(
+            lambda row: merge_unique_strings(
+                [
+                    row.get("biosimilar_bla_types", []),
                     [
-                        row.get("biosimilar_bla_types", []),
-                        [
-                            bla_type
-                            for application_number in ensure_string_list(row.get("biosimilar_application_numbers", []))
-                            for bla_type in purple_book_lookup.get(normalize_bla_number(application_number), [])
-                        ],
-                    ]
-                ),
-                axis=1,
-            )
+                        bla_type
+                        for application_number in ensure_string_list(row.get("biosimilar_application_numbers", []))
+                        for bla_type in purple_book_lookup.get(normalize_bla_number(application_number), [])
+                    ],
+                ]
+            ),
+            axis=1,
+        )
 
     default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
     is_biologics = fda_drug_labels_filtered.get("is_biologics", default_false).fillna(False).astype(bool)

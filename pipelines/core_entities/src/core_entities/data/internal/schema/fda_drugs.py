@@ -207,6 +207,66 @@ def _list_like_of_dicts(series: pa.typing.Series) -> pa.typing.Series:
 # (output of ``ingest_fda_drug_list``)
 # ---------------------------------------------------------------------------
 
+FDA_DRUG_JSON_INPUT_SCHEMA = pa.DataFrameSchema(
+    columns={
+        "application_number": pa.Column(
+            nullable=False,
+            checks=[
+                pa.Check(
+                    lambda col: col.apply(lambda x: isinstance(x, str) and x.strip() != ""),
+                    title="application_number must be a non-empty string",
+                ),
+            ],
+        ),
+        "sponsor_name": pa.Column(
+            nullable=False,
+            checks=[
+                pa.Check(
+                    lambda col: col.apply(lambda x: isinstance(x, str) and x.strip() != ""),
+                    title="sponsor_name must be a non-empty string",
+                ),
+            ],
+        ),
+        "submissions": pa.Column(
+            required=False,
+            nullable=True,
+            checks=[
+                pa.Check(
+                    _list_like_of_dicts,
+                    title="submissions must be a list-like collection of dicts when present",
+                ),
+            ],
+        ),
+        "openfda": pa.Column(
+            required=False,
+            nullable=True,
+            checks=[
+                pa.Check(
+                    _openfda_is_dict,
+                    title="openfda must be a dict when present",
+                ),
+            ],
+        ),
+        "products": pa.Column(
+            required=False,
+            nullable=True,
+            checks=[
+                pa.Check(
+                    _list_like_of_dicts,
+                    title="products must be a list-like collection of dicts when present",
+                ),
+            ],
+        ),
+    },
+    strict=False,
+    checks=[
+        pa.Check(
+            lambda df: len(df) > 0,
+            title="fda_json results must not be empty",
+        ),
+    ],
+)
+
 FDA_DRUG_LIST_SCHEMA = pa.DataFrameSchema(
     columns={
         # Primary key — nda/anda/bla number (lowercase), e.g. "nda021274"

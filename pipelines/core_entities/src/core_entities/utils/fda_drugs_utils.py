@@ -11,6 +11,27 @@ logger = logging.getLogger(__name__)
 
 _COMBO_KEYWORD_PATTERN = re.compile(r"\band\b|&|;|,", re.IGNORECASE)
 _COMBO_SPLIT_PATTERN = re.compile(r"\s+\band\b\s+|\s*&\s*|\s*;\s*|\s*,\s*", re.IGNORECASE)
+_OPENFDA_LIST_KEYS_TO_COERCE = frozenset(
+    {
+        "brand_name",
+        "generic_name",
+        "substance_name",
+        "manufacturer_name",
+        "product_ndc",
+        "route",
+        "pharm_class_epc",
+        "pharm_class_moa",
+        "pharm_class_cs",
+        "pharm_class_pe",
+        "application_number",
+        "package_ndc",
+        "unii",
+        "rxcui",
+        "spl_id",
+        "spl_set_id",
+        "product_type",
+    }
+)
 
 
 def _normalize(value: str) -> str:
@@ -18,9 +39,52 @@ def _normalize(value: str) -> str:
     return value.lower().strip()
 
 
+# NOTE: This function was partially generated using AI assistance.
+def _coerce_string_list_like(value: Any) -> list[str]:
+    """Coerce string/list-like values into a deduplicated list of strings."""
+    if isinstance(value, str):
+        return _unique_non_empty_strings([value])
+
+    sequence_value = _as_list(value)
+    if sequence_value is None:
+        return []
+
+    flattened: list[str] = []
+    for item in sequence_value:
+        if isinstance(item, str):
+            flattened.append(item)
+            continue
+
+        nested_items = _as_list(item)
+        if nested_items is None:
+            continue
+        flattened.extend([nested for nested in nested_items if isinstance(nested, str)])
+
+    return _unique_non_empty_strings(flattened)
+
+
+def _normalize_openfda_string_list_fields(result_row: dict[str, Any]) -> dict[str, Any]:
+    """Normalize known openfda string-list keys to list[str] values."""
+    openfda = result_row.get("openfda")
+    if not isinstance(openfda, dict):
+        return result_row
+
+    normalized_openfda = dict(openfda)
+    for key in _OPENFDA_LIST_KEYS_TO_COERCE:
+        if key in normalized_openfda:
+            normalized_openfda[key] = _coerce_string_list_like(normalized_openfda.get(key))
+
+    result_row["openfda"] = normalized_openfda
+    return result_row
+
+
 def normalize_fda_results_to_dataframe(fda_drug_list: dict) -> pd.DataFrame:
     normalized_results = deep_lowercase_strings(fda_drug_list["results"])
     normalized_results = canonicalize_reference_flags(normalized_results)
+    normalized_results = [
+        _normalize_openfda_string_list_fields(result) if isinstance(result, dict) else result
+        for result in normalized_results
+    ]
     return pd.DataFrame(normalized_results)
 
 
@@ -377,11 +441,7 @@ def extract_openfda_field(filtered_rows: list, field_name: str) -> list[str]:
         if not isinstance(openfda, dict):
             continue
 
-        field_value = openfda.get(field_name, [])
-        if isinstance(field_value, str):
-            values.append(field_value)
-        elif isinstance(field_value, list):
-            values.extend(field_value)
+        values.extend(_coerce_string_list_like(openfda.get(field_name, [])))
 
     return _unique_non_empty_strings(values)
 

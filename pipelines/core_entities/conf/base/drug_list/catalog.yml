@@ -36,6 +36,7 @@ raw.fda_drug_json:
   type: core_entities.datasets.json_zip_dataset.JSONZipDataset
   url: https://download.open.fda.gov/drug/drugsfda/drug-drugsfda-0001-of-0001.json.zip
   member_name: drug-drugsfda-0001-of-0001.json
+  records_path: results
 
 raw.fda_purple_book_data:
   type: pandas.CSVDataset
@@ -120,6 +121,10 @@ primary.fda_drug_labels_filtered_including_otc_monograph_tsv:
 primary.fda_generic_drug_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/drug/fda-generic-drug-list.parquet
+
+primary.fda_purple_book_data:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/drug/fda-purple-book-data.parquet
 
 # -------------------------------------------------------------------------
 # Release
