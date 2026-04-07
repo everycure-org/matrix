@@ -35,14 +35,6 @@ def _has_application_prefix(application_number: str, *prefixes: str) -> bool:
     return normalized_application_number.startswith(normalized_prefixes)
 
 
-def _is_anda_or_bla_application_number(application_number: str) -> bool:
-    return _has_application_prefix(application_number, "anda", "bla")
-
-
-def _is_anda_application_number(application_number: str) -> bool:
-    return _has_application_prefix(application_number, "anda")
-
-
 def _as_list(value: Any) -> list | None:
     """Coerce sequences (list, tuple, set, ndarray) to list; return None for non-sequences."""
     if isinstance(value, list):
@@ -197,8 +189,8 @@ def _is_probable_combo_expression(value: str, search_terms: list[str]) -> bool:
         return False
 
     # Require one part that matches the current drug context and another that does not.
-    has_matching_part = any(_matches_any_search_term(part, search_terms) for part in parts)
-    has_non_matching_part = any(not _matches_any_search_term(part, search_terms) for part in parts)
+    has_matching_part = any(_any_substring_match((part,), search_terms) for part in parts)
+    has_non_matching_part = any(not _any_substring_match((part,), search_terms) for part in parts)
     return has_matching_part and has_non_matching_part
 
 
@@ -216,11 +208,6 @@ def _extract_active_ingredient_names(active_ingredients: list[dict | str]) -> li
         if isinstance(ingredient, (dict, str))
     ]
     return _normalize_string_terms(raw_names)
-
-
-def _matches_any_search_term(value: str, search_terms: list[str]) -> bool:
-    # Delegate to _any_substring_match to avoid duplicating the same bidirectional substring logic.
-    return _any_substring_match((value,), search_terms)
 
 
 def match_drug_to_fda_worker(
@@ -264,7 +251,7 @@ def _active_ingredients_match_combo(
 
     # Find the ingredient that matches the drug (any search term)
     drug_match_idx = next(
-        (i for i, name in enumerate(ingredient_names) if _matches_any_search_term(name, search_terms)), None
+        (i for i, name in enumerate(ingredient_names) if _any_substring_match((name,), search_terms)), None
     )
     if drug_match_idx is None:
         return False
@@ -274,7 +261,7 @@ def _active_ingredients_match_combo(
         (
             i
             for i, name in enumerate(ingredient_names)
-            if i != drug_match_idx and _matches_any_search_term(name, [combo_partner])
+            if i != drug_match_idx and _any_substring_match((name,), [combo_partner])
         ),
         None,
     )
@@ -324,7 +311,7 @@ def _filter_matching_products(
             continue
         if has_combo_substance_name:
             continue
-        if _matches_any_search_term(ingredient_name, search_terms):
+        if _any_substring_match((ingredient_name,), search_terms):
             matching.append(product)
 
     return matching
@@ -343,7 +330,7 @@ def filter_fda_rows(row: pd.Series) -> list:
     for value in fda_rows:
         if not isinstance(value, dict):
             continue
-        if not _is_anda_or_bla_application_number(value.get("application_number", "")):
+        if not _has_application_prefix(value.get("application_number", ""), "anda", "bla"):
             continue
 
         has_combo_substance_name = _has_probable_combo_substance_name(value, normalized_search_terms)
@@ -437,6 +424,6 @@ def has_anda_application_number(fda_rows: list) -> bool:
         if not isinstance(row, dict):
             continue
         application_number = row.get("application_number")
-        if _is_anda_application_number(application_number):
+        if _has_application_prefix(application_number, "anda"):
             return True
     return False
