@@ -179,9 +179,12 @@ def _is_probable_combo_expression(value: str, search_terms: list[str]) -> bool:
         return False
 
     parts = _split_combo_expression_parts(normalized)
+    # A combo expression must have at least two components (e.g. "drug a and drug b").
     if len(parts) < 2:
         return False
 
+    # Reject expressions where every part is identical (e.g. "aspirin and aspirin")
+    # — those aren't genuine combinations.
     if len(set(parts)) < 2:
         return False
 
