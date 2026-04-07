@@ -86,15 +86,35 @@ def transform_nodes_v2_10_0_validated(nodes_df: ps.DataFrame):
 def transform_edges_v2_7_3(edges_df: ps.DataFrame, curie_to_pmids: ps.DataFrame, semmed_filters: Dict[str, str]):
     # fmt: off
     df = (edges_df
-          .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR)) # RTX KG2 2.10 does not exist
+          # Qualifiers — not present in v2.7.3
+          .withColumn("qualified_predicate",          f.lit(None).cast(T.StringType()))
+          .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType()))
+          .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType()))
+          .withColumn("subject_part_qualifier",        f.lit(None).cast(T.StringType()))
+          .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType()))
+          .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType()))
+          .withColumn("object_specialization_qualifier", f.lit(None).cast(T.StringType()))
+          .withColumn("object_part_qualifier",         f.lit(None).cast(T.StringType()))
+          .withColumn("species_context_qualifier",     f.lit(None).cast(T.StringType()))
+          .withColumn("disease_context_qualifier",     f.lit(None).cast(T.StringType()))
+          .withColumn("frequency_qualifier",           f.lit(None).cast(T.StringType()))
+          .withColumn("qualifiers",                    f.lit(None).cast(T.StringType()))
+          .withColumn("stage_qualifier",               f.lit(None).cast(T.StringType()))
+          .withColumn("anatomical_context_qualifier",  f.lit(None).cast(T.StringType()))
+          .withColumn("onset_qualifier",               f.lit(None).cast(T.StringType()))
+          .withColumn("sex_qualifier",                 f.lit(None).cast(T.StringType()))
+          # Provenance — v2.7.3 uses annotated column names
+          .withColumn("aggregator_knowledge_source",   f.split(f.col("knowledge_source:string[]"), RTX_SEPARATOR))
           .withColumn("publications",                  f.split(f.col("publications:string[]"), RTX_SEPARATOR))
           .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
           .withColumn("knowledge_level",               f.lit(None).cast(T.StringType()))
-          .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0)) # RTX KG2 2.10 `primary_knowledge_source``
-          .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-          .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
+          .withColumn("primary_knowledge_source",      f.col("aggregator_knowledge_source").getItem(0))
+          # Quantitative attributes
+          .withColumn("has_confidence_score",          f.lit(None).cast(T.FloatType()))
+          .withColumn("extraction_confidence_score",   f.lit(None).cast(T.FloatType()))
+          .withColumn("affinity",                      f.lit(None).cast(T.FloatType()))
+          .withColumn("affinity_parameter",            f.lit(None).cast(T.StringType()))
+          .withColumn("supporting_study_method_type",  f.lit(None).cast(T.StringType()))
           .transform(filter_semmed, curie_to_pmids, **semmed_filters)
     )
     # fmt: on
@@ -106,15 +126,35 @@ def transform_edges_v2_10_0_validated(
 ):
     # fmt: off
     df = (edges_df
-            .withColumn("aggregator_knowledge_source",   f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR)) #RTX KG2 2.10 has a column for aggregator knowledge source
-            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR)) # RTX KG2 2.10 no longer has type annotation on publication column
+            # Qualifiers — v2.10 exposes object_aspect_qualifier and object_direction_qualifier directly
+            .withColumn("qualified_predicate",           f.lit(None).cast(T.StringType()))
+            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType()))
+            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType()))
+            .withColumn("subject_part_qualifier",        f.lit(None).cast(T.StringType()))
+            .withColumn("object_aspect_qualifier",       f.col("object_aspect_qualifier").cast(T.StringType()))
+            .withColumn("object_direction_qualifier",    f.col("object_direction_qualifier").cast(T.StringType()))
+            .withColumn("object_specialization_qualifier", f.lit(None).cast(T.StringType()))
+            .withColumn("object_part_qualifier",         f.lit(None).cast(T.StringType()))
+            .withColumn("species_context_qualifier",     f.lit(None).cast(T.StringType()))
+            .withColumn("disease_context_qualifier",     f.lit(None).cast(T.StringType()))
+            .withColumn("frequency_qualifier",           f.lit(None).cast(T.StringType()))
+            .withColumn("qualifiers",                    f.lit(None).cast(T.StringType()))
+            .withColumn("stage_qualifier",               f.lit(None).cast(T.StringType()))
+            .withColumn("anatomical_context_qualifier",  f.lit(None).cast(T.StringType()))
+            .withColumn("onset_qualifier",               f.lit(None).cast(T.StringType()))
+            .withColumn("sex_qualifier",                 f.lit(None).cast(T.StringType()))
+            # Provenance
+            .withColumn("aggregator_knowledge_source",   f.split(f.col("aggregator_knowledge_source"), RTX_SEPARATOR))
+            .withColumn("publications",                  f.split(f.col("publications"), RTX_SEPARATOR))
             .withColumn("upstream_data_source",          f.array(f.lit("rtxkg2")))
-            .withColumn("subject_aspect_qualifier",      f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .withColumn("subject_direction_qualifier",   f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .withColumn("object_aspect_qualifier",       f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .withColumn("object_direction_qualifier",    f.lit(None).cast(T.StringType())) #not present in RTX KG2 at this time
-            .withColumn("num_references",                f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+            # Quantitative attributes
+            .withColumn("num_references",                f.lit(None).cast(T.IntegerType()))
+            .withColumn("num_sentences",                 f.lit(None).cast(T.IntegerType()))
+            .withColumn("has_confidence_score",          f.lit(None).cast(T.FloatType()))
+            .withColumn("extraction_confidence_score",   f.lit(None).cast(T.FloatType()))
+            .withColumn("affinity",                      f.lit(None).cast(T.FloatType()))
+            .withColumn("affinity_parameter",            f.lit(None).cast(T.StringType()))
+            .withColumn("supporting_study_method_type",  f.lit(None).cast(T.StringType()))
             .transform(filter_semmed, curie_to_pmids, **semmed_filters)
     )
     # fmt: on
@@ -183,7 +223,13 @@ def filter_semmed(
     )
     edges_filtered = edges_df.filter(~semmeddb_is_only_knowledge_source).unionByName(single_semmed_edges)
     edges_filtered.explain()
-    return edges_filtered
+    return edges_filtered.withColumn(
+        "num_references",
+        f.when(
+            f.col("publications").isNotNull(),
+            f.size(f.array_distinct(f.col("publications"))),
+        ).cast(T.IntegerType()),
+    )
 
 
 def compute_ngd(df: ps.DataFrame, num_pairs: int = 3.7e7 * 20) -> ps.DataFrame:

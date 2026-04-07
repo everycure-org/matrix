@@ -66,11 +66,35 @@ def transform_nodes_2_1(nodes_df: ps.DataFrame):
 def transform_edges_2_1(edges_df: ps.DataFrame):
     # fmt: off
     df = (edges_df
+          # Qualifiers — subject_aspect_qualifier, object_aspect_qualifier, object_direction_qualifier present in source
+          .withColumn("qualified_predicate",                      F.lit(None).cast(T.StringType()))
+          .withColumn("subject_aspect_qualifier",                 F.col("subject_aspect_qualifier").cast(T.StringType()))
+          .withColumn("subject_direction_qualifier",              F.lit(None).cast(T.StringType()))
+          .withColumn("subject_part_qualifier",                   F.lit(None).cast(T.StringType()))
+          .withColumn("object_aspect_qualifier",                  F.col("object_aspect_qualifier").cast(T.StringType()))
+          .withColumn("object_direction_qualifier",               F.col("object_direction_qualifier").cast(T.StringType()))
+          .withColumn("object_specialization_qualifier",          F.lit(None).cast(T.StringType()))
+          .withColumn("object_part_qualifier",                    F.lit(None).cast(T.StringType()))
+          .withColumn("species_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumn("disease_context_qualifier",                F.lit(None).cast(T.StringType()))
+          .withColumn("frequency_qualifier",                      F.lit(None).cast(T.StringType()))
+          .withColumn("qualifiers",                               F.lit(None).cast(T.StringType()))
+          .withColumn("stage_qualifier",                          F.lit(None).cast(T.StringType()))
+          .withColumn("anatomical_context_qualifier",             F.lit(None).cast(T.StringType()))
+          .withColumn("onset_qualifier",                          F.lit(None).cast(T.StringType()))
+          .withColumn("sex_qualifier",                            F.lit(None).cast(T.StringType()))
+          # Provenance
+          .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), SEPARATOR))
           .withColumn("publications",                             F.split(F.col("publications"), SEPARATOR))
           .withColumn("upstream_data_source",                     F.array(F.lit("primekg")))
-          .withColumn("aggregator_knowledge_source",              F.split(F.col("aggregator_knowledge_source"), SEPARATOR))
-          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
-          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType())) # Required to match EmBiology schema
+          # Quantitative attributes
+          .withColumn("num_references",                           F.lit(None).cast(T.IntegerType()))
+          .withColumn("num_sentences",                            F.lit(None).cast(T.IntegerType()))
+          .withColumn("has_confidence_score",                     F.lit(None).cast(T.FloatType()))
+          .withColumn("extraction_confidence_score",              F.lit(None).cast(T.FloatType()))
+          .withColumn("affinity",                                 F.lit(None).cast(T.FloatType()))
+          .withColumn("affinity_parameter",                       F.lit(None).cast(T.StringType()))
+          .withColumn("supporting_study_method_type",             F.lit(None).cast(T.StringType()))
           )
-    # fmt: off
+    # fmt: on
     return df
