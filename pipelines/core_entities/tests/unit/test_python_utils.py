@@ -85,8 +85,8 @@ def test_canonicalize_reference_flags_normalizes_flag_fields() -> None:
     result = canonicalize_reference_flags(payload)
 
     assert result == {
-        "reference_drug": "yes",
-        "reference_standard": "no",
+        "reference_drug": True,
+        "reference_standard": False,
         "other": "Y",
     }
 
@@ -100,7 +100,7 @@ def test_canonicalize_reference_flags_handles_bool_and_nullish_values() -> None:
     result = canonicalize_reference_flags(payload)
 
     assert result == {
-        "reference_drug": "yes",
+        "reference_drug": True,
         "reference_standard": None,
     }
 
@@ -138,14 +138,14 @@ def test_canonicalize_reference_flags_recurses_into_lists_and_nested_dicts() -> 
 
     assert result == [
         {
-            "reference_drug": "yes",
+            "reference_drug": True,
             "nested": {
-                "reference_standard": "no",
+                "reference_standard": False,
                 "note": "KeepMe",
             },
         },
         {
-            "reference_drug": "no",
+            "reference_drug": False,
             "reference_standard": None,
         },
     ]

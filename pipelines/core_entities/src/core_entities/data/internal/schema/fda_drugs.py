@@ -99,7 +99,7 @@ def _openfda_string_lists_are_non_empty(series: pa.typing.Series) -> pa.typing.S
 # Helpers — products
 # ---------------------------------------------------------------------------
 
-_VALID_REFERENCE_FLAG = frozenset({"yes", "no"})
+_VALID_REFERENCE_FLAG = frozenset({True, False})
 
 
 def _products_are_list(series: pa.typing.Series) -> pa.typing.Series:
@@ -159,7 +159,7 @@ def _products_string_fields_lowercase(series: pa.typing.Series) -> pa.typing.Ser
 
 
 def _products_reference_flags_valid(series: pa.typing.Series) -> pa.typing.Series:
-    """reference_drug and reference_standard flags must be 'yes' or 'no' (lowercase)."""
+    """reference_drug and reference_standard flags must be True or False."""
 
     def _check_entry(products: list) -> bool:
         for product in products:

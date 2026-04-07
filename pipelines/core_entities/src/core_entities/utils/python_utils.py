@@ -54,18 +54,18 @@ _NULLISH_REFERENCE_VALUES = {"", "none", "null", "na", "n/a", "unknown", "tbd"}
 
 
 def canonicalize_reference_flags(obj):
-    """Normalise reference flags to canonical yes/no/None values."""
+    """Normalise reference flags to canonical True/False/None values."""
 
     def _normalize_flag(value):
         if isinstance(value, bool):
-            return "yes" if value else "no"
+            return value
 
         if isinstance(value, str):
             normalized = value.strip().lower()
             if normalized in {"yes", "y", "true", "1"}:
-                return "yes"
+                return True
             if normalized in {"no", "n", "false", "0"}:
-                return "no"
+                return False
             if normalized in _NULLISH_REFERENCE_VALUES:
                 return None
 
