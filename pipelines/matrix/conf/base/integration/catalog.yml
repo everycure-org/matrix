@@ -73,7 +73,8 @@ integration.prm.unified_edges:
 
 integration.prm.unified_edges_simplified:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/prm/unified/edges_simplified
+  # filepath: ${globals:paths.integration}/prm/unified/edges_simplified
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/tests/prime-kg-merged/datasets/integration/prm/prime_kg_gt_corr_with_off_label.parquet
 
 integration.int.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
