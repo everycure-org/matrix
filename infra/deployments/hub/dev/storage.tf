@@ -1,7 +1,7 @@
 resource "google_storage_bucket_iam_member" "object_user" {
   bucket = var.storage_bucket_name
   role   = "roles/storage.objectCreator"
-  member = "group:matrix-all@everycure.org"
+  member = "group:techteam@everycure.org"
 
   condition {
     title      = "only_edit_raw"
@@ -42,7 +42,7 @@ resource "google_secret_manager_secret_version" "storage_viewer_key" {
 resource "google_secret_manager_secret_iam_member" "storage_viewer_key_access" {
   secret_id = google_secret_manager_secret.storage_viewer_key.secret_id
   role      = "roles/secretmanager.secretAccessor"
-  member    = "group:matrix-all@everycure.org"
+  member    = "group:techteam@everycure.org"
 }
 
 # furthermore grant access to the serviceaccount of wg1/wg2
@@ -85,7 +85,7 @@ resource "google_project_iam_member" "bq_read_session" {
 resource "google_storage_bucket_iam_member" "object_lister" {
   bucket = var.storage_bucket_name
   role   = "roles/storage.objectViewer"
-  member = "group:matrix-all@everycure.org"
+  member = "group:techteam@everycure.org"
 }
 
 # add a new binding for the compute engine default service account for Orchard prod
