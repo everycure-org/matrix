@@ -1083,16 +1083,8 @@ def resolve_fda_drugs_matches_to_drug_list_unfiltered(
     work_items_records = work_items.to_dict(orient="records")
 
     if len(work_items_records) == 0:
-        logger.info("No curated drugs available for FDA matching after filtering")
-        return pd.DataFrame(
-            columns=[
-                "fda_rows",
-                "fda_match_count",
-                "drug_name",
-                "id",
-                "search_terms",
-                "available_in_combo_with",
-            ]
+        raise ValueError(
+            "No curated drugs available for FDA matching after filtering. Please make sure the filtering parameters are not too strict and that there are drugs in the curated drug list that meet the criteria."
         )
 
     worker_fn = partial(
@@ -1350,6 +1342,10 @@ def resolve_fda_drugs_that_are_otc_monograph(
     fda_drug_labels_filtered: pd.DataFrame,
     fda_labels_params: dict,
 ) -> tuple[DataFrame, DataFrame, DataFrame]:
+    if fda_drug_labels_filtered.empty:
+        raise ValueError(
+            "The input DataFrame for resolving OTC monograph status is empty. Please ensure that the previous steps have produced results and that the input data is correct."
+        )
     default_false = pd.Series(False, index=fda_drug_labels_filtered.index, dtype=bool)
     is_fda_generic = fda_drug_labels_filtered.get("is_fda_generic_drug", default_false).fillna(False).astype(bool)
     otc_candidates_mask = ~is_fda_generic
