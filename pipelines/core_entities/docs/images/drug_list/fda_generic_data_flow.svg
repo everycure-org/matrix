@@ -1,0 +1,96 @@
+<svg width="1400" height="980" viewBox="0 0 1400 980" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">FDA Generic Data Flow</title>
+  <desc id="desc">Data flow for deriving is_fda_generic_drug in the core_entities drug_list pipeline.</desc>
+
+  <defs>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #0b132b; }
+      .subtitle { font: 400 15px Arial, sans-serif; fill: #334155; }
+      .node-title { font: 700 14px Arial, sans-serif; fill: #0b132b; }
+      .node-text { font: 400 12px Arial, sans-serif; fill: #1f2937; }
+      .src-badge { font: 700 12px Arial, sans-serif; fill: #ffffff; }
+      .edge-label { font: 400 12px Arial, sans-serif; fill: #1e293b; }
+      .source-box { fill: #e0f2fe; stroke: #0284c7; stroke-width: 2; }
+      .aux-source-box { fill: #f8fafc; stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 6 4; }
+      .process-box { fill: #f8fafc; stroke: #475569; stroke-width: 2; }
+      .output-box { fill: #ecfdf5; stroke: #059669; stroke-width: 2; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="980" fill="#ffffff" />
+
+  <text x="700" y="52" text-anchor="middle" class="title">FDA Generic Data Flow (drug_list pipeline)</text>
+  <text x="700" y="78" text-anchor="middle" class="subtitle">Three source streams are combined to compute and refine is_fda_generic_drug</text>
+
+  <rect x="80" y="120" width="360" height="130" rx="12" class="source-box" />
+  <circle cx="106" cy="146" r="14" fill="#0284c7" />
+  <text x="106" y="150" text-anchor="middle" class="src-badge">1</text>
+  <text x="132" y="150" class="node-title">Source 1: Drugs@FDA Dataset</text>
+  <text x="96" y="176" class="node-text">Dataset key: raw.fda_drug_list</text>
+  <text x="96" y="196" class="node-text">Origin: download.open.fda.gov/drug/drugsfda/*.json.zip</text>
+  <text x="96" y="216" class="node-text">Used for FDA row matching and initial generic signal</text>
+
+  <rect x="520" y="120" width="360" height="130" rx="12" class="source-box" />
+  <circle cx="546" cy="146" r="14" fill="#0284c7" />
+  <text x="546" y="150" text-anchor="middle" class="src-badge">2</text>
+  <text x="572" y="150" class="node-title">Source 2: FDA Purple Book</text>
+  <text x="536" y="176" class="node-text">Dataset key: raw.fda_purple_book_data</text>
+  <text x="536" y="196" class="node-text">Origin: CSV from purple_book_url</text>
+  <text x="536" y="216" class="node-text">Used to map BLA number -&gt; BLA type for biosimilars</text>
+
+  <rect x="960" y="120" width="360" height="130" rx="12" class="source-box" />
+  <circle cx="986" cy="146" r="14" fill="#0284c7" />
+  <text x="986" y="150" text-anchor="middle" class="src-badge">3</text>
+  <text x="1012" y="150" class="node-title">Source 3: openFDA Label API</text>
+  <text x="976" y="176" class="node-text">Config: params drug_list.fda_labels.api.api_url</text>
+  <text x="976" y="196" class="node-text">Default: api.fda.gov/drug/label.json</text>
+  <text x="976" y="216" class="node-text">Used for OTC monograph checks on non-generic candidates</text>
+
+  <rect x="80" y="286" width="360" height="96" rx="12" class="aux-source-box" />
+  <text x="100" y="316" class="node-title">Auxiliary Input: curated drug list</text>
+  <text x="100" y="338" class="node-text">Dataset key: raw.curated_drug_list</text>
+  <text x="100" y="358" class="node-text">Provides candidate drug IDs/names to evaluate</text>
+
+  <rect x="220" y="430" width="960" height="88" rx="12" class="process-box" />
+  <text x="240" y="460" class="node-title">ingest_fda_drug_list</text>
+  <text x="240" y="482" class="node-text">normalize_fda_results_to_dataframe(...) -&gt; primary.fda_drug_list</text>
+
+  <rect x="220" y="554" width="960" height="102" rx="12" class="process-box" />
+  <text x="240" y="584" class="node-title">resolve_fda_drugs_matches_to_drug_list_unfiltered</text>
+  <text x="240" y="606" class="node-text">Matches curated drugs to FDA rows using substance/active ingredient fields</text>
+  <text x="240" y="626" class="node-text">Output: primary.fda_drug_labels_unfiltered</text>
+
+  <rect x="220" y="692" width="960" height="106" rx="12" class="process-box" />
+  <text x="240" y="722" class="node-title">resolve_fda_drugs_matches_to_drug_list_filtered</text>
+  <text x="240" y="744" class="node-text">Computes filtered_fda_values and sets initial is_fda_generic_drug = filtered_fda_values_count &gt; 0</text>
+  <text x="240" y="766" class="node-text">Output: primary.fda_drug_labels_filtered_parquet/tsv</text>
+
+  <rect x="220" y="828" width="460" height="106" rx="12" class="process-box" />
+  <text x="240" y="858" class="node-title">resolve_fda_drugs_that_are_biosimilar_and_are_generic</text>
+  <text x="240" y="880" class="node-text">For biologics: refine generic flag using allowed BLA types</text>
+  <text x="240" y="902" class="node-text">Output: primary.fda_drugs_filtered_biosimilar_parquet/tsv</text>
+
+  <rect x="720" y="828" width="460" height="106" rx="12" class="process-box" />
+  <text x="740" y="858" class="node-title">resolve_fda_drugs_that_are_otc_monograph</text>
+  <text x="740" y="880" class="node-text">Checks openFDA labels for OTC monograph and ORs result into generic flag</text>
+  <text x="740" y="902" class="node-text">Outputs include primary.fda_generic_drug_list (id, is_fda_generic_drug)</text>
+
+  <rect x="1010" y="944" width="310" height="28" rx="8" class="output-box" />
+  <text x="1165" y="964" text-anchor="middle" class="node-title">Final Output: primary.fda_generic_drug_list</text>
+
+  <line x1="260" y1="250" x2="430" y2="430" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="260" y1="382" x2="430" y2="554" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="700" y1="518" x2="700" y2="554" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="700" y1="656" x2="700" y2="692" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="700" y1="798" x2="450" y2="828" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="700" y1="798" x2="950" y2="828" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+  <line x1="700" y1="250" x2="460" y2="828" stroke="#334155" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#arrow)" />
+  <line x1="1140" y1="250" x2="960" y2="828" stroke="#334155" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#arrow)" />
+  <line x1="950" y1="934" x2="1010" y2="958" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)" />
+
+  <text x="470" y="815" class="edge-label">Purple Book enrichment</text>
+  <text x="990" y="815" class="edge-label">OTC monograph enrichment</text>
+</svg>

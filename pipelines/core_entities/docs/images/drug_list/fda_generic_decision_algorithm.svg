@@ -1,0 +1,93 @@
+<svg width="1400" height="980" viewBox="0 0 1400 980" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">FDA Generic Decision Algorithm</title>
+  <desc id="desc">Decision flow for classifying a drug as FDA generic in the core_entities drug_list pipeline.</desc>
+
+  <defs>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 15px Arial, sans-serif; fill: #334155; }
+      .node-title { font: 700 14px Arial, sans-serif; fill: #0f172a; }
+      .node-text { font: 400 12px Arial, sans-serif; fill: #1f2937; }
+      .edge { stroke: #334155; stroke-width: 2.5; }
+      .edge-label { font: 700 12px Arial, sans-serif; fill: #0f172a; }
+      .start-end { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; }
+      .process { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; }
+      .decision { fill: #fff7ed; stroke: #ea580c; stroke-width: 2; }
+      .output { fill: #ecfeff; stroke: #0891b2; stroke-width: 2; }
+      .note { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="980" fill="#ffffff" />
+
+  <text x="700" y="52" text-anchor="middle" class="title">FDA Generic Decision Algorithm</text>
+  <text x="700" y="80" text-anchor="middle" class="subtitle">How is_fda_generic_drug is derived in resolve_fda_* nodes</text>
+
+  <rect x="510" y="120" width="380" height="72" rx="14" class="start-end" />
+  <text x="700" y="150" text-anchor="middle" class="node-title">Start: curated drug row with matched FDA data</text>
+  <text x="700" y="171" text-anchor="middle" class="node-text">Inputs include fda_rows, search_terms, available_in_combo_with</text>
+
+  <rect x="450" y="236" width="500" height="86" rx="12" class="process" />
+  <text x="700" y="268" text-anchor="middle" class="node-title">Stage 1: Build filtered_fda_values</text>
+  <text x="700" y="289" text-anchor="middle" class="node-text">Keep rows with ANDA/BLA and matching active products</text>
+  <text x="700" y="308" text-anchor="middle" class="node-text">Initial generic := filtered_fda_values_count &gt; 0</text>
+
+  <polygon points="700,354 850,430 700,506 550,430" class="decision" />
+  <text x="700" y="420" text-anchor="middle" class="node-title">Is biologic?</text>
+  <text x="700" y="440" text-anchor="middle" class="node-text">is_biologics == True</text>
+
+  <rect x="880" y="390" width="420" height="88" rx="12" class="process" />
+  <text x="1090" y="421" text-anchor="middle" class="node-title">Stage 2: Biosimilar override</text>
+  <text x="1090" y="443" text-anchor="middle" class="node-text">Resolve BLA types (FDA rows + Purple Book enrichment)</text>
+  <text x="1090" y="462" text-anchor="middle" class="node-text">generic := any type in allowed 351(k) list</text>
+
+  <rect x="420" y="560" width="560" height="88" rx="12" class="decision" />
+  <text x="700" y="592" text-anchor="middle" class="node-title">Stage 3 trigger</text>
+  <text x="700" y="614" text-anchor="middle" class="node-text">If current generic is False, check openFDA label OTC monograph status</text>
+  <text x="700" y="633" text-anchor="middle" class="node-text">If OTC_MONOGRAPH, promote generic to True</text>
+
+  <polygon points="700,690 850,766 700,842 550,766" class="decision" />
+  <text x="700" y="756" text-anchor="middle" class="node-title">Final generic?</text>
+  <text x="700" y="776" text-anchor="middle" class="node-text">is_fda_generic_drug == True</text>
+
+  <rect x="230" y="876" width="420" height="74" rx="12" class="output" />
+  <text x="440" y="905" text-anchor="middle" class="node-title">No: excluded from generic output</text>
+  <text x="440" y="926" text-anchor="middle" class="node-text">Not present in primary.fda_generic_drug_list</text>
+
+  <rect x="750" y="876" width="420" height="74" rx="12" class="output" />
+  <text x="960" y="905" text-anchor="middle" class="node-title">Yes: include in generic output</text>
+  <text x="960" y="926" text-anchor="middle" class="node-text">Write id, is_fda_generic_drug to primary.fda_generic_drug_list</text>
+
+  <rect x="80" y="270" width="320" height="160" rx="12" class="note" />
+  <text x="100" y="300" class="node-title">Stage 1 matching notes</text>
+  <text x="100" y="323" class="node-text">- Active product status required:</text>
+  <text x="100" y="342" class="node-text">  prescription or over-the-counter</text>
+  <text x="100" y="365" class="node-text">- Single ingredient path:</text>
+  <text x="100" y="384" class="node-text">  exactly 1 active ingredient</text>
+  <text x="100" y="407" class="node-text">- Combo path:</text>
+  <text x="100" y="426" class="node-text">  exactly 2 ingredients and partner match</text>
+
+  <rect x="1010" y="560" width="330" height="128" rx="12" class="note" />
+  <text x="1030" y="590" class="node-title">Allowed biosimilar types</text>
+  <text x="1030" y="613" class="node-text">- 351(k) Interchangeable</text>
+  <text x="1030" y="636" class="node-text">- 351(k) Biosimilar</text>
+  <text x="1030" y="661" class="node-text">Configured in params.drug_list.fda_purple_book</text>
+
+  <line x1="700" y1="192" x2="700" y2="236" class="edge" marker-end="url(#arrow)" />
+  <line x1="700" y1="322" x2="700" y2="354" class="edge" marker-end="url(#arrow)" />
+  <line x1="850" y1="430" x2="880" y2="430" class="edge" marker-end="url(#arrow)" />
+  <line x1="1090" y1="478" x2="1090" y2="516" class="edge" marker-end="url(#arrow)" />
+  <line x1="1090" y1="516" x2="780" y2="560" class="edge" marker-end="url(#arrow)" />
+  <line x1="700" y1="506" x2="700" y2="560" class="edge" marker-end="url(#arrow)" />
+  <line x1="700" y1="648" x2="700" y2="690" class="edge" marker-end="url(#arrow)" />
+  <line x1="550" y1="766" x2="650" y2="906" class="edge" marker-end="url(#arrow)" />
+  <line x1="850" y1="766" x2="750" y2="906" class="edge" marker-end="url(#arrow)" />
+
+  <text x="868" y="420" class="edge-label">Yes</text>
+  <text x="710" y="520" class="edge-label">No</text>
+  <text x="566" y="806" class="edge-label">No</text>
+  <text x="824" y="806" class="edge-label">Yes</text>
+</svg>

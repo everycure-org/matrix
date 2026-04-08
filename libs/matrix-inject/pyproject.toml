@@ -27,3 +27,5 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = "src"
+# adding this to be able to run pytest locally
+addopts = ["--import-mode=importlib"]

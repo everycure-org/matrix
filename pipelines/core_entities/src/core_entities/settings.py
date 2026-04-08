@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from everycure.datasets.kedro.hooks import GitStorageHook
 from kedro.config import OmegaConfigLoader
 
-from .resolvers import env
+from .resolvers import env, purple_book_url
 
 load_dotenv()
 
@@ -16,6 +16,7 @@ CONFIG_LOADER_ARGS = {
     "default_run_env": "local",
     "custom_resolvers": {
         "oc.env": env,
+        "purple_book_url": purple_book_url,
     },
 }
 

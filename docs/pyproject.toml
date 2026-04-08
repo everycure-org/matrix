@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.pytest.ini_options]
-pythonpath = "src"
+# adding this to be able to run pytest locally
+pythonpath = ["src", "."]
 addopts = [
     "--import-mode=importlib",
     "--ignore=packages",
