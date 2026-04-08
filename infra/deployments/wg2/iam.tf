@@ -20,7 +20,7 @@ module "project_iam_bindings" {
     "roles/owner"  = ["serviceAccount:sa-github-actions-rw@mtrx-hub-dev-3of.iam.gserviceaccount.com"]
     # https://cloud.google.com/compute/docs/oslogin/set-up-oslogin#configure_users
     # "roles/compute.osLoginExternalUser" needs to be set at org level
-    "roles/compute.osLogin"      = ["group:matrix-all@everycure.org"],
+    "roles/compute.osLogin"      = ["group:techteam@everycure.org"],
     "roles/storage.objectViewer" = local.cross_account_sas
   }
 

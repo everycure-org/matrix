@@ -13,5 +13,5 @@ argo:
     users:
       # add new people here that should be able to submit workflows
     groups:
-      - matrix-all@everycure.org
+      - techteam@everycure.org
       - data-science@everycure.org

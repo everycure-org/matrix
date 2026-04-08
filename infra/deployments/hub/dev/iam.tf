@@ -1,5 +1,5 @@
 locals {
-  matrix_all_group                     = "group:matrix-all@everycure.org"
+  matrix_all_group                     = "group:techteam@everycure.org"
   matrix_viewers_group                 = [local.matrix_all_group, "group:matrix-viewers@everycure.org"]
   tech_team_group                      = ["group:techteam@everycure.org"]
   orchard_prod_compute_service_account = "serviceAccount:342224594736-compute@developer.gserviceaccount.com"
