@@ -25,11 +25,19 @@ external-dns:
   rbac:
     additionalPermissions:
       - apiGroups: ["gateway.networking.k8s.io"]
-        resources: ["gateways","httproutes","grpcroutes","tlsroutes","tcproutes","udproutes"] 
-        verbs: ["get","watch","list"]
+        resources:
+          [
+            "gateways",
+            "httproutes",
+            "grpcroutes",
+            "tlsroutes",
+            "tcproutes",
+            "udproutes",
+          ]
+        verbs: ["get", "watch", "list"]
       - apiGroups: [""]
         resources: ["namespaces"]
-        verbs: ["get","watch","list"]
+        verbs: ["get", "watch", "list"]
 ```
 
 This configuration allows External DNS to manage DNS records based on Gateway API resources, particularly HTTPRoutes.
@@ -57,14 +65,14 @@ metadata:
   name: whoami-route
 spec:
   parentRefs:
-  - kind: Gateway
-    name: external-http
+    - kind: Gateway
+      name: external-http
   hostnames:
-  - "whoami-test.platform.dev.everycure.org"
+    - "whoami-test.platform.dev.everycure.org"
   rules:
-  - backendRefs:
-    - name: whoami
-      port: 80
+    - backendRefs:
+        - name: whoami
+          port: 80
 ```
 
 This HTTPRoute resource:
@@ -81,22 +89,20 @@ This HTTPRoute resource:
 
 Our setup leverages these concepts to provide a flexible and powerful routing solution.
 
-
 ### Additional Resources
 
 - **Using Gateway for Ingress**: [https://gateway-api.sigs.k8s.io/guides/](https://gateway-api.sigs.k8s.io/guides/)
 - **External DNS & Gateway**: [https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/](https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/)
 - **Cert Manager Configuration**:
-
   - **ACME**: [https://cert-manager.io/docs/configuration/acme/](https://cert-manager.io/docs/configuration/acme/)
   - **Cert Manager and Gateway**: [https://cert-manager.io/docs/usage/gateway/](https://cert-manager.io/docs/usage/gateway/)
 
 - **Gateway API on GKE**:
-
   - **How it Works**: [https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api](https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api)
   - **Securing with IAP**: [https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway](https://cloud.google.com/kubernetes-engine/docs/how-to/secure-gateway)
 
 [^1]: https://gateway-api.sigs.k8s.io/
+
 [^2]: https://gateway-api.sigs.k8s.io/guides/
 
 ## Deploying applications to the cluster
@@ -110,6 +116,7 @@ For services requiring larger compute resources (e.g., >32 GB RAM), explicit tai
 ## Implementation Examples
 
 Reference implementations for high-memory workloads can be found in:
+
 - `gke.tf`: Infrastructure configuration
 - `pipelines/matrix/templates/argo_wf_spec.tmpl`: Pipeline node configuration
 
@@ -136,7 +143,7 @@ We enabled [Google Groups RBAC](https://cloud.google.com/kubernetes-engine/docs/
 1. The cluster is configured with Google Groups for RBAC using the security group `gke-security-groups@everycure.org`
 2. Argo Workflows access is granted to:
    - Individual users (can be added in the configuration)
-   - Members of the `matrix-all@everycure.org` Google Group
+   - Members of the `techteam@everycure.org` Google Group
 
 The configuration is managed in the `values.yaml` file for the `developer-iam` argo application:
 
@@ -148,11 +155,12 @@ argo:
       # add new users here that should be able to submit workflows
       #- user@example.com
     groups:
-      - matrix-all@everycure.org
+      - techteam@everycure.org
 ```
 
 To request access to submit workflows:
-1. Ensure you are a member of the `matrix-all@everycure.org` Google Group
+
+1. Ensure you are a member of the `techteam@everycure.org` Google Group
 2. For individual access, request to be added to the `users` section in the configuration (should rarely be needed)
 
 For more details on Google Groups RBAC setup, refer to the [official documentation](https://cloud.google.com/kubernetes-engine/docs/how-to/google-groups-rbac).
@@ -165,7 +173,6 @@ We will provide `roles/container.developer` to everyone in the MATRIX project th
 
 We expose the applications via web-based interfaces, which are accessible via the web browser. Those that should not be accessible to the public are protected by IAP.
 See [the google docs](https://cloud.google.com/iap/docs/enabling-kubernetes-howto) for more details.
-
 
 ## Cluster Configuration
 
@@ -188,7 +195,8 @@ Networking between the hub and spoke projects leverages a shared VPC:
 
 ### Secrets
 
-We set all secrets in our `cloud_secrets` terraform module by grabbing our encrypted yaml file from the disk and creating cloud secrets for each of them. 
+We set all secrets in our `cloud_secrets` terraform module by grabbing our encrypted yaml file from the disk and creating cloud secrets for each of them.
+
 <!--
 ## Access and Permissions
 
