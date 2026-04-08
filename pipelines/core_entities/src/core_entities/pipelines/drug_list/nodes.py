@@ -421,11 +421,10 @@ def ingest_fda_purple_book_data(fda_purple_book_data: pd.DataFrame) -> pd.DataFr
     bla_type_column = resolve_column_name(purple_book_df, ["BLA Type", "bla type", "bla_type"])
 
     if bla_number_column is None or bla_type_column is None:
-        logger.warning(
+        raise ValueError(
             "Could not find BLA Number/BLA Type columns in purple book data. Available columns: %s",
             list(purple_book_df.columns),
         )
-        return pd.DataFrame(columns=["bla_number", "bla_type"])
 
     purple_book_df = purple_book_df[[bla_number_column, bla_type_column]].copy()
     purple_book_df.loc[:, "bla_number"] = purple_book_df[bla_number_column].apply(normalize_bla_number)
