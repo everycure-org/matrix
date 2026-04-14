@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "matrix-auth"
 version = "0.1.0"
 description = "Authentication and cloud utilities for Matrix platform"
-requires-python = ">=3.11"
+requires-python = "==3.14.*"
 dependencies = [
     "click",
     "requests",

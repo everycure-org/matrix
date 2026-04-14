@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "matrix-pandera"
 version = "0.1.0" 
 description = "Cross datatype validation for Matrix platform"
-requires-python = ">=3.11"
+requires-python = "==3.14.*"
 dependencies = [
     "pandera==0.24.0",
     "pyspark>=3.5.0",
