@@ -59,7 +59,7 @@ dependencies = [
     "langchain",
     "langchain-openai",
     "matplotlib",
-    "mlflow==3.9.0rc0",
+    "mlflow==3.11.0rc1",
     "neo4j>=5.5.0",
     "notebook",
     "numpy==1.24.4", # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
