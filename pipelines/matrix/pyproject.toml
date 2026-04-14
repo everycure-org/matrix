@@ -52,7 +52,7 @@ dependencies = [
     "ipywidgets",
     "jsonpath-ng",
     "jupyterlab>=3.0",
-    "kedro-datasets>=6.0.0",
+    "kedro-datasets>=9.3.0",
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
     "kedro~=1.3.1",
