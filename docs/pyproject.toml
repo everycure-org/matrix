@@ -22,7 +22,7 @@ norecursedirs = [
 # NOTE: This pyproject.toml was partially generated using AI assistance.
 [project]
 name = "matrix-docs"
-requires-python = ">=3.11"
+requires-python = "==3.14.*"
 readme = "README.md"
 dynamic = [ "version"]
 dependencies = [
