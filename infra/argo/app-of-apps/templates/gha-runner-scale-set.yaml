@@ -52,6 +52,7 @@ spec:
                 - dockerd
                 - --host=unix:///var/run/docker.sock
                 - --group=$(DOCKER_GROUP_GID)
+                - --dns=8.8.8.8
               env:
                 - name: DOCKER_GROUP_GID
                   value: "123"
