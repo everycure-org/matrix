@@ -107,7 +107,7 @@ spec:
               value: "true"
               effect: "NoSchedule"
             nodeSelector:
-              workload-type: "ci-cd"
+              workload-type: "github-runner"
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
