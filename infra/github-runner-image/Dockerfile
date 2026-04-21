@@ -12,4 +12,12 @@ RUN apt-get update && \
           libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && uv python install
 
+# Install Docker Compose V2 plugin
+RUN DOCKER_CONFIG=${DOCKER_CONFIG:-/usr/local/lib/docker} && \
+    mkdir -p $DOCKER_CONFIG/cli-plugins && \
+    ARCH=$(dpkg --print-architecture) && \
+    curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-${ARCH}" \
+      -o $DOCKER_CONFIG/cli-plugins/docker-compose && \
+    chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+
 USER runner
