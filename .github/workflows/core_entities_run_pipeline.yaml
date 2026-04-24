@@ -29,7 +29,7 @@ on:
 
 jobs:
   setup-matrix:
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:

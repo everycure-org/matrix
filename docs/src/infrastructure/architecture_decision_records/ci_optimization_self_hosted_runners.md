@@ -166,7 +166,7 @@ graph TD
 
 ### Usage
 
-Replace `runs-on: ubuntu-latest` with `runs-on: ai-platform-dev-gha-runner-scale-set` in GitHub Actions workflows.
+Replace `runs-on: ai-platform-dev-gha-runner-scale-set` with `runs-on: ai-platform-dev-gha-runner-scale-set` in GitHub Actions workflows.
 
 ## Success Metrics
 

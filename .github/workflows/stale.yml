@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   stale:
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     steps:
       - uses: actions/stale@v9
         with:

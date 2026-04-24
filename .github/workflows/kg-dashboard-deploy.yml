@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   build_and_deploy:
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     name: Build Dashboard
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
     permissions:
