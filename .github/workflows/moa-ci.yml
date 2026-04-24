@@ -51,7 +51,7 @@ jobs:
               - .github/workflows/moa-ci.yml
 
   ci:
-    runs-on:  'gha-runner-scale-set'
+    runs-on:  'ai-platform-dev-gha-runner-scale-set'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:

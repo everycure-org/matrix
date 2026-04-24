@@ -18,7 +18,7 @@ on:
 jobs:
   create-release-pr:
     environment: dev
-    runs-on: gha-runner-scale-set
+    runs-on: ai-platform-dev-gha-runner-scale-set
     defaults:
       run:
         working-directory: ./pipelines/core_entities

@@ -160,13 +160,13 @@ graph TD
 
 ### Configuration Files
 
-- `/infra/argo/app-of-apps/templates/gha-runner-scale-set.yaml` - ArgoCD application
+- `/infra/argo/app-of-apps/templates/ai-platform-dev-gha-runner-scale-set.yaml` - ArgoCD application
 - `/infra/github-runner-image/Dockerfile` - Custom runner image
 - `/.github/workflows/build_and_upload_image_for_github_runner_set_k8s.yml` - Image build pipeline
 
 ### Usage
 
-Replace `runs-on: ubuntu-latest` with `runs-on: gha-runner-scale-set` in GitHub Actions workflows.
+Replace `runs-on: ubuntu-latest` with `runs-on: ai-platform-dev-gha-runner-scale-set` in GitHub Actions workflows.
 
 ## Success Metrics
 
