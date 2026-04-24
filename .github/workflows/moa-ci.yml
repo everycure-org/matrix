@@ -67,7 +67,7 @@ jobs:
   push_image:
       needs: [ci]
       if: github.ref == 'refs/heads/main'
-      runs-on: 'gha-runner-scale-set'
+      runs-on: ai-platform-dev-gha-runner-scale-set
       environment: dev
       permissions: write-all
       defaults:
