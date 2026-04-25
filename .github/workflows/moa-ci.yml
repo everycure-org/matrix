@@ -29,7 +29,7 @@ jobs:
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
     if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ai-platform-dev-gha-runner-scale-set'
     permissions: 
       pull-requests: read
       contents: 'read'
@@ -51,7 +51,7 @@ jobs:
               - .github/workflows/moa-ci.yml
 
   ci:
-    runs-on:  'gha-runner-scale-set'
+    runs-on:  'ai-platform-dev-gha-runner-scale-set'
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     defaults:
@@ -67,7 +67,7 @@ jobs:
   push_image:
       needs: [ci]
       if: github.ref == 'refs/heads/main'
-      runs-on: 'gha-runner-scale-set'
+      runs-on: ai-platform-dev-gha-runner-scale-set
       environment: dev
       permissions: write-all
       defaults:

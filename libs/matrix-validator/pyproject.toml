@@ -9,7 +9,7 @@ description = "Matrix Schema and Data Validation library."
 requires-python = ">=3.11"
 dependencies = [
     "polars-lts-cpu>=1.23.0",
-    "pandera==0.24.0",
+    "pandera>=0.26.1",
     "pyspark>=3.5.0",
     "pandas",
     "pyarrow",

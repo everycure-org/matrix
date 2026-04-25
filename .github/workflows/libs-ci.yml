@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   test-libs:
-    runs-on: ubuntu-latest  # Use ubuntu-latest for local testing with act
+    runs-on: ai-platform-dev-gha-runner-scale-set  # Use ai-platform-dev-gha-runner-scale-set for local testing with act
     strategy:
       # NOTE: Matrix here is a github actions concept and is not related to our
       # repository's concept of matrix

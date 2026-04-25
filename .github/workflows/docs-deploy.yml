@@ -40,7 +40,7 @@ jobs:
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
     if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ai-platform-dev-gha-runner-scale-set'
     permissions: 
       pull-requests: read
       contents: 'read'
@@ -62,7 +62,7 @@ jobs:
   build_and_deploy:
     environment: dev
     needs: [paths_filter]
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     name: Build Documentation
     permissions:
       contents: 'read'
