@@ -81,7 +81,7 @@ The ArgoCD applications have been added to app-of-apps. They will be automatical
 ### 3. Verify GitHub Integration
 
 1. Go to https://github.com/everycure-org/matrix/settings/actions/runners
-2. You should see "gha-runner-scale-set" listed as a runner set
+2. You should see "ai-platform-dev-gha-runner-scale-set" listed as a runner set
 3. Initially shows 0 runners (auto-scales on demand)
 
 ## Usage in GitHub Actions
@@ -94,7 +94,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: gha-runner-scale-set # <-- Use this value
+    runs-on: ai-platform-dev-gha-runner-scale-set # <-- Use this value
     steps:
       - uses: actions/checkout@v4
 
@@ -142,17 +142,17 @@ It is advised to refrain from running docker compose and instead rely on nativel
 kubectl get runnerscaleset -n actions-runner-system
 
 # Check individual runners
-kubectl get pods -n actions-runner-system -l app=gha-runner-scale-set
+kubectl get pods -n actions-runner-system -l app=ai-platform-dev-gha-runner-scale-set
 
 # View controller logs
-kubectl logs -n actions-runner-system deployment/gha-runner-scale-set-controller
+kubectl logs -n actions-runner-system deployment/ai-platform-dev-gha-runner-scale-set-controller
 ```
 
 ### GitHub Actions Queue
 
 ```bash
 # Check if runners are being created for queued jobs
-kubectl describe runnerscaleset gha-runner-scale-set -n actions-runner-system
+kubectl describe runnerscaleset ai-platform-dev-gha-runner-scale-set -n actions-runner-system
 ```
 
 ### Common Issues

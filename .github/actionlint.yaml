@@ -3,4 +3,4 @@
 self-hosted-runner:
   # Labels of self-hosted runner in array of strings.
   labels:
-    - gha-runner-scale-set
+    - ai-platform-dev-gha-runner-scale-set

@@ -11,7 +11,7 @@ on:
 
 jobs:
   cleanup_raw_bucket:
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     environment: dev
     permissions:
       contents: 'read'
