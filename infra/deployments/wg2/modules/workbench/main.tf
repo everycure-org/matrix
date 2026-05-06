@@ -82,3 +82,10 @@ resource "google_workbench_instance_iam_member" "workbench_user_admin" {
   role     = "roles/notebooks.admin"
   member   = "user:${var.email}"
 }
+
+# Grant the user IAP tunnel access so they can SSH into their instance
+resource "google_project_iam_member" "workbench_user_iap_tunnel" {
+  project = var.project_id
+  role    = "roles/iap.tunnelResourceAccessor"
+  member  = "user:${var.email}"
+}
