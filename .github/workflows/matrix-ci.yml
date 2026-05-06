@@ -45,7 +45,7 @@ jobs:
   # https://github.com/orgs/community/discussions/26698
   paths_filter:
     if: github.event.pull_request.draft == false || github.ref == 'refs/heads/main'
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ai-platform-dev-gha-runner-scale-set'
     permissions: 
       pull-requests: read
       contents: 'read'
@@ -69,7 +69,7 @@ jobs:
               - .dockerignore
 
   ci:
-    runs-on: 'gha-runner-scale-set'
+    runs-on: ai-platform-dev-gha-runner-scale-set
     needs: [paths_filter]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
 
@@ -101,7 +101,7 @@ jobs:
 
   # Run commands in parallel using matrix strategy.
   parallel_commands:
-    runs-on: 'gha-runner-scale-set'
+    runs-on: ai-platform-dev-gha-runner-scale-set
     needs: [paths_filter, ci]
     if: needs.paths_filter.outputs.changed == 'true' && (github.event.pull_request.draft == false || github.ref == 'refs/heads/main')
     
@@ -168,7 +168,7 @@ jobs:
   # we use this check as required in our PRs to ensure that CI runs but only for our paths. 
   matrix_ci_check:
     name: Matrix CI PR Check
-    runs-on:  'gha-runner-scale-set'
+    runs-on:  'ai-platform-dev-gha-runner-scale-set'
     if: always()
     needs: [paths_filter, ci, parallel_commands]
     steps:
@@ -181,7 +181,7 @@ jobs:
   push_image:
     needs: [ci, parallel_commands]
     if: github.ref == 'refs/heads/main'
-    runs-on: 'gha-runner-scale-set'
+    runs-on: ai-platform-dev-gha-runner-scale-set
     environment: dev
     permissions: write-all
     defaults:
@@ -213,7 +213,7 @@ jobs:
   # licenses:
   #   needs: [ci]
   #   # if: github.ref == 'refs/heads/main'
-  #   runs-on: "gha-runner-scale-set"
+  #   runs-on: "ai-platform-dev-gha-runner-scale-set"
   #   defaults:
   #     run:
   #       working-directory: ./pipelines/matrix
@@ -227,7 +227,7 @@ jobs:
     # This condition ensures it runs only if any previous job fails
     # we notify on main branches only
     if: failure() && github.ref == 'refs/heads/main' 
-    runs-on: "gha-runner-scale-set"
+    runs-on: "ai-platform-dev-gha-runner-scale-set"
     steps:
       - name: Post to a Slack channel
         id: slack

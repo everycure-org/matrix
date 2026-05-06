@@ -154,7 +154,7 @@ jobs:
     # we notify on main branches only
     needs: submit_data_release_periodically
     if: failure()
-    runs-on: "gha-runner-scale-set"
+    runs-on: "ai-platform-dev-gha-runner-scale-set"
     steps:
       - name: Post to a Slack channel
         id: slack

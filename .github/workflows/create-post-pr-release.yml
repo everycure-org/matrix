@@ -8,7 +8,7 @@ jobs:
     if: |
       github.event.pull_request.merged == true &&
       contains(github.event.pull_request.labels.*.name, 'Release')
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     name: PR approval
     permissions:
       pull-requests: 'read'
@@ -19,7 +19,7 @@ jobs:
 
   create_release:
     needs: [approved]
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     name: Create release
     permissions:
       contents: 'write'

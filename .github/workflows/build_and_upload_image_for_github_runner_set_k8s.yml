@@ -21,7 +21,7 @@ env:
 jobs:
   build-and-push:
     environment: dev
-    runs-on: ubuntu-latest
+    runs-on: ai-platform-dev-gha-runner-scale-set
     steps:
       - name: Checkout
         uses: actions/checkout@v4
