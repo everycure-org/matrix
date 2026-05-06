@@ -39,7 +39,7 @@ class LabelDiseaseResponse(BaseModel):
 class DiseaseLabelsGraph(InvokableGraph):
     class State(TypedDict):
         entity: str
-        synonyms: str
+        synonyms: list[str]
         synonyms_prompt: str
         entity_labels_all: Annotated[list[str], add]
         entity_labels_judgements: Annotated[list[dict], add]
@@ -64,7 +64,7 @@ class DiseaseLabelsGraph(InvokableGraph):
     @staticmethod
     def initialise_state(state: State) -> dict:
         return {
-            "synonyms_prompt": f"It is also known as {state['synonyms']}." if state["synonyms"] else "",
+            "synonyms_prompt": f"It is also known as {state['synonyms']}." if len(state["synonyms"]) > 0 else "",
             "request_token_counter": [],
             "response_token_counter": [],
             "entity_labels": [],
@@ -206,6 +206,6 @@ class DiseaseLabelsGraph(InvokableGraph):
         ]
         return {key: state[key] for key in keys_to_keep if key in state}
 
-    async def safe_invoke(self, disease_name: str, synonyms: str) -> dict:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str]) -> dict:
         final_state = await self.invoke({"entity": disease_name, "synonyms": synonyms})
         return self.post_process(final_state)

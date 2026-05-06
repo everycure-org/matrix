@@ -45,7 +45,7 @@ class DiseasePrevalenceGraph(InvokableGraph):
     class State(TypedDict):
         # input
         disease_name: str
-        synonyms: str
+        synonyms: list[str]
         synonyms_prompt: str
         disease_label: str
 
@@ -89,7 +89,9 @@ class DiseasePrevalenceGraph(InvokableGraph):
         return {
             "request_token_counter": [],
             "response_token_counter": [],
-            "synonyms_prompt": f"(This entity is also known as {state['synonyms']})" if state["synonyms"] else "",
+            "synonyms_prompt": f"(This entity is also known as {state['synonyms']})"
+            if len(state["synonyms"]) > 0
+            else "",
         }
 
     def check_disease_label(self, state: State) -> str:
@@ -266,7 +268,7 @@ class DiseasePrevalenceGraph(InvokableGraph):
             logger.error(f"Error generating Mermaid graph: {str(e)}")
             return None
 
-    async def safe_invoke(self, disease_name: str, synonyms: str, disease_label: str) -> dict[str, Any]:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str], disease_label: str) -> dict[str, Any]:
         return await self.invoke(
             {
                 "disease_name": disease_name,
@@ -288,7 +290,7 @@ class DiseasePrevalenceConsensusGraph(InvokableGraph):
     class State(TypedDict):
         # input
         disease_name: str
-        synonyms: str
+        synonyms: list[str]
         synonyms_prompt: str
         disease_label: str
 
@@ -428,7 +430,7 @@ class DiseasePrevalenceConsensusGraph(InvokableGraph):
 
         return graph.compile()
 
-    async def safe_invoke(self, disease_name: str, synonyms: str, disease_label: str) -> dict[str, Any]:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str], disease_label: str) -> dict[str, Any]:
         return await self.invoke(
             {
                 "disease_name": disease_name,
