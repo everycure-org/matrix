@@ -72,7 +72,7 @@ curated_list_speciality_columns = [
         {
             "id": pa.Column(dtype=str, nullable=False),
             "name": pa.Column(dtype=str, nullable=False),
-            "synonyms": pa.Column(dtype=str, nullable=True),
+            "synonyms": pa.Column(dtype=list[str], nullable=False),
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
@@ -94,7 +94,9 @@ def ingest_disease_list(disease_list: pd.DataFrame) -> pd.DataFrame:
         else:
             return x
 
-    disease_list["synonyms"] = disease_list["synonyms"].apply(parse_string_column)
+    disease_list["synonyms"] = disease_list.synonyms.apply(
+        lambda x: [] if pd.isna(x) else [xx.strip() for xx in x.split(";") if xx.strip() != ""]
+    )
     disease_list["harrisons_view"] = disease_list["harrisons_view"].apply(parse_string_column)
     disease_list["mondo_txgnn"] = disease_list["mondo_txgnn"].fillna("other")
     disease_list["mondo_top_grouping"] = disease_list["mondo_top_grouping"].apply(parse_string_column)
@@ -647,7 +649,7 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
                     )
                 ],
             ),
-            "synonyms": pa.Column(dtype=str, nullable=True),
+            "synonyms": pa.Column(dtype=list[str], nullable=False),
             "level": pa.Column(
                 nullable=True,
                 checks=pa.Check(
@@ -686,7 +688,6 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
         ],
     )
 )
-# TODO: add value checks for columns that apply for it(level, supergroup ...)
 def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) -> pd.DataFrame:
     disease_list_sorted = disease_list.sort_values(by="name").reset_index(drop=True)
 
@@ -697,6 +698,8 @@ def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) 
         case=False,
     )
     disease_list_sorted = disease_list_sorted.drop(columns=["is_pathogen_caused"])
+    disease_list_sorted["synonyms"] = disease_list_sorted.synonyms.apply(lambda x: x.tolist())
+
     return disease_list_sorted[release_columns]
 
 

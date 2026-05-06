@@ -23,7 +23,7 @@ class DiseaseTxGNNGraph(InvokableGraph):
     class State(TypedDict):
         # input
         entity: str
-        synonyms: str | None
+        synonyms: list[str] | None
 
         # prompt construction
         synonym_prompt: str
@@ -45,7 +45,9 @@ class DiseaseTxGNNGraph(InvokableGraph):
         return {
             "request_token_counter": [],
             "response_token_counter": [],
-            "synonym_prompt": f"This disease is also known as: {state['synonyms']}" if state["synonyms"] else "",
+            "synonym_prompt": f"This disease is also known as: {state['synonyms']}"
+            if len(state["synonyms"]) > 0
+            else "",
             "categories_list": ", ".join(self.categories),
         }
 
@@ -91,5 +93,5 @@ class DiseaseTxGNNGraph(InvokableGraph):
 
         return graph.compile()
 
-    async def safe_invoke(self, disease_name: str, synonyms: str) -> dict[str, Any]:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str]) -> dict[str, Any]:
         return await self.invoke({"entity": disease_name, "synonyms": synonyms})
