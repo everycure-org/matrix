@@ -72,7 +72,7 @@ curated_list_speciality_columns = [
         {
             "id": pa.Column(dtype=str, nullable=False),
             "name": pa.Column(dtype=str, nullable=False),
-            "synonyms": pa.Column(dtype=str, nullable=True),
+            "synonyms": pa.Column(dtype=list[str], nullable=False),
             "harrisons_view": pa.Column(dtype=str, nullable=True),
             "mondo_txgnn": pa.Column(dtype=str, nullable=False),
             "mondo_top_grouping": pa.Column(dtype=str, nullable=True),
@@ -94,7 +94,9 @@ def ingest_disease_list(disease_list: pd.DataFrame) -> pd.DataFrame:
         else:
             return x
 
-    disease_list["synonyms"] = disease_list["synonyms"].apply(parse_string_column)
+    disease_list["synonyms"] = disease_list.synonyms.apply(
+        lambda x: [] if pd.isna(x) else [xx.strip() for xx in x.split(";")]
+    )
     disease_list["harrisons_view"] = disease_list["harrisons_view"].apply(parse_string_column)
     disease_list["mondo_txgnn"] = disease_list["mondo_txgnn"].fillna("other")
     disease_list["mondo_top_grouping"] = disease_list["mondo_top_grouping"].apply(parse_string_column)
