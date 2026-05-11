@@ -234,80 +234,47 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
     return curated_disease_list
 
 
-# @pa.check_input(
-#     pa.DataFrameSchema(
-#         parsers=pa.Parser(
-#             lambda df: df[
-#                 [
-#                     "MONDO",
-#                     "level",
-#                     "supergroup",
-#                     *curated_list_speciality_columns,
-#                     "core",
-#                     "anatomical_deformity",
-#                     "benign_malignant",
-#                     "precancerous",
-#                     "anatomical_id",
-#                     "anatomical_name",
-#                 ]
-#             ]
-#         ),
-#         columns={
-#             "mondo_id": pa.Column(
-#                 nullable=False,
-#                 checks=pa.Check(
-#                     lambda col: col.apply(lambda x: x.startswith("MONDO:")),
-#                     title="mondo_id does not start with 'MONDO:'",
-#                 ),
-#             ),
-#             "level": pa.Column(
-#                 nullable=True,
-#                 checks=pa.Check(
-#                     lambda col: col.apply(
-#                         lambda x: x.strip() == "" or x in ["clinically_recognized", "subgroup", "exclude", "grouping"]
-#                     ),
-#                     ignore_na=False,
-#                     title="level value is valid",
-#                 ),
-#             ),
-#             "supergroup": pa.Column(
-#                 nullable=True,
-#                 checks=pa.Check(
-#                     lambda col: col.isin(["NNNI", "neoplasm", "infection", "exclude"]) | col.isna(),
-#                     ignore_na=False,
-#                     title="supergroup value is valid",
-#                 ),
-#             ),
-#             **{
-#                 col: pa.Column(nullable=True, checks=_get_curated_list_boolean_check(col))
-#                 for col in curated_list_speciality_columns
-#             },
-#             "core": pa.Column(nullable=True, checks=_get_curated_list_boolean_check("core")),
-#             "anatomical_deformity": pa.Column(
-#                 nullable=True,
-#                 checks=_get_curated_list_boolean_check("anatomical_deformity"),
-#             ),
-#             "benign_malignant": pa.Column(
-#                 nullable=True,
-#                 checks=pa.Check(
-#                     lambda col: col.apply(lambda x: x.strip() == "" or x in ["benign", "malignant"]),
-#                     ignore_na=False,
-#                     title="benign_malignant value is valid",
-#                 ),
-#             ),
-#             "precancerous": pa.Column(nullable=True, checks=_get_curated_list_boolean_check("precancerous")),
-#             "anatomical_id": pa.Column(
-#                 nullable=True,
-#                 checks=pa.Check(
-#                     lambda col: col.apply(lambda x: x.strip() == "" or x == "null" or x.startswith("MONDO:")),
-#                     title="anatomical_id does not start with 'MONDO:'",
-#                 ),
-#             ),
-#             "anatomical_name": pa.Column(nullable=True),
-#         },
-#         unique=["mondo_id"],
-#     )
-# )
+@pa.check_input(
+    pa.DataFrameSchema(
+        parsers=pa.Parser(
+            lambda df: df[
+                [
+                    "MONDO",
+                    "Disease name",
+                    "UMN score",
+                    "Strategically-viable disease? (final call)",
+                    "Clinically recognized disease? (i.e., not a group; not too granular)",
+                    "Disease treatable? (i.e., not dev syndrome)",
+                    "Definitively diagnosable? (i.e., not diagnosis of exclusion)",
+                    "Pt pop sufficient for trial?",
+                    "Trial somewhat feasible; reasonable endpoints?",
+                    "Keep parent disease? (say yes, no, or cancer)",
+                    "RF reviewer",
+                    "Notes",
+                ]
+            ]
+        ),
+        columns={
+            "MONDO": pa.Column(
+                nullable=False,
+                checks=pa.Check(
+                    lambda col: col.apply(lambda x: x.startswith("MONDO:")),
+                    title="mondo_id does not start with 'MONDO:'",
+                ),
+            ),
+            "Disease name": pa.Column(nullable=True),
+            "UMN score": pa.Column(nullable=True),
+            "Strategically-viable disease? (final call)": pa.Column(nullable=True),
+            "Clinically recognized disease? (i.e., not a group; not too granular)": pa.Column(nullable=True),
+            "Disease treatable? (i.e., not dev syndrome)": pa.Column(nullable=True),
+            "Definitively diagnosable? (i.e., not diagnosis of exclusion)": pa.Column(nullable=True),
+            "Pt pop sufficient for trial?": pa.Column(nullable=True),
+            "Trial somewhat feasible; reasonable endpoints?": pa.Column(nullable=True),
+            "Keep parent disease? (say yes, no, or cancer)": pa.Column(nullable=True),
+        },
+        unique=["MONDO"],
+    )
+)
 @pa.check_output(
     pa.DataFrameSchema(
         {
