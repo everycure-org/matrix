@@ -29,6 +29,7 @@ disease_list:
     - speciality_renal_and_urinary
     - speciality_syndromic
     - core
+    - is_svd
     - anatomical_deformity
     - benign_malignant
     - precancerous
