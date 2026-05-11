@@ -34,6 +34,12 @@ raw.curated_disease_list:
   spreadsheet_url: https://docs.google.com/spreadsheets/d/1l29b-2MNfNf0EBtjLq7tFEZmZwxTZz1rfezx5RevuaA/edit?gid=632653766#gid=632653766
   worksheet_gid: 632653766
   service_account_file_path: ${globals:service_account_file_path}
+
+raw.strategic_disease_list:
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
+  spreadsheet_url: https://docs.google.com/spreadsheets/d/1l8hCuhNepTScy26s4tcaCLra4JrnEGuC8yQ-kgXwVCU/edit?gid=0#gid=0
+  worksheet_gid: 0
+  service_account_file_path: ${globals:service_account_file_path}
   
 raw.disease_categories:
   <<: [*_pandas_parquet]
