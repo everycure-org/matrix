@@ -355,13 +355,14 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
     for col in bool_cols:
         strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_to_bool)
 
-    # drop duplicates
+    # convert dtypes
     dtypes_dict = {
         **{col: bool for col in col_mapping.values() if col in bool_cols},
         **{col: str for col in col_mapping.values() if col not in bool_cols},
     }
-    strategic_disease_list = strategic_disease_list.astype(dtypes_dict)
-    strategic_disease_list = strategic_disease_list.drop_duplicates("id")
+
+    # drop duplicates
+    strategic_disease_list = strategic_disease_list.astype(dtypes_dict).drop_duplicates("id")
     return strategic_disease_list
 
 
