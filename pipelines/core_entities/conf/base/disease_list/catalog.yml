@@ -73,6 +73,10 @@ primary.curated_disease_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease/curated-disease-list.parquet
 
+primary.strategic_disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/strategic-disease-list.parquet
+
 primary.disease_name_patch:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease/disease-name-patch.parquet
