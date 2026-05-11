@@ -92,6 +92,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "disease_prevalence": "primary.disease_prevalence",
                     "disease_txgnn": "primary.disease_txgnn",
                     "curated_disease_list": "primary.curated_disease_list",
+                    "strategic_disease_list": "primary.strategic_disease_list",
                 },
                 outputs="primary.disease_list_merged",
                 name="merge_disease_lists",

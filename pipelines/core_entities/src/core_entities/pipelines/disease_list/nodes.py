@@ -311,7 +311,7 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
 @pa.check_output(
     pa.DataFrameSchema(
         {
-            "mondo_id": pa.Column(dtype=str, nullable=False),
+            "id": pa.Column(dtype=str, nullable=False),
             "disease_name": pa.Column(dtype=str, nullable=False),
             "umn_score": pa.Column(dtype=str, nullable=True),
             "is_svd": pa.Column(dtype=bool, nullable=False),
@@ -325,13 +325,13 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
             "reviewer": pa.Column(dtype=str, nullable=True),
             "notes": pa.Column(dtype=str, nullable=True),
         },
-        unique=["mondo_id"],
+        unique=["id"],
     )
 )
 def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> pd.DataFrame:
     # rename columns
     col_mapping = {
-        "MONDO": "mondo_id",
+        "MONDO": "id",
         "Disease name": "disease_name",
         "UMN score": "umn_score",
         "Strategically-viable disease? (final call)": "is_svd",
@@ -360,7 +360,7 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
         else:
             return x.replace("\n", "")
 
-    string_cols = ["mondo_id", "disease_name", "reviewer", "notes", "keep_parent"]
+    string_cols = ["id", "disease_name", "reviewer", "notes", "keep_parent"]
     for col in string_cols:
         strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
 
@@ -394,7 +394,7 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
         **{col: str for col in col_mapping.values() if col not in bool_cols},
     }
     strategic_disease_list = strategic_disease_list.astype(dtypes_dict)
-    strategic_disease_list = strategic_disease_list.drop_duplicates("mondo_id")
+    strategic_disease_list = strategic_disease_list.drop_duplicates("id")
     return strategic_disease_list
 
 
@@ -690,6 +690,7 @@ def ingest_manual_disease_remapping(
             "unmet_medical_need": pa.Column(dtype=float, nullable=True),
             "prevalence_experimental": pa.Column(nullable=True),
             "prevalence_world": pa.Column(dtype=str, nullable=True),
+            "is_svd": pa.Column(dtype=bool, nullable=True),
         },
         unique=["id"],
     )
@@ -701,6 +702,7 @@ def merge_disease_lists(
     disease_prevalence: pd.DataFrame,
     disease_txgnn: pd.DataFrame,
     curated_disease_list: pd.DataFrame,
+    strategic_disease_list: pd.DataFrame,
 ) -> pd.DataFrame:
     _log_merge_statistics(
         primary_df=disease_list,
@@ -766,7 +768,18 @@ def merge_disease_lists(
         primary_only_action="will be dropped",
         secondary_only_action="will be dropped",
     )
-    merged_disease_list = pd.merge(disease_list, curated_disease_list_renamed, on="id", how="inner")
+    disease_list = pd.merge(disease_list, curated_disease_list_renamed, on="id", how="inner")
+
+    _log_merge_statistics(
+        primary_df=disease_list,
+        secondary_df=strategic_disease_list[["id", "is_svd"]],
+        primary_name="disease list",
+        secondary_name="strategic disease list",
+        primary_only_action="will be kept with nulls",
+        secondary_only_action="will be dropped",
+    )
+    merged_disease_list = pd.merge(disease_list, strategic_disease_list[["id", "is_svd"]], on="id", how="left")
+    merged_disease_list["is_svd"] = merged_disease_list["is_svd"].fillna(False).astype(bool)
 
     if merged_disease_list.isna().any().any():
         logger.warning("⚠️ Disease list has null values")
