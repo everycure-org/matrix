@@ -243,6 +243,7 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
                     "Disease name",
                     "UMN score",
                     "Strategically-viable disease? (final call)",
+                    "UMN actually high?",
                     "Clinically recognized disease? (i.e., not a group; not too granular)",
                     "Disease treatable? (i.e., not dev syndrome)",
                     "Definitively diagnosable? (i.e., not diagnosis of exclusion)",
@@ -255,16 +256,11 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
             ]
         ),
         columns={
-            "MONDO": pa.Column(
-                nullable=False,
-                checks=pa.Check(
-                    lambda col: col.apply(lambda x: x.startswith("MONDO:")),
-                    title="mondo_id does not start with 'MONDO:'",
-                ),
-            ),
+            "MONDO": pa.Column(nullable=True),
             "Disease name": pa.Column(nullable=True),
             "UMN score": pa.Column(nullable=True),
             "Strategically-viable disease? (final call)": pa.Column(nullable=True),
+            "UMN actually high?": pa.Column(nullable=True),
             "Clinically recognized disease? (i.e., not a group; not too granular)": pa.Column(nullable=True),
             "Disease treatable? (i.e., not dev syndrome)": pa.Column(nullable=True),
             "Definitively diagnosable? (i.e., not diagnosis of exclusion)": pa.Column(nullable=True),
@@ -272,7 +268,6 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
             "Trial somewhat feasible; reasonable endpoints?": pa.Column(nullable=True),
             "Keep parent disease? (say yes, no, or cancer)": pa.Column(nullable=True),
         },
-        unique=["MONDO"],
     )
 )
 @pa.check_output(
@@ -361,9 +356,16 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
         **{col: str for col in col_mapping.values() if col not in bool_cols},
     }
 
+    def resolve_and_drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+        duplicated_ids_df = df.loc[df["id"].duplicated(keep=False)].groupby("id")["is_svd"].sum()
+        duplicated_ids = duplicated_ids_df[duplicated_ids_df == 1].index
+        df.loc[df.id.isin(duplicated_ids), "is_svd"] = False
+        df = df.drop_duplicates(subset=["id"])
+        return df
+
     # drop duplicates
-    strategic_disease_list = strategic_disease_list.astype(dtypes_dict).drop_duplicates("id")
-    return strategic_disease_list
+    strategic_disease_list = resolve_and_drop_duplicates(strategic_disease_list)
+    return strategic_disease_list.astype(dtypes_dict)
 
 
 @pa.check_input(
