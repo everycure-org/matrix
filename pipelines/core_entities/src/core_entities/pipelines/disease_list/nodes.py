@@ -234,6 +234,163 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
     return curated_disease_list
 
 
+# @pa.check_input(
+#     pa.DataFrameSchema(
+#         parsers=pa.Parser(
+#             lambda df: df[
+#                 [
+#                     "MONDO",
+#                     "level",
+#                     "supergroup",
+#                     *curated_list_speciality_columns,
+#                     "core",
+#                     "anatomical_deformity",
+#                     "benign_malignant",
+#                     "precancerous",
+#                     "anatomical_id",
+#                     "anatomical_name",
+#                 ]
+#             ]
+#         ),
+#         columns={
+#             "mondo_id": pa.Column(
+#                 nullable=False,
+#                 checks=pa.Check(
+#                     lambda col: col.apply(lambda x: x.startswith("MONDO:")),
+#                     title="mondo_id does not start with 'MONDO:'",
+#                 ),
+#             ),
+#             "level": pa.Column(
+#                 nullable=True,
+#                 checks=pa.Check(
+#                     lambda col: col.apply(
+#                         lambda x: x.strip() == "" or x in ["clinically_recognized", "subgroup", "exclude", "grouping"]
+#                     ),
+#                     ignore_na=False,
+#                     title="level value is valid",
+#                 ),
+#             ),
+#             "supergroup": pa.Column(
+#                 nullable=True,
+#                 checks=pa.Check(
+#                     lambda col: col.isin(["NNNI", "neoplasm", "infection", "exclude"]) | col.isna(),
+#                     ignore_na=False,
+#                     title="supergroup value is valid",
+#                 ),
+#             ),
+#             **{
+#                 col: pa.Column(nullable=True, checks=_get_curated_list_boolean_check(col))
+#                 for col in curated_list_speciality_columns
+#             },
+#             "core": pa.Column(nullable=True, checks=_get_curated_list_boolean_check("core")),
+#             "anatomical_deformity": pa.Column(
+#                 nullable=True,
+#                 checks=_get_curated_list_boolean_check("anatomical_deformity"),
+#             ),
+#             "benign_malignant": pa.Column(
+#                 nullable=True,
+#                 checks=pa.Check(
+#                     lambda col: col.apply(lambda x: x.strip() == "" or x in ["benign", "malignant"]),
+#                     ignore_na=False,
+#                     title="benign_malignant value is valid",
+#                 ),
+#             ),
+#             "precancerous": pa.Column(nullable=True, checks=_get_curated_list_boolean_check("precancerous")),
+#             "anatomical_id": pa.Column(
+#                 nullable=True,
+#                 checks=pa.Check(
+#                     lambda col: col.apply(lambda x: x.strip() == "" or x == "null" or x.startswith("MONDO:")),
+#                     title="anatomical_id does not start with 'MONDO:'",
+#                 ),
+#             ),
+#             "anatomical_name": pa.Column(nullable=True),
+#         },
+#         unique=["mondo_id"],
+#     )
+# )
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "mondo_id": pa.Column(dtype=str, nullable=False),
+            "disease_name": pa.Column(dtype=str, nullable=False),
+            "umn_score": pa.Column(dtype=str, nullable=True),
+            "is_svd": pa.Column(dtype=bool, nullable=False),
+            "is_umn_high": pa.Column(dtype=bool, nullable=True),
+            "is_clinically_recognized": pa.Column(dtype=bool, nullable=True),
+            "is_treatable": pa.Column(dtype=bool, nullable=True),
+            "is_diagnosable": pa.Column(dtype=bool, nullable=True),
+            "is_pop_sufficient": pa.Column(dtype=bool, nullable=True),
+            "is_feasible": pa.Column(dtype=bool, nullable=True),
+            "keep_parent": pa.Column(dtype=str, nullable=True),
+            "reviewer": pa.Column(dtype=str, nullable=True),
+            "notes": pa.Column(dtype=str, nullable=True),
+        },
+        unique=["mondo_id"],
+    )
+)
+def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> pd.DataFrame:
+    # rename columns
+    col_mapping = {
+        "MONDO": "mondo_id",
+        "Disease name": "disease_name",
+        "UMN score": "umn_score",
+        "Strategically-viable disease? (final call)": "is_svd",
+        "UMN actually high?": "is_umn_high",
+        "Clinically recognized disease? (i.e., not a group; not too granular)": "is_clinically_recognized",
+        "Disease treatable? (i.e., not dev syndrome)": "is_treatable",
+        "Definitively diagnosable? (i.e., not diagnosis of exclusion)": "is_diagnosable",
+        "Pt pop sufficient for trial?": "is_pop_sufficient",
+        "Trial somewhat feasible; reasonable endpoints?": "is_feasible",
+        "Keep parent disease? (say yes, no, or cancer)": "keep_parent",
+        "RF reviewer": "reviewer",
+        "Notes": "notes",
+    }
+    strategic_disease_list = raw_strategic_disease_list.rename(columns=col_mapping)
+
+    def parse_string_column(x: str):
+        if x.strip() == "" or pd.isna(x) or x == "null":
+            return None
+        else:
+            return x.upper().replace("\n", "")
+
+    def parse_string_to_bool(x: str):
+        if x == "NO":
+            return False
+        elif x == "YES":
+            return True
+        elif x == None or x == "MAYBE":
+            return None
+        else:
+            raise ValueError(f"Invalid string value: {x}, only uppercase 'NO' and 'YES' are allowed")
+
+    # clean strings
+    for col in col_mapping.values():
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
+
+    # convert y/n strings to booleans
+    bool_cols = [
+        "is_clinically_recognized",
+        "is_svd",
+        "is_umn_high",
+        "is_treatable",
+        "is_diagnosable",
+        "is_pop_sufficient",
+        "is_feasible",
+    ]
+    for col in bool_cols:
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_to_bool)
+
+    # drop duplicates
+    dtypes_dict = {
+        **{col: bool for col in col_mapping.values() if col in bool_cols},
+        **{col: str for col in col_mapping.values() if col not in bool_cols},
+    }
+    strategic_disease_list = strategic_disease_list.astype(dtypes_dict)
+    strategic_disease_list = strategic_disease_list.drop_duplicates("mondo_id")
+
+    return strategic_disease_list
+
+
 @pa.check_input(
     pa.DataFrameSchema(
         parsers=pa.Parser(lambda df: df[["id", "name"]]),
