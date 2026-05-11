@@ -347,27 +347,35 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
     }
     strategic_disease_list = raw_strategic_disease_list.rename(columns=col_mapping)
 
+    # convert all strings to uppercase
+    for col in col_mapping.values():
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(
+            lambda x: x.upper() if isinstance(x, str) else x
+        )
+
+    # clean strings
     def parse_string_column(x: str):
         if x.strip() == "" or pd.isna(x) or x == "null":
             return None
         else:
-            return x.upper().replace("\n", "")
+            return x.replace("\n", "")
 
+    string_cols = ["mondo_id", "disease_name", "reviewer", "notes", "keep_parent"]
+    for col in string_cols:
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
+
+    # convert y/n strings to booleans
     def parse_string_to_bool(x: str):
+        x = x.strip(", ").upper()
         if x == "NO":
             return False
         elif x == "YES":
             return True
-        elif x == None or x == "MAYBE":
+        elif x == None or x == "MAYBE" or x == "":
             return None
         else:
             raise ValueError(f"Invalid string value: {x}, only uppercase 'NO' and 'YES' are allowed")
 
-    # clean strings
-    for col in col_mapping.values():
-        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
-
-    # convert y/n strings to booleans
     bool_cols = [
         "is_clinically_recognized",
         "is_svd",
@@ -387,7 +395,6 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
     }
     strategic_disease_list = strategic_disease_list.astype(dtypes_dict)
     strategic_disease_list = strategic_disease_list.drop_duplicates("mondo_id")
-
     return strategic_disease_list
 
 
