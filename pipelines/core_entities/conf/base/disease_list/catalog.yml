@@ -62,6 +62,14 @@ raw.disease_txgnn:
   filepath: ${globals:paths.raw_llm}/disease_txgnn/${globals:data_sources.disease_txgnn.version}/03_primary/release/disease_txgnn.parquet
 
 # -------------------------------------------------------------------------
+# Intermediate
+# -------------------------------------------------------------------------
+
+intermediate.strategic_disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.intermediate}/disease/strategic-disease-list.parquet
+
+# -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
 

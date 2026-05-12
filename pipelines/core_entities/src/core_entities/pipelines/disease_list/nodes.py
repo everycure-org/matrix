@@ -2,6 +2,8 @@ import logging
 
 import pandas as pd
 import pandera.pandas as pa
+from fuzzywuzzy import fuzz, process
+from tqdm import tqdm
 
 from core_entities.utils.curation_utils import _log_merge_statistics, apply_patch
 
@@ -347,6 +349,68 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
     # drop duplicates
     strategic_disease_list = resolve_and_drop_duplicates(strategic_disease_list)
     return strategic_disease_list.astype(dtypes_dict)
+
+
+def collapse_parent_diseases(
+    strategic_disease_list: pd.DataFrame, mondo_disease_list: pd.DataFrame, curated_disease_list: pd.DataFrame
+) -> pd.DataFrame:
+    """Function which detects diseases with keep_parent == TRUE, identifies the parent disease name,
+    resolves it into MONDO & adds the parent disease to the strategic disease list"""
+    # Extract names from disease list (using only CRDs). This is to avoid fuzzy matching on noisy non-CRD names (eg syndrome 1)
+    disease_list = mondo_disease_list.loc[:, ["id", "name"]]
+    disease_list = disease_list[disease_list["id"].isin(curated_disease_list["mondo_id"])]
+    disease_list["name"] = disease_list["name"].str.upper()
+
+    # Extract disease names from notes with keep_parent == TRUE
+    keep_parent_notes = list(
+        set(
+            (
+                strategic_disease_list.loc[strategic_disease_list.keep_parent == "YES", "notes"]
+                .str.split('"')
+                .str[1]
+                .dropna()
+            )
+        )
+    )
+    # Fuzzy match
+    results = []
+    for note in tqdm(keep_parent_notes, "fuzzy matching parent disease names"):
+        results.append(process.extractOne(note, disease_list["name"].to_list(), scorer=fuzz.token_sort_ratio))
+
+    # Create a Df with results
+    results = pd.DataFrame(results, columns=["name", "score"])
+    results["query_names"] = keep_parent_notes
+    results = results.merge(disease_list, on="name", how="left")
+
+    # Add parent disease to strategic disease list if it is not already an SVD
+    for _, row in tqdm(results.iterrows(), "adding parent diseases to strategic disease list"):
+        id = row["id"]
+        disease_name = row["name"]
+        if id in strategic_disease_list["id"].to_list():
+            if strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"].values[0] == True:
+                continue
+            else:
+                strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"] = True
+        else:
+            row_dict = {
+                "id": [id],
+                "disease_name": [disease_name],
+                "umn_score": [None],
+                "is_svd": [True],
+                "is_clinically_recognized": [False],
+                "is_treatable": [False],
+                "is_diagnosable": [False],
+                "is_pop_sufficient": [False],
+                "is_feasible": [False],
+                "keep_parent": [f"parent of {row['query_names']}"],
+                "reviewer": ["parent_collapse"],
+                "notes": [None],
+                "score": [row["score"]],
+            }
+            strategic_disease_list = pd.concat(
+                [strategic_disease_list, pd.DataFrame(row_dict)], axis=0, ignore_index=True
+            )
+    return strategic_disease_list
 
 
 @pa.check_input(
