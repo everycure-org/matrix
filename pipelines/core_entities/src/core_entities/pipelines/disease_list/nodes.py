@@ -236,26 +236,7 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
 
 @pa.check_input(
     pa.DataFrameSchema(
-        parsers=pa.Parser(
-            lambda df: df[
-                [
-                    "MONDO",
-                    "Disease name",
-                    "UMN score",
-                    "Strategically-viable disease? (final call)",
-                    "UMN actually high?",
-                    "Clinically recognized disease? (i.e., not a group; not too granular)",
-                    "Disease treatable? (i.e., not dev syndrome)",
-                    "Definitively diagnosable? (i.e., not diagnosis of exclusion)",
-                    "Pt pop sufficient for trial?",
-                    "Trial somewhat feasible; reasonable endpoints?",
-                    "Keep parent disease? (say yes, no, or cancer)",
-                    "RF reviewer",
-                    "Notes",
-                ]
-            ]
-        ),
-        columns={
+        {
             "MONDO": pa.Column(nullable=True),
             "Disease name": pa.Column(nullable=True),
             "UMN score": pa.Column(nullable=True),
