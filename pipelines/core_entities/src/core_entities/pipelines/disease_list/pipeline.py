@@ -26,7 +26,7 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=nodes.collapse_parent_diseases,
-                inputs=["intermediate.strategic_disease_list", "primary.disease_list"],
+                inputs=["intermediate.strategic_disease_list", "primary.disease_list", "primary.curated_disease_list"],
                 outputs="primary.strategic_disease_list",
                 name="collapse_parent_diseases",
             ),
