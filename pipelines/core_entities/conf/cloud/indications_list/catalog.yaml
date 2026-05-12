@@ -1,9 +1,3 @@
-# NOTE: This file was partially generated using AI assistance.
-
-# -------------------------------------------------------------------------
-# Published
-# -------------------------------------------------------------------------
-
 primary.published.indications_list_hf:
   type: matrix_gcp_datasets.huggingface.HFIterableDataset
   repo_id: everycure/indications-list

@@ -13,11 +13,6 @@ raw.ec_indications_list:
   <<: [*_pandas_parquet]
   filepath: gs://mtrx-us-central1-hub-dev-storage/data/01_RAW/ec_indications_list/v0.0.1/ec_indications_list.parquet
   
-
-# -------------------------------------------------------------------------
-# Published
-# -------------------------------------------------------------------------
-
 primary.published.indications_list_hf:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.published}/ec-indications-list.parquet
