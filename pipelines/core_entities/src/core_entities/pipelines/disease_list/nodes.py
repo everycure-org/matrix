@@ -386,8 +386,8 @@ def collapse_parent_diseases(
     for _, row in tqdm(results.iterrows(), "adding parent diseases to strategic disease list"):
         id = row["id"]
         disease_name = row["name"]
-        if id in strategic_disease_list["id"]:
-            if strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"] == True:
+        if id in strategic_disease_list["id"].to_list():
+            if strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"].values[0] == True:
                 continue
             else:
                 strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"] = True
@@ -404,12 +404,12 @@ def collapse_parent_diseases(
                 "is_feasible": [False],
                 "keep_parent": [f"parent of {row['query_names']}"],
                 "reviewer": ["parent_collapse"],
-                "notes": [row["score"]],
+                "notes": [None],
+                "score": [row["score"]],
             }
             strategic_disease_list = pd.concat(
                 [strategic_disease_list, pd.DataFrame(row_dict)], axis=0, ignore_index=True
             )
-
     return strategic_disease_list
 
 
