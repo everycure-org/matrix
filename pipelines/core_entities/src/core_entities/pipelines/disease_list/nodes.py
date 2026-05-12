@@ -309,7 +309,7 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
 
     # convert y/n strings to booleans
     def parse_string_to_bool(x: str):
-        x = x.strip(", ").upper()
+        x = x.strip(", ")
         if x == "NO":
             return False
         elif x == "YES":
