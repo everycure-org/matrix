@@ -387,16 +387,16 @@ def collapse_parent_diseases(
         id = row["id"]
         disease_name = row["name"]
         if id in strategic_disease_list["id"].to_list():
-            if strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"].values[0] == True:
+            if strategic_disease_list.loc[strategic_disease_list.id == id, "strategically_viable"].values[0] == True:
                 continue
             else:
-                strategic_disease_list.loc[strategic_disease_list.id == id, "is_svd"] = True
+                strategic_disease_list.loc[strategic_disease_list.id == id, "strategically_viable"] = True
         else:
             row_dict = {
                 "id": [id],
                 "disease_name": [disease_name],
                 "umn_score": [None],
-                "is_svd": [True],
+                "strategically_viable": [True],
                 "is_clinically_recognized": [False],
                 "is_treatable": [False],
                 "is_diagnosable": [False],
