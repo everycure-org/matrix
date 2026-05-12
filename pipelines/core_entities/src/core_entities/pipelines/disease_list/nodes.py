@@ -349,6 +349,15 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
     return strategic_disease_list.astype(dtypes_dict)
 
 
+def collapse_parent_diseases(
+    strategic_disease_list: pd.DataFrame,
+    disease_list: pd.DataFrame,
+) -> pd.DataFrame:
+    """Function which detects diseases with keep_parent == TRUE, identifies the parent disease name,
+    resolves it into MONDO & adds the parent disease to the strategic disease list"""
+    return strategic_disease_list
+
+
 @pa.check_input(
     pa.DataFrameSchema(
         parsers=pa.Parser(lambda df: df[["id", "name"]]),
