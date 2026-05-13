@@ -239,8 +239,8 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
 @pa.check_input(
     pa.DataFrameSchema(
         {
-            "MONDO": pa.Column(nullable=True),
-            "Disease name": pa.Column(nullable=True),
+            "MONDO": pa.Column(nullable=False),
+            "Disease name": pa.Column(nullable=False),
             "UMN score": pa.Column(nullable=True),
             "Strategically-viable disease? (final call)": pa.Column(nullable=True),
             "UMN actually high?": pa.Column(nullable=True),
@@ -292,12 +292,6 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
     }
     strategic_disease_list = raw_strategic_disease_list.rename(columns=col_mapping)
 
-    # convert all strings to uppercase
-    for col in col_mapping.values():
-        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(
-            lambda x: x.upper() if isinstance(x, str) else x
-        )
-
     # clean strings
     def parse_string_column(x: str):
         if x.strip() == "" or pd.isna(x) or x == "null":
@@ -307,7 +301,7 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
 
     string_cols = ["id", "disease_name", "reviewer", "notes", "keep_parent"]
     for col in string_cols:
-        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].str.upper().apply(parse_string_column)
 
     # convert y/n strings to booleans
     def parse_string_to_bool(x: str):
@@ -331,7 +325,7 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
         "is_feasible",
     ]
     for col in bool_cols:
-        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_to_bool)
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].str.upper().apply(parse_string_to_bool)
 
     # convert dtypes
     dtypes_dict = {
@@ -386,6 +380,11 @@ def collapse_parent_diseases(
     for _, row in tqdm(results.iterrows(), "adding parent diseases to strategic disease list"):
         id = row["id"]
         disease_name = row["name"]
+        if row["score"] != 100:
+            logger.warning(
+                f"At the moment we are only allowing 100% fuzzy matching. Therefore, fuzzy matching failed for {row['query_names']} with score {row['score']}"
+            )
+            continue
         if id in strategic_disease_list["id"].to_list():
             if strategic_disease_list.loc[strategic_disease_list.id == id, "strategically_viable"].values[0] == True:
                 continue
