@@ -346,13 +346,20 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
 
 
 def collapse_parent_diseases(
-    strategic_disease_list: pd.DataFrame, mondo_disease_list: pd.DataFrame, curated_disease_list: pd.DataFrame
+    strategic_disease_list: pd.DataFrame,
+    mondo_disease_list: pd.DataFrame,
+    patched_disease_list: pd.DataFrame,
+    curated_disease_list: pd.DataFrame,
 ) -> pd.DataFrame:
     """Function which detects diseases with keep_parent == TRUE, identifies the parent disease name,
     resolves it into MONDO & adds the parent disease to the strategic disease list"""
     # Extract names from disease list (using only CRDs). This is to avoid fuzzy matching on noisy non-CRD names (eg syndrome 1)
     disease_list = mondo_disease_list.loc[:, ["id", "name"]]
+
+    # Keep rows where id is not in patched_disease_list
+    disease_list = disease_list[~disease_list["id"].isin(patched_disease_list["id"].to_list())]
     disease_list = disease_list[disease_list["id"].isin(curated_disease_list["mondo_id"])]
+    disease_list = pd.concat([disease_list, patched_disease_list.loc[:, ["id", "name"]]])
     disease_list["name"] = disease_list["name"].str.upper()
 
     # Extract disease names from notes with keep_parent == TRUE
