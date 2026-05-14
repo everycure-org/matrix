@@ -16,7 +16,7 @@ concurrency:
 jobs:
   precommit:
     name: Run Precommit Checks
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ai-platform-dev-gha-runner-scale-set'
     if: github.event.pull_request.draft == false
     
     steps:

@@ -57,13 +57,11 @@ No breaking changes in this release.
 
 - **ESM2 Embeddings**: Experiment training a classifier for drug-target predictions using embeddings from ESM2 [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/3515b6197bfc1d60e678950a8f12c944912d4296/uab-new-models-for-improved-performance/experiment-december-2025/UAB_Michel_Reproduction_Embeddings_Experiment_Report.ipynb)
 
-- **Patent Scraping Part 4**: The experiment is intended to explore improved text phrase-to-CURIE resolution for Patents [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/c6ad78cd0097f6839f2052adabbbced1b6d91dc1/uab-LLM-patent-scraping/experiment-december-2025/UAB_Patent_Text_Improved_Phrase_to_CURIE_Experiment_Report.ipynb) 
+- **Patent Scraping Part 4**: The experiment is intended to explore improved text phrase-to-CURIE resolution for Patents [link to notebook](https://github.com/everycure-org/lab-notebooks/blob/c6ad78cd0097f6839f2052adabbbced1b6d91dc1/uab-LLM-patent-scraping/experiment-december-2025/UAB_Patent_Text_Improved_Phrase_to_CURIE_Experiment_Report.ipynb)
 
--**SPOKE Experiments**: This captures various experiments with MATRIX pipeline and SPOKE KG to assess its value in drug repurposing. [link to report](https://github.com/everycure-org/lab-notebooks/blob/03773f8c1ad9e20f2eaeafda6d14c3835ed82643/piotr/spoke/spoke_exp.ipynb) 
+-**SPOKE Experiments**: This captures various experiments with MATRIX pipeline and SPOKE KG to assess its value in drug repurposing. [link to report](https://github.com/everycure-org/lab-notebooks/blob/03773f8c1ad9e20f2eaeafda6d14c3835ed82643/piotr/spoke/spoke_exp.ipynb)
 
 - **Final Cross-KG Experiments**: Cross-KG benchmark with MATRIX pipeline and all usable KGs within our system, including aggregated score combining all matrix predictions. [link to report](https://github.com/everycure-org/lab-notebooks/pull/286/changes#diff-6f9510cf6c45eb80444cf45d09a6c12f5ff0bfe335532a50a08b9d49e237aac0)
-
-
 
 No experiment reports in this release.
 
@@ -79,7 +77,7 @@ No experiment reports in this release.
 
 - **Argo Workflow Resource Configuration**: Updated resource allocations and volume mounts in Argo workflow templates. [#2002](https://github.com/everycure-org/matrix/pull/2002), [#2003](https://github.com/everycure-org/matrix/pull/2003)
 
-- **GitHub Actions Runner Scale Set Updates**: Updated gha-runner-scale-set-controller and gha-runner-scale-set to version 0.13.0. [#1991](https://github.com/everycure-org/matrix/pull/1991)
+- **GitHub Actions Runner Scale Set Updates**: Updated ai-platform-dev-gha-runner-scale-set-controller and ai-platform-dev-gha-runner-scale-set to version 0.13.0. [#1991](https://github.com/everycure-org/matrix/pull/1991)
 
 - **Logging Exclusions**: Added severity-based log exclusions (DEFAULT and NOTICE) for hub environments to reduce log noise. [#2050](https://github.com/everycure-org/matrix/pull/2050)
 
@@ -138,4 +136,3 @@ No experiment reports in this release.
 ### Other Changes
 
 - **Core Entities Release PRs**: Multiple release-related PRs for the core entities pipeline (disease_list and drug_list releases). [#2064](https://github.com/everycure-org/matrix/pull/2064), [#2048](https://github.com/everycure-org/matrix/pull/2048), [#2024](https://github.com/everycure-org/matrix/pull/2024), [#2019](https://github.com/everycure-org/matrix/pull/2019)
-
