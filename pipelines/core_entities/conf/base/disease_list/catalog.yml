@@ -34,6 +34,12 @@ raw.curated_disease_list:
   spreadsheet_url: https://docs.google.com/spreadsheets/d/1l29b-2MNfNf0EBtjLq7tFEZmZwxTZz1rfezx5RevuaA/edit?gid=632653766#gid=632653766
   worksheet_gid: 632653766
   service_account_file_path: ${globals:service_account_file_path}
+
+raw.strategic_disease_list:
+  type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
+  spreadsheet_url: https://docs.google.com/spreadsheets/d/1l8hCuhNepTScy26s4tcaCLra4JrnEGuC8yQ-kgXwVCU/edit?gid=0#gid=0
+  worksheet_gid: 1048797242 
+  service_account_file_path: ${globals:service_account_file_path}
   
 raw.disease_categories:
   <<: [*_pandas_parquet]
@@ -56,6 +62,14 @@ raw.disease_txgnn:
   filepath: ${globals:paths.raw_llm}/disease_txgnn/${globals:data_sources.disease_txgnn.version}/03_primary/release/disease_txgnn.parquet
 
 # -------------------------------------------------------------------------
+# Intermediate
+# -------------------------------------------------------------------------
+
+intermediate.strategic_disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.intermediate}/disease/strategic-disease-list.parquet
+
+# -------------------------------------------------------------------------
 # Primary
 # -------------------------------------------------------------------------
 
@@ -66,6 +80,10 @@ primary.disease_list:
 primary.curated_disease_list:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease/curated-disease-list.parquet
+
+primary.strategic_disease_list:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease/strategic-disease-list.parquet
 
 primary.disease_name_patch:
   <<: [*_pandas_parquet]

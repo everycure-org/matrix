@@ -2,6 +2,8 @@ import logging
 
 import pandas as pd
 import pandera.pandas as pa
+from fuzzywuzzy import fuzz, process
+from tqdm import tqdm
 
 from core_entities.utils.curation_utils import _log_merge_statistics, apply_patch
 
@@ -232,6 +234,189 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
     curated_disease_list = curated_disease_list.astype(dtypes_dict)
 
     return curated_disease_list
+
+
+@pa.check_input(
+    pa.DataFrameSchema(
+        {
+            "MONDO": pa.Column(nullable=False),
+            "Disease name": pa.Column(nullable=False),
+            "UMN score": pa.Column(nullable=True),
+            "Strategically-viable disease? (final call)": pa.Column(nullable=True),
+            "UMN actually high?": pa.Column(nullable=True),
+            "Clinically recognized disease? (i.e., not a group; not too granular)": pa.Column(nullable=True),
+            "Disease treatable? (i.e., not dev syndrome)": pa.Column(nullable=True),
+            "Definitively diagnosable? (i.e., not diagnosis of exclusion)": pa.Column(nullable=True),
+            "Pt pop sufficient for trial?": pa.Column(nullable=True),
+            "Trial somewhat feasible; reasonable endpoints?": pa.Column(nullable=True),
+            "Keep parent disease? (say yes, no, or cancer)": pa.Column(nullable=True),
+        },
+    )
+)
+@pa.check_output(
+    pa.DataFrameSchema(
+        {
+            "id": pa.Column(dtype=str, nullable=False),
+            "disease_name": pa.Column(dtype=str, nullable=False),
+            "umn_score": pa.Column(dtype=str, nullable=True),
+            "strategically_viable": pa.Column(dtype=bool, nullable=False),
+            "is_umn_high": pa.Column(dtype=bool, nullable=True),
+            "is_clinically_recognized": pa.Column(dtype=bool, nullable=True),
+            "is_treatable": pa.Column(dtype=bool, nullable=True),
+            "is_diagnosable": pa.Column(dtype=bool, nullable=True),
+            "is_pop_sufficient": pa.Column(dtype=bool, nullable=True),
+            "is_feasible": pa.Column(dtype=bool, nullable=True),
+            "keep_parent": pa.Column(dtype=str, nullable=True),
+            "reviewer": pa.Column(dtype=str, nullable=True),
+            "notes": pa.Column(dtype=str, nullable=True),
+        },
+        unique=["id"],
+    )
+)
+def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> pd.DataFrame:
+    # rename columns
+    col_mapping = {
+        "MONDO": "id",
+        "Disease name": "disease_name",
+        "UMN score": "umn_score",
+        "Strategically-viable disease? (final call)": "strategically_viable",
+        "UMN actually high?": "is_umn_high",
+        "Clinically recognized disease? (i.e., not a group; not too granular)": "is_clinically_recognized",
+        "Disease treatable? (i.e., not dev syndrome)": "is_treatable",
+        "Definitively diagnosable? (i.e., not diagnosis of exclusion)": "is_diagnosable",
+        "Pt pop sufficient for trial?": "is_pop_sufficient",
+        "Trial somewhat feasible; reasonable endpoints?": "is_feasible",
+        "Keep parent disease? (say yes, no, or cancer)": "keep_parent",
+        "RF reviewer": "reviewer",
+        "Notes": "notes",
+    }
+    strategic_disease_list = raw_strategic_disease_list.rename(columns=col_mapping)
+
+    # clean strings
+    def parse_string_column(x: str):
+        if x.strip() == "" or pd.isna(x) or x == "null":
+            return None
+        else:
+            return x.replace("\n", "").upper()
+
+    string_cols = ["id", "disease_name", "reviewer", "notes", "keep_parent"]
+    for col in string_cols:
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
+
+    # convert y/n strings to booleans
+    def parse_string_to_bool(x: str):
+        x = x.strip(", ").upper()
+        if x == "NO":
+            return False
+        elif x == "YES":
+            return True
+        elif x == None or x == "MAYBE" or x == "":
+            return None
+        else:
+            raise ValueError(f"Invalid string value: {x}, only uppercase 'NO' and 'YES' are allowed")
+
+    bool_cols = [
+        "is_clinically_recognized",
+        "strategically_viable",
+        "is_umn_high",
+        "is_treatable",
+        "is_diagnosable",
+        "is_pop_sufficient",
+        "is_feasible",
+    ]
+    for col in bool_cols:
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_to_bool)
+
+    # convert dtypes
+    dtypes_dict = {
+        **{col: bool for col in col_mapping.values() if col in bool_cols},
+        **{col: str for col in col_mapping.values() if col not in bool_cols},
+    }
+
+    def resolve_and_drop_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+        duplicated_ids_df = df.loc[df["id"].duplicated(keep=False)].groupby("id")["strategically_viable"].sum()
+        duplicated_ids = duplicated_ids_df[duplicated_ids_df == 1].index
+        df.loc[df.id.isin(duplicated_ids), "strategically_viable"] = False
+        df = df.drop_duplicates(subset=["id"])
+        return df
+
+    # drop duplicates
+    strategic_disease_list = resolve_and_drop_duplicates(strategic_disease_list)
+    return strategic_disease_list.astype(dtypes_dict)
+
+
+def collapse_parent_diseases(
+    strategic_disease_list: pd.DataFrame,
+    mondo_disease_list: pd.DataFrame,
+    patched_disease_list: pd.DataFrame,
+    curated_disease_list: pd.DataFrame,
+) -> pd.DataFrame:
+    """Function which detects diseases with keep_parent == TRUE, identifies the parent disease name,
+    resolves it into MONDO & adds the parent disease to the strategic disease list"""
+    # Extract names from disease list (using only CRDs). This is to avoid fuzzy matching on noisy non-CRD names (eg syndrome 1)
+    disease_list = mondo_disease_list.loc[:, ["id", "name"]]
+
+    # Keep rows where id is not in patched_disease_list
+    disease_list = disease_list[~disease_list["id"].isin(patched_disease_list["id"].to_list())]
+    disease_list = disease_list[disease_list["id"].isin(curated_disease_list["mondo_id"])]
+    disease_list = pd.concat([disease_list, patched_disease_list.loc[:, ["id", "name"]]])
+    disease_list["name"] = disease_list["name"].str.upper()
+
+    # Extract disease names from notes with keep_parent == TRUE
+    keep_parent_notes = list(
+        set(
+            (
+                strategic_disease_list.loc[strategic_disease_list.keep_parent == "YES", "notes"]
+                .str.split('"')
+                .str[1]
+                .dropna()
+            )
+        )
+    )
+    # Fuzzy match
+    results = []
+    for note in tqdm(keep_parent_notes, "fuzzy matching parent disease names"):
+        results.append(process.extractOne(note, disease_list["name"].to_list(), scorer=fuzz.token_sort_ratio))
+
+    # Create a Df with results
+    results = pd.DataFrame(results, columns=["name", "score"])
+    results["query_names"] = keep_parent_notes
+    results = results.merge(disease_list, on="name", how="left")
+
+    # Add parent disease to strategic disease list if it is not already an SVD
+    for _, row in tqdm(results.iterrows(), "adding parent diseases to strategic disease list"):
+        id = row["id"]
+        disease_name = row["name"]
+        if row["score"] != 100:
+            logger.warning(
+                f"At the moment we are only allowing 100% fuzzy matching. Therefore, fuzzy matching failed for {row['query_names']} with score {row['score']}"
+            )
+            continue
+        if id in strategic_disease_list["id"].to_list():
+            if strategic_disease_list.loc[strategic_disease_list.id == id, "strategically_viable"].values[0] == True:
+                continue
+            else:
+                strategic_disease_list.loc[strategic_disease_list.id == id, "strategically_viable"] = True
+        else:
+            row_dict = {
+                "id": [id],
+                "disease_name": [disease_name],
+                "umn_score": [None],
+                "strategically_viable": [True],
+                "is_clinically_recognized": [False],
+                "is_treatable": [False],
+                "is_diagnosable": [False],
+                "is_pop_sufficient": [False],
+                "is_feasible": [False],
+                "keep_parent": [f"parent of {row['query_names']}"],
+                "reviewer": ["parent_collapse"],
+                "notes": [None],
+                "score": [row["score"]],
+            }
+            strategic_disease_list = pd.concat(
+                [strategic_disease_list, pd.DataFrame(row_dict)], axis=0, ignore_index=True
+            )
+    return strategic_disease_list
 
 
 @pa.check_input(
@@ -526,6 +711,7 @@ def ingest_manual_disease_remapping(
             "unmet_medical_need": pa.Column(dtype=float, nullable=True),
             "prevalence_experimental": pa.Column(nullable=True),
             "prevalence_world": pa.Column(dtype=str, nullable=True),
+            "strategically_viable": pa.Column(dtype=bool, nullable=True),
         },
         unique=["id"],
     )
@@ -537,6 +723,7 @@ def merge_disease_lists(
     disease_prevalence: pd.DataFrame,
     disease_txgnn: pd.DataFrame,
     curated_disease_list: pd.DataFrame,
+    strategic_disease_list: pd.DataFrame,
 ) -> pd.DataFrame:
     _log_merge_statistics(
         primary_df=disease_list,
@@ -602,7 +789,20 @@ def merge_disease_lists(
         primary_only_action="will be dropped",
         secondary_only_action="will be dropped",
     )
-    merged_disease_list = pd.merge(disease_list, curated_disease_list_renamed, on="id", how="inner")
+    disease_list = pd.merge(disease_list, curated_disease_list_renamed, on="id", how="inner")
+
+    _log_merge_statistics(
+        primary_df=disease_list,
+        secondary_df=strategic_disease_list[["id", "strategically_viable"]],
+        primary_name="disease list",
+        secondary_name="strategic disease list",
+        primary_only_action="will be kept with nulls",
+        secondary_only_action="will be dropped",
+    )
+    merged_disease_list = pd.merge(
+        disease_list, strategic_disease_list[["id", "strategically_viable"]], on="id", how="left"
+    )
+    merged_disease_list["strategically_viable"] = merged_disease_list["strategically_viable"].fillna(False).astype(bool)
 
     if merged_disease_list.isna().any().any():
         logger.warning("⚠️ Disease list has null values")
@@ -660,6 +860,7 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
             "supergroup": pa.Column(dtype=str, nullable=False),
             **{col: pa.Column(dtype=bool, nullable=False) for col in curated_list_speciality_columns},
             "core": pa.Column(dtype=bool, nullable=False),
+            "strategically_viable": pa.Column(dtype=bool, nullable=False),
             "anatomical_deformity": pa.Column(dtype=bool, nullable=False),
             "benign_malignant": pa.Column(dtype=str, nullable=True),
             "precancerous": pa.Column(dtype=bool, nullable=True),
@@ -713,6 +914,7 @@ def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) 
             "supergroup": pa.Column(nullable=True),
             **{col: pa.Column(nullable=True) for col in curated_list_speciality_columns},
             "core": pa.Column(nullable=True),
+            "strategically_viable": pa.Column(nullable=True),
             "anatomical_deformity": pa.Column(nullable=True),
             "benign_malignant": pa.Column(nullable=True),
             "precancerous": pa.Column(nullable=True),
@@ -849,6 +1051,7 @@ _DISEASE_HF_COLUMNS_TO_DROP = [
     "is_benign_tumour",
     "is_infectious_disease",
     "is_glucose_dysfunction",
+    "strategically_viable",
 ]
 
 
