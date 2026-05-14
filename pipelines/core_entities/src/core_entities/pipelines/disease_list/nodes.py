@@ -297,15 +297,15 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
         if x.strip() == "" or pd.isna(x) or x == "null":
             return None
         else:
-            return x.replace("\n", "")
+            return x.replace("\n", "").upper()
 
     string_cols = ["id", "disease_name", "reviewer", "notes", "keep_parent"]
     for col in string_cols:
-        strategic_disease_list.loc[:, col] = strategic_disease_list[col].str.upper().apply(parse_string_column)
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_column)
 
     # convert y/n strings to booleans
     def parse_string_to_bool(x: str):
-        x = x.strip(", ")
+        x = x.strip(", ").upper()
         if x == "NO":
             return False
         elif x == "YES":
@@ -325,7 +325,7 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
         "is_feasible",
     ]
     for col in bool_cols:
-        strategic_disease_list.loc[:, col] = strategic_disease_list[col].str.upper().apply(parse_string_to_bool)
+        strategic_disease_list.loc[:, col] = strategic_disease_list[col].apply(parse_string_to_bool)
 
     # convert dtypes
     dtypes_dict = {
