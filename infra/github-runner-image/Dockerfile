@@ -12,4 +12,21 @@ RUN apt-get update && \
           libffi-dev liblzma-dev openjdk-17-jdk openjdk-17-jre && \
     apt-get clean && rm -rf /var/lib/apt/lists/* && uv python install
 
+# Install Docker Compose V2 plugin.
+# Map dpkg architecture names to Compose release asset names and fail on HTTP errors.
+RUN set -eux; \
+    DOCKER_CONFIG=${DOCKER_CONFIG:-/usr/local/lib/docker}; \
+    mkdir -p "$DOCKER_CONFIG/cli-plugins"; \
+    ARCH=$(dpkg --print-architecture); \
+    case "$ARCH" in \
+      amd64) COMPOSE_ARCH="x86_64" ;; \
+      arm64) COMPOSE_ARCH="aarch64" ;; \
+      armhf) COMPOSE_ARCH="armv7" ;; \
+      *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac; \
+    curl -fSL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-${COMPOSE_ARCH}" \
+      -o "$DOCKER_CONFIG/cli-plugins/docker-compose"; \
+    chmod +x "$DOCKER_CONFIG/cli-plugins/docker-compose"; \
+    "$DOCKER_CONFIG/cli-plugins/docker-compose" version
+
 USER runner
