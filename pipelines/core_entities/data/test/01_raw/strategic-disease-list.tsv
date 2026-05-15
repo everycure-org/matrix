@@ -1,0 +1,11 @@
+	MONDO	Disease name	UMN score	Strategically-viable disease? (final call)	UMN actually high?	Clinically recognized disease? (i.e., not a group; not too granular)	Disease treatable? (i.e., not dev syndrome)	Definitively diagnosable? (i.e., not diagnosis of exclusion)	Pt pop sufficient for trial?	Trial somewhat feasible; reasonable endpoints?	Keep parent disease? (say yes, no, or cancer)	RF reviewer	Notes
+905	MONDO:0018646	Sclerosing cholangitis	20.75	yes	yes	yes	yes	yes	yes	yes		Sophia	
+816	MONDO:0019438	Al amyloidosis	21	yes	yes	yes	yes	yes	yes	yes		Ashley	
+743	MONDO:0013493	Acetyl-coa carboxylase deficiency	21.5	yes	yes	yes	yes	yes	yes	yes		Sophia	
+765	MONDO:0015649	Micturation-induced seizures	21.25	no	no	yes	yes	yes	yes	yes		Ashley	manageable w/ typical antiepileptic drugs
+953	MONDO:0011603	Gne myopathy	20.5	yes	yes	yes	yes	yes	yes	yes		Ashley	
+1116	MONDO:0007407	Cryoglobulinemic vasculitis	20	yes	yes	yes	yes	yes	yes	yes		Sophia	
+345	MONDO:0014116	complex cortical dysplasia with other brain malformations 2		no	yes	yes	no	yes	maybe	no		Ashley	likely not intervenable after birth
+1062	MONDO:0011698	Glycine n-methyltransferase deficiency	20	no	no	yes	yes	yes	yes	yes		Sophia	benign or mild
+493	MONDO:0009744	neuronal ceroid lipofuscinosis 1		no	yes	no	yes	yes	yes	yes	yes	Ashley	"collapse to ""neuronal ceroid lipofuscinosis"""
+667	MONDO:0019325	Phakomatosis cesioflammea	21.75	no	no	yes	yes	yes	maybe	yes		Sophia	typically benign/cosmetic, can co-occur with other conditions which should be treated
