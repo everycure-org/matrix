@@ -27,7 +27,7 @@ class DiseaseCategoryGraph(InvokableGraph):
     class State(TypedDict):
         # input
         entity: str
-        synonyms: str | None
+        synonyms: list[str]
 
         # synonym prompt
         synonym_prompt: str
@@ -72,7 +72,7 @@ class DiseaseCategoryGraph(InvokableGraph):
             "results": [],
             "request_token_counter": [],
             "response_token_counter": [],
-            "synonym_prompt": f"This entity is also known as {state['synonyms']}" if state["synonyms"] else "",
+            "synonym_prompt": f"This entity is also known as {state['synonyms']}" if len(state["synonyms"]) > 0 else "",
         }
 
     async def get_disease_category_classification(
@@ -143,7 +143,7 @@ class DiseaseCategoryGraph(InvokableGraph):
 
         return graph.compile()
 
-    async def safe_invoke(self, disease_name: str, synonyms: str) -> dict[str, Any]:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str]) -> dict[str, Any]:
         return await self.compile_graph().ainvoke({"entity": disease_name, "synonyms": synonyms})
 
 
@@ -156,7 +156,7 @@ class DiseaseCategoriesGraphWithConsensus(InvokableGraph):
     class State(TypedDict):
         # input
         entity: str
-        synonyms: str | None
+        synonyms: list[str]
 
         # aggregate results from all iterations of the disease category graph for each disease category
         results: dict[str, dict[str, list[str]]]
@@ -224,5 +224,5 @@ class DiseaseCategoriesGraphWithConsensus(InvokableGraph):
 
         return graph.compile()
 
-    async def safe_invoke(self, disease_name: str, synonyms: str) -> dict[str, Any]:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str]) -> dict[str, Any]:
         return await self.invoke({"entity": disease_name, "synonyms": synonyms})

@@ -45,6 +45,7 @@ raw.fda_purple_book_data:
     User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36
   load_args:
     skiprows: 3
+    encoding: cp1252
 
 # -------------------------------------------------------------------------
 # Primary
