@@ -6,7 +6,7 @@ known_entity_removal:
   datasets_to_include:
     kgml_xdtd_ground_truth:
       positives: true
-      negatives: true
+      negatives: false
     medic_ground_truth:
       positives: true
       negatives: true
