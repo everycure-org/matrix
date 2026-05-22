@@ -13,8 +13,8 @@ known_entity_removal.known_entity_matrix:
         type: gcs
       description: Known entity predictions, generated in the known_entity_removal pipeline.
       owner:
-        name: Piotr Kaniewski # temporary owner until we have a proper gitops in place
-        email: piotr@everycure.org
+        name: ${git.name:}
+        email: ${git.email:}
       origin:
         system: matrix
         url: https://github.com/everycure-org/matrix
