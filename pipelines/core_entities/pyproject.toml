@@ -164,6 +164,7 @@ dependencies = [
     "yarl",
     "zipp",
     "zstandard",
+    "fuzzywuzzy>=0.18.0",
 ]
 
 [tool.uv.sources]

@@ -4,6 +4,7 @@ paths:
   raw: data/test/01_raw
   raw_drugbank: data/test/01_raw/drugbank
   raw_llm: data/test/01_raw
+  intermediate: data/test/02_intermediate
   primary: data/test/03_primary
   release: data/test/03_primary/release
   published: data/test/03_primary/published
