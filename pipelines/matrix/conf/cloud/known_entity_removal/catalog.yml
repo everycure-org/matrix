@@ -19,16 +19,16 @@ known_entity_removal.model_output.known_entity_matrix:
         system: matrix
         url: https://github.com/everycure-org/matrix
       metadata:
-  known_entity_removal:
-    datasets_to_include:
-      kgml_xdtd_ground_truth:
-        positives: true
-        negatives: false
-      ec_ground_truth:
-        positives: true
-        negatives: true
-      off_label:
-        positives: true
-        negatives: false 
+        known_entity_removal:
+          datasets_to_include:
+            kgml_xdtd_ground_truth:
+              positives: true
+              negatives: false
+            ec_ground_truth:
+              positives: true
+              negatives: true
+            off_label:
+              positives: true
+              negatives: false 
 # known_entity_removal.evaluation.metrics:
 #   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
