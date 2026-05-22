@@ -5,7 +5,7 @@ known_entity_removal.model_output.known_entity_matrix:
   engine: spark
   save_args:
     catalog_args:
-      version: ${next_version:known_entity_matrix, minor, known_entity_removal}
+      version: ${next_version:known_entity_removal, minor, known_entity}
       message: Run of the known_entity_removal pipeline from main. Dataset based lookup with MONDO expansion after removing KGML-xDTD contraindication.
       location:
         format: parquet
