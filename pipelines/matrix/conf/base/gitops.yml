@@ -1,0 +1,12 @@
+origin:
+  repo_url: https://github.com/everycure-org/datasets
+  branch: main
+
+user:
+  name: Kedro
+  email: kedro@everycure.org
+
+options:
+  force: false
+  pull: true
+  target_dir: data/external/data-catalog

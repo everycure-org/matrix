@@ -21,9 +21,6 @@ public_gcs_bucket: gs://data.dev.everycure.org
 mlflow_artifact_root: ${run_dir}/mlflow
 mlflow_experiment_id: ${oc.env:MLFLOW_EXPERIMENT_ID, 1}
 
-# for known_entity_removal pipeline
-release_version_semver: ${oc.env:RELEASE_VERSION_SEMVER, dummy_release_version_semver}
-
 paths:
   raw:             ${dev_gcs_bucket}/data/01_RAW
   raw_private:     ${prod_gcs_bucket}/data/01_RAW
