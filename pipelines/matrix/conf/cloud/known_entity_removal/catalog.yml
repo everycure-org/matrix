@@ -1,7 +1,7 @@
 known_entity_removal.model_output.known_entity_matrix:
   type: everycure.datasets.kedro.DataCatalogDataset
-  group: known_entity_removal
-  dataset: known_entity_matrix
+  group: known_entity
+  dataset: known_entity_removal
   engine: spark
   save_args:
     catalog_args:
