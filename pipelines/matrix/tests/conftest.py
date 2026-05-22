@@ -4,6 +4,7 @@ from typing import Generator
 
 import pyspark.sql as ps
 import pytest
+from everycure.datasets.kedro.resolvers import latest_version, next_version
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import _create_hook_manager
@@ -53,6 +54,8 @@ def build_config_loader(env: str, conf_source: Path) -> OmegaConfigLoader:
             "setting": _load_setting,
             "oc.int": cast_to_int,
             "if_null": if_null,
+            "next_version": next_version,
+            "latest_version": latest_version,
         },
     )
 
