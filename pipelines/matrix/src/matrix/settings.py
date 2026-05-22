@@ -11,6 +11,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 import os
 
 from everycure.datasets.kedro.hooks import GitStorageHook
+from everycure.datasets.kedro.resolvers import next_version
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
@@ -30,6 +31,7 @@ hooks = {
     "spark": matrix_hooks.SparkHooks(),
     "release": matrix_hooks.ReleaseInfoHooks(),
     "git_storage": GitStorageHook(),
+    "next_version": next_version,
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
