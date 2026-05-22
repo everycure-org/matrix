@@ -13,8 +13,8 @@ known_entity_removal.model_output.known_entity_matrix:
         type: gcs
       description: Known entity predictions, generated in the known_entity_removal pipeline.
       owner:
-        name: ${git.name:}
-        email: ${git.email:}
+        name: Piotr
+        email: piotr@everycure.org
       origin:
         system: matrix
         url: https://github.com/everycure-org/matrix
@@ -30,5 +30,6 @@ known_entity_removal.model_output.known_entity_matrix:
             off_label:
               positives: true
               negatives: false 
+
 # known_entity_removal.evaluation.metrics:
 #   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
