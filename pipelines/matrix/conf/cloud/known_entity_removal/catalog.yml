@@ -5,8 +5,8 @@ known_entity_removal.model_output.known_entity_matrix:
   engine: pandas
   save_args:
     catalog_args:
-      version: ${globals:release_version_semver}
-      message: Run of the known_entity_removal pipeline from main. Dataset based lookup with MONDO expansion. Done after KGML-xDTD contraindication
+      version: ${next_version:known_entity_matrix, minor, known_entity_removal}
+      message: Run of the known_entity_removal pipeline from main. Dataset based lookup with MONDO expansion after removing KGML-xDTD contraindication.
       location:
         format: parquet
         uri: ${globals:paths.known_entity_removal}/known_entity_matrix
@@ -18,6 +18,18 @@ known_entity_removal.model_output.known_entity_matrix:
       origin:
         system: matrix
         url: https://github.com/everycure-org/matrix
-        
+      tags: ["disease_list"]
+      metadata:
+  known_entity_removal:
+    datasets_to_include:
+      kgml_xdtd_ground_truth:
+        positives: true
+        negatives: false
+      ec_ground_truth:
+        positives: true
+        negatives: true
+      off_label:
+        positives: true
+        negatives: false 
 # known_entity_removal.evaluation.metrics:
 #   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
