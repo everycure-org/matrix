@@ -31,5 +31,5 @@ known_entity_removal.model_output.known_entity_matrix:
               positives: true
               negatives: false 
 
-# known_entity_removal.evaluation.metrics:
-#   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
+known_entity_removal.evaluation.metrics:
+  type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset
