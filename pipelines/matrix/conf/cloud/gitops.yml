@@ -1,7 +1,0 @@
-origin:
-  repo_url: https://github.com/everycure-org/datasets
-  branch: main
-
-user:
-  name: Kedro
-  email: kedro@everycure.org
