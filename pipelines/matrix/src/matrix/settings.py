@@ -10,6 +10,7 @@ https://docs.kedro.org/en/stable/kedro_project_setup/settings.html.
 # Class that manages how configuration is loaded.
 import os
 
+from everycure.datasets.kedro.hooks import GitStorageHook
 from kedro.config import OmegaConfigLoader  # noqa: E402
 from kedro_mlflow.framework.hooks import MlflowHook
 
@@ -28,6 +29,7 @@ hooks = {
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
     "release": matrix_hooks.ReleaseInfoHooks(),
+    "git_storage": GitStorageHook(),
 }
 
 # Hooks are executed in a Last-In-First-Out (LIFO) order.
