@@ -513,7 +513,7 @@ def test_normalization_summary_nodes_and_edges(spark, sample_nodes_norm, sample_
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
+def test_unify_nodes(spark, sample_nodes, sample_edges, sample_biolink_category_hierarchy):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
@@ -524,7 +524,13 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
     )
 
     # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(
+        True,
+        core_id_mapping,
+        sample_edges,
+        nodes1,
+        nodes2,
+    )
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
@@ -540,7 +546,7 @@ def test_unify_nodes(spark, sample_nodes, sample_biolink_category_hierarchy):
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_core_promotion(spark, sample_nodes, sample_biolink_category_hierarchy):
+def test_core_promotion(spark, sample_nodes, sample_edges, sample_biolink_category_hierarchy):
     # Create two node datasets
     nodes1 = sample_nodes.filter(sample_nodes.id != "MONDO:0005148")
     nodes2 = sample_nodes.filter(sample_nodes.id != "CHEBI:119157")
@@ -551,8 +557,32 @@ def test_core_promotion(spark, sample_nodes, sample_biolink_category_hierarchy):
         core_mapping_data, schema="normalized_id string, core_id string, core_name string, core_category string"
     )
 
+    # Promote edges to use core IDs (matches production behavior where edges are promoted before nodes)
+    promoted_edges = (
+        sample_edges.join(
+            core_id_mapping.select(F.col("normalized_id").alias("subject"), F.col("core_id").alias("subject_core_id")),
+            on="subject",
+            how="left",
+        )
+        .withColumn("subject", F.coalesce("subject_core_id", "subject"))
+        .drop("subject_core_id")
+        .join(
+            core_id_mapping.select(F.col("normalized_id").alias("object"), F.col("core_id").alias("object_core_id")),
+            on="object",
+            how="left",
+        )
+        .withColumn("object", F.coalesce("object_core_id", "object"))
+        .drop("object_core_id")
+    )
+
     # Call the unify_nodes function
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(
+        True,
+        core_id_mapping,
+        promoted_edges,
+        nodes1,
+        nodes2,
+    )
 
     # Check the result
     assert isinstance(result, ps.DataFrame)
@@ -575,7 +605,7 @@ def test_core_promotion(spark, sample_nodes, sample_biolink_category_hierarchy):
 @pytest.mark.spark(
     help="This test relies on PYSPARK_PYTHON to be set appropriately, and sometimes does not work in VSCode"
 )
-def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_category_hierarchy):
+def test_correctly_identified_categories(spark, sample_nodes, sample_edges, sample_biolink_category_hierarchy):
     # Given: two node datasets
     nodes1 = sample_nodes
     nodes2 = sample_nodes.withColumn("category", F.lit("biolink:NamedThing"))
@@ -586,7 +616,13 @@ def test_correctly_identified_categories(spark, sample_nodes, sample_biolink_cat
     )
 
     # When: unifying the two datasets, putting nodes2 first -> meaning within each group, "first()" grabs the NamedThing
-    result = nodes.union_and_deduplicate_nodes(sample_biolink_category_hierarchy, core_id_mapping, nodes1, nodes2)
+    result = nodes.union_and_deduplicate_nodes(
+        True,
+        core_id_mapping,
+        sample_edges,
+        nodes1,
+        nodes2,
+    )
 
     # Then: the most specific category is correctly identified
     assert result.filter(F.col("category") == "biolink:NamedThing").count() == 0
