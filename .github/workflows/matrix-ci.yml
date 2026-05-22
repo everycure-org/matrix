@@ -131,8 +131,6 @@ jobs:
     defaults:
       run:
         working-directory: ./pipelines/matrix
-    env:
-      GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -165,9 +163,7 @@ jobs:
 
       - name: Configure Git for private repo access
         run: |
-          git config --global url."https://oauth2:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git config --global url."https://oauth2:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
