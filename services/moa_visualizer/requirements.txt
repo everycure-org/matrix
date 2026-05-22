@@ -4,3 +4,4 @@ streamlit-flow-component>=0.6.0
 sqlalchemy>=2.0.36
 google-cloud-storage
 pydantic-settings
+python-dotenv>=1.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
