@@ -9,4 +9,3 @@ user:
 options:
   force: false
   pull: true
-  target_dir: data/external/data-catalog
