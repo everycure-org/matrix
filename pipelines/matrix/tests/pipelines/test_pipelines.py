@@ -120,7 +120,6 @@ def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
     """Tests that no MemoryDataSets are created by verifying all datasets can be resolved."""
     used_data_sets = set.union(*[_pipeline_datasets(p) for p in pipelines.values()])
     used_data_sets_wout_double_params = {x.replace("params:params:", "params:") for x in used_data_sets}
-
     catalog_datasets = set(cloud_kedro_context.catalog.list())
 
     # Try to get dataset patterns from config resolver
@@ -145,7 +144,6 @@ def test_memory_data_sets_absent(cloud_kedro_context: KedroContext) -> None:
                 cloud_kedro_context.catalog._get_dataset(dataset_name)
             except Exception:
                 memory_data_sets.append(dataset_name)
-
     assert len(memory_data_sets) == 0, f"{memory_data_sets}"
 
 

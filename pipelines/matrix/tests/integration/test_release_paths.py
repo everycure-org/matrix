@@ -52,7 +52,6 @@ def test_all_post_release_paths_namespaced(catalog: DataCatalog, pipelines: Dict
     # When
     post_release_pipeline = pipeline.from_nodes(*release_nodes)
     post_release_nodes = [x for x in post_release_pipeline.nodes if x.name not in release_nodes]
-
     # Then
     for node in post_release_nodes:
         # Skip nodes tagged with "validation"
