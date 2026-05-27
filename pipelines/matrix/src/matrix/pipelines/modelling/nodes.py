@@ -157,7 +157,6 @@ def _filter_source_and_target_exist(df: ps.DataFrame, in_: ps.DataFrame) -> ps.D
             "source_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
             "target_embedding": Column(T.ArrayType(T.FloatType()), nullable=False),
         },
-        unique=["source", "target"],
     )
 )
 def attach_embeddings(
@@ -305,7 +304,6 @@ def make_folds(
             "split": Column(str, nullable=False),
             "fold": Column(int, nullable=False),
         },
-        # unique=["fold", "source", "target"] TODO: Why is this?
     )
 )
 def create_model_input_nodes(
