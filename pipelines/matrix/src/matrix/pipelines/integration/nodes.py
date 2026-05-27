@@ -117,7 +117,7 @@ def unify_ground_truth(*edges) -> ps.DataFrame:
     pass_columns=True,
 )
 def union_and_deduplicate_nodes(
-    retrieve_most_specific_category: bool, core_id_mapping: ps.DataFrame, *nodes, cols: list[str]
+    retrieve_most_specific_category: bool, core_id_mapping: ps.DataFrame, edges: ps.DataFrame, *nodes, cols: list[str]
 ) -> ps.DataFrame:
     """Function to unify nodes datasets."""
 
@@ -160,6 +160,12 @@ def union_and_deduplicate_nodes(
         # Get the updated categories and all_categories
         unioned_datasets = unioned_datasets.transform(determine_most_specific_category)
 
+    # drop floating nodes
+    edge_node_ids = (
+        edges.select(F.col("subject").alias("id")).union(edges.select(F.col("object").alias("id"))).distinct()
+    )
+    # Keep only nodes that participate in at least one edge (drop floating nodes)
+    unioned_datasets = unioned_datasets.join(edge_node_ids, on="id", how="inner")
     return unioned_datasets.select(*cols)
 
 
