@@ -6,6 +6,7 @@ paths:
   raw: data/test/01_raw
   raw_drugbank: data/test/01_raw
   raw_llm: ${dev_gcs_bucket}/kedro/data/core-entities
+  intermediate: data/test/02_intermediate
   primary: data/test/03_primary
   release: data/test/03_primary/release
   published: data/03_primary/published

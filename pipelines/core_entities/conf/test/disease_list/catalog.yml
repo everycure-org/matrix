@@ -14,6 +14,14 @@ raw.curated_disease_list:
     keep_default_na: False
     dtype: str
 
+raw.strategic_disease_list:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/strategic-disease-list.tsv
+  load_args:
+    sep: "\t"
+    keep_default_na: False
+    dtype: str
+
 raw.disease_categories:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-categories.tsv
