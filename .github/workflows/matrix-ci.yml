@@ -161,6 +161,10 @@ jobs:
       - name: Install Python dependencies
         run: uv sync
 
+      - name: Configure Git for private repo access
+        run: |
+          git config --global url."https://oauth2:${{ secrets.GH_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       # Run the specific command for this matrix job
       - name: "Run ${{ matrix.command.name }}"
         run: ${{ matrix.command.run }}

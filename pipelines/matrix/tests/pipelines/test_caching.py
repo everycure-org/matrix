@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, patch
 
 import pyarrow as pa
 import pytest
-from kedro.framework.session import KedroSession
 from kedro.io import DataCatalog, MemoryDataset
 from kedro.runner import SequentialRunner
 from kedro_datasets.pandas import ParquetDataset
@@ -179,11 +178,10 @@ def test_cached_api_enrichment_pipeline(
     sample_primary_key: str,
     sample_new_col: str,
     tmp_path: Path,
-    kedro_session: KedroSession,
 ):
     """Verify the workings of the cached_api_enrichment_pipeline by calling it twice on the same dataset."""
 
-    # Given a KedroSession, with a catalog where the cache is empty, and a
+    # Given a catalog where the cache is empty, and a
     # dataset where some keys need to be looked up using a service...
     async def dummy_resolver(docs: Sequence):
         return [[1.0, 2.0]] * len(docs)

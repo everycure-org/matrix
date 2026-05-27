@@ -4,6 +4,7 @@ from typing import Generator
 
 import pyspark.sql as ps
 import pytest
+from everycure.datasets.kedro.resolvers import latest_version, next_version
 from kedro.config import OmegaConfigLoader
 from kedro.framework.context import KedroContext
 from kedro.framework.hooks import _create_hook_manager
@@ -53,19 +54,36 @@ def build_config_loader(env: str, conf_source: Path) -> OmegaConfigLoader:
             "setting": _load_setting,
             "oc.int": cast_to_int,
             "if_null": if_null,
+            "next_version": next_version,
+            "latest_version": latest_version,
         },
     )
 
 
-def build_kedro_context(config_loader: OmegaConfigLoader) -> KedroContext:
+from matrix.settings import HOOKS
+
+
+def build_kedro_context(config_loader: OmegaConfigLoader, env: str = "cloud") -> KedroContext:
     """Instantiate a KedroContext."""
-    return KedroContext(
-        env="cloud",
+    hook_manager = _create_hook_manager()
+
+    # Register project hooks from settings
+    for hook in HOOKS:
+        if not hook_manager.is_registered(hook):
+            hook_manager.register(hook)
+
+    context = KedroContext(
+        env=env,
         package_name="matrix",
         project_path=Path.cwd(),
         config_loader=config_loader,
-        hook_manager=_create_hook_manager(),
+        hook_manager=hook_manager,
     )
+
+    # Manually trigger after_context_created hook since we're bypassing KedroSession
+    hook_manager.hook.after_context_created(context=context)
+
+    return context
 
 
 @pytest.fixture(scope="session")
@@ -87,7 +105,7 @@ def cloud_kedro_context(conf_source: Path) -> KedroContext:
 @pytest.fixture(scope="session")
 def base_kedro_context(conf_source: Path) -> KedroContext:
     config_loader = build_config_loader("base", conf_source)
-    return build_kedro_context(config_loader)
+    return build_kedro_context(config_loader, env="base")
 
 
 @pytest.fixture(scope="session")
