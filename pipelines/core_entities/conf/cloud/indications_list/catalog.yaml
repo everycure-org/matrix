@@ -1,0 +1,6 @@
+primary.published.indications_list_hf:
+  type: matrix_gcp_datasets.huggingface.HFIterableDataset
+  repo_id: everycure/indications-list
+  split: train
+  dataframe_type: pandas
+  tag: ${globals:release_version}

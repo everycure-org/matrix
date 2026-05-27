@@ -418,7 +418,9 @@ def ingest_fda_purple_book_data(fda_purple_book_data: pd.DataFrame) -> pd.DataFr
     """
     purple_book_df = fda_purple_book_data.copy()
     bla_number_column = resolve_column_name(purple_book_df, ["BLA Number", "bla number", "bla_number"])
-    bla_type_column = resolve_column_name(purple_book_df, ["BLA Type", "bla type", "bla_type"])
+    bla_type_column = resolve_column_name(
+        purple_book_df, ["BLA Type", "bla type", "bla_type", "License Type", "license type", "license_type"]
+    )
 
     if bla_number_column is None or bla_type_column is None:
         raise ValueError(

@@ -72,3 +72,20 @@ resource "google_service_account_iam_member" "workbench_user_sa_access" {
   role               = "roles/iam.serviceAccountUser"
   member             = "user:${var.email}"
 }
+
+# Grant the user notebooks.admin on their own instance so they can start/stop it
+# NOTE: instance_owners alone does not reliably grant notebooks.instances.start
+resource "google_workbench_instance_iam_member" "workbench_user_admin" {
+  project  = var.project_id
+  location = var.location
+  name     = google_workbench_instance.user_workbench.name
+  role     = "roles/notebooks.admin"
+  member   = "user:${var.email}"
+}
+
+# Grant the user IAP tunnel access so they can SSH into their instance
+resource "google_project_iam_member" "workbench_user_iap_tunnel" {
+  project = var.project_id
+  role    = "roles/iap.tunnelResourceAccessor"
+  member  = "user:${var.email}"
+}

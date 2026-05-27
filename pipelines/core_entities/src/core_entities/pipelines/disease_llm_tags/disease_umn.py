@@ -25,7 +25,7 @@ class DiseaseUMNGraph(InvokableGraph):
     class State(TypedDict):
         # input
         entity: str
-        synonyms: str
+        synonyms: list[str]
 
         # assets
         synonym_prompt: str
@@ -85,7 +85,9 @@ class DiseaseUMNGraph(InvokableGraph):
         return {
             "request_token_counter": [],
             "response_token_counter": [],
-            "synonym_prompt": f"(This entity is also known as {state['synonyms']})" if state["synonyms"] else "",
+            "synonym_prompt": f"(This entity is also known as {state['synonyms']})"
+            if len(state["synonyms"]) > 0
+            else "",
         }
 
     async def get_commonality(self, state: State) -> State:
@@ -319,5 +321,5 @@ class DiseaseUMNGraph(InvokableGraph):
             self._compiled_graph.get_graph(xray=all_subgraphs).draw_mermaid_png(draw_method=MermaidDrawMethod.PYPPETEER)
         )
 
-    async def safe_invoke(self, disease_name: str, synonyms: str) -> dict[str, Any]:
+    async def safe_invoke(self, disease_name: str, synonyms: list[str]) -> dict[str, Any]:
         return await self.invoke({"entity": disease_name, "synonyms": synonyms})
