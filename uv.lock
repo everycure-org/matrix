@@ -1490,7 +1490,7 @@ wheels = [
 
 [[package]]
 name = "everycure-datasets"
-version = "0.2.203"
+version = "0.2.210"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "gitpython" },
@@ -1502,9 +1502,9 @@ dependencies = [
     { name = "semantic-version" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/4d/2ba678eb86a6931661d6a35cf50ff31ced322d7a23038ab5297e23dc4323/everycure_datasets-0.2.203.tar.gz", hash = "sha256:50c173a7f15638dc3da144153c5f81042766f0ecdeea20f29af27b07d1c0d9a0", size = 16297, upload-time = "2026-05-22T10:36:41.034Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/bb/d9b99ad2425bee07d584f20192f9279437a74106e997d712fb4a26629991/everycure_datasets-0.2.210.tar.gz", hash = "sha256:de90539625cc73269f25fd4588b3c9173fde73cdcfecd6110073b0ce2a7ed0dc", size = 16296, upload-time = "2026-05-27T10:37:46.439Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dc/39/8cd9d6005eddef7ce8fda14f15a0d51076ff6d569c6008ca98d55b1ca76b/everycure_datasets-0.2.203-py3-none-any.whl", hash = "sha256:b23d3fd0eb3a4eb4fea4c5760efc97d16c5b677f9fd141026a6235b506e566e4", size = 21789, upload-time = "2026-05-22T10:36:40.171Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/29/9af206e5490a68c5e2e14e9772c3b76ff057d503040e7db5d13612ee8754/everycure_datasets-0.2.210-py3-none-any.whl", hash = "sha256:88e7ca464fa51c3be0367acf07d63a68b438b03758ec2e064e5145be4187ebea", size = 21788, upload-time = "2026-05-27T10:37:45.41Z" },
 ]
 
 [[package]]
@@ -3974,7 +3974,7 @@ requires-dist = [
     { name = "bmt" },
     { name = "bracex", specifier = ">=2.6" },
     { name = "db-dtypes" },
-    { name = "everycure-datasets", extras = ["kedro"], specifier = "==0.2.203" },
+    { name = "everycure-datasets", extras = ["kedro"], specifier = ">=0.2.205" },
     { name = "faker" },
     { name = "gcsfs", specifier = "==2024.3.1" },
     { name = "google-cloud-bigquery" },
