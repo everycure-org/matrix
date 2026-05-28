@@ -166,7 +166,6 @@ dependencies = [
     "zipp",
     "zstandard",
     "fuzzywuzzy>=0.18.0",
-    "openpyxl>=3.1.5",
 ]
 
 [tool.uv.sources]
