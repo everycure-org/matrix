@@ -6,7 +6,7 @@ from .resolvers import env, purple_book_url
 
 load_dotenv()
 
-HOOKS = (GitStorageHook(),)
+HOOKS = [GitStorageHook()]
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 
