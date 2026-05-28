@@ -166,6 +166,7 @@ def create_pipeline(**kwargs) -> Pipeline:
                     inputs=[
                         "params:integration.deduplication.retrieve_most_specific_category",
                         "integration.int.core_node_mapping",
+                        "integration.prm.unified_edges",
                         *[
                             f"integration.int.{source['name']}.nodes.norm@spark"
                             for source in settings.DYNAMIC_PIPELINES_MAPPING().get("integration")

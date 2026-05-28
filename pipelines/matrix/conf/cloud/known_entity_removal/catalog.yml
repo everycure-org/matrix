@@ -1,2 +1,35 @@
+known_entity_removal.model_output.known_entity_matrix:
+  type: everycure.datasets.kedro.DataCatalogDataset
+  group: known_entity
+  dataset: known_entity_removal
+  engine: spark
+  save_args:
+    catalog_args:
+      version: ${next_version:known_entity_removal, patch, known_entity}
+      message: Run of the known_entity_removal pipeline from main. Dataset based lookup with MONDO expansion after removing KGML-xDTD contraindication.
+      location:
+        format: parquet
+        uri: ${globals:paths.known_entity_removal}/known_entity_matrix
+        type: gcs
+      description: Known entity predictions, generated in the known_entity_removal pipeline.
+      owner:
+        name: Piotr
+        email: piotr@everycure.org
+      origin:
+        system: matrix
+        url: https://github.com/everycure-org/matrix
+      metadata:
+        known_entity_removal:
+          datasets_to_include:
+            kgml_xdtd_ground_truth:
+              positives: true
+              negatives: false
+            ec_ground_truth:
+              positives: true
+              negatives: true
+            off_label:
+              positives: true
+              negatives: false 
+
 known_entity_removal.evaluation.metrics:
   type: matrix_mlflow_utils.mlflow.MlflowMetricsDataset

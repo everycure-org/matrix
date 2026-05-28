@@ -761,6 +761,7 @@ dependencies = [
     { name = "filelock" },
     { name = "frozenlist" },
     { name = "fsspec" },
+    { name = "fuzzywuzzy" },
     { name = "gcsfs" },
     { name = "google-api-core" },
     { name = "google-auth" },
@@ -928,6 +929,7 @@ requires-dist = [
     { name = "filelock" },
     { name = "frozenlist" },
     { name = "fsspec" },
+    { name = "fuzzywuzzy", specifier = ">=0.18.0" },
     { name = "gcsfs" },
     { name = "google-api-core" },
     { name = "google-auth" },
@@ -1486,7 +1488,7 @@ wheels = [
 
 [[package]]
 name = "everycure-datasets"
-version = "0.2.166"
+version = "0.2.210"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "gitpython" },
@@ -1498,9 +1500,9 @@ dependencies = [
     { name = "semantic-version" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/23/87/b3059e62d699ac1d0b0bad9de9289f952e8f9cbac9f724860ba592d27b34/everycure_datasets-0.2.166.tar.gz", hash = "sha256:340370a3a44369d5cee4d02d0440079b21a21845d6038ff085ec355f7beedebb", size = 16173, upload-time = "2026-05-06T17:32:08.194Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/bb/d9b99ad2425bee07d584f20192f9279437a74106e997d712fb4a26629991/everycure_datasets-0.2.210.tar.gz", hash = "sha256:de90539625cc73269f25fd4588b3c9173fde73cdcfecd6110073b0ce2a7ed0dc", size = 16296, upload-time = "2026-05-27T10:37:46.439Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/87/9525da2dab97160b8bbf70a3cac1302931bdddf5363fa64d26b8210a90d4/everycure_datasets-0.2.166-py3-none-any.whl", hash = "sha256:c2dd7f6b6ab01cdfa435913a682510caf799e091d5fe2784aa349f5d7e11f6f7", size = 21598, upload-time = "2026-05-06T17:32:07.323Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/29/9af206e5490a68c5e2e14e9772c3b76ff057d503040e7db5d13612ee8754/everycure_datasets-0.2.210-py3-none-any.whl", hash = "sha256:88e7ca464fa51c3be0367acf07d63a68b438b03758ec2e064e5145be4187ebea", size = 21788, upload-time = "2026-05-27T10:37:45.41Z" },
 ]
 
 [[package]]
@@ -1672,6 +1674,15 @@ wheels = [
 [package.optional-dependencies]
 http = [
     { name = "aiohttp" },
+]
+
+[[package]]
+name = "fuzzywuzzy"
+version = "0.18.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/4b/0a002eea91be6048a2b5d53c5f1b4dafd57ba2e36eea961d05086d7c28ce/fuzzywuzzy-0.18.0.tar.gz", hash = "sha256:45016e92264780e58972dca1b3d939ac864b78437422beecebb3095f8efd00e8", size = 28888, upload-time = "2020-02-13T21:06:27.054Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/ff/74f23998ad2f93b945c0309f825be92e04e0348e062026998b5eefef4c33/fuzzywuzzy-0.18.0-py2.py3-none-any.whl", hash = "sha256:928244b28db720d1e0ee7587acf660ea49d7e4c632569cad4f1cd7e68a5f0993", size = 18272, upload-time = "2020-02-13T21:06:25.209Z" },
 ]
 
 [[package]]
@@ -2094,6 +2105,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1f/cb/48e964c452ca2b92175a9b2dca037a553036cb053ba69e284650ce755f13/greenlet-3.3.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:e29f3018580e8412d6aaf5641bb7745d38c85228dacf51a73bd4e26ddf2a6a8e", size = 274908, upload-time = "2025-12-04T14:23:26.435Z" },
     { url = "https://files.pythonhosted.org/packages/28/da/38d7bff4d0277b594ec557f479d65272a893f1f2a716cad91efeb8680953/greenlet-3.3.0-cp311-cp311-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a687205fb22794e838f947e2194c0566d3812966b41c78709554aa883183fb62", size = 577113, upload-time = "2025-12-04T14:50:05.493Z" },
     { url = "https://files.pythonhosted.org/packages/3c/f2/89c5eb0faddc3ff014f1c04467d67dee0d1d334ab81fadbf3744847f8a8a/greenlet-3.3.0-cp311-cp311-manylinux_2_24_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:4243050a88ba61842186cb9e63c7dfa677ec146160b0efd73b855a3d9c7fcf32", size = 590338, upload-time = "2025-12-04T14:57:41.136Z" },
+    { url = "https://files.pythonhosted.org/packages/80/d7/db0a5085035d05134f8c089643da2b44cc9b80647c39e93129c5ef170d8f/greenlet-3.3.0-cp311-cp311-manylinux_2_24_s390x.manylinux_2_28_s390x.whl", hash = "sha256:670d0f94cd302d81796e37299bcd04b95d62403883b24225c6b5271466612f45", size = 601098, upload-time = "2025-12-04T15:07:11.898Z" },
     { url = "https://files.pythonhosted.org/packages/dc/a6/e959a127b630a58e23529972dbc868c107f9d583b5a9f878fb858c46bc1a/greenlet-3.3.0-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6cb3a8ec3db4a3b0eb8a3c25436c2d49e3505821802074969db017b87bc6a948", size = 590206, upload-time = "2025-12-04T14:26:01.254Z" },
     { url = "https://files.pythonhosted.org/packages/48/60/29035719feb91798693023608447283b266b12efc576ed013dd9442364bb/greenlet-3.3.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:2de5a0b09eab81fc6a382791b995b1ccf2b172a9fec934747a7a23d2ff291794", size = 1550668, upload-time = "2025-12-04T15:04:22.439Z" },
     { url = "https://files.pythonhosted.org/packages/0a/5f/783a23754b691bfa86bd72c3033aa107490deac9b2ef190837b860996c9f/greenlet-3.3.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:4449a736606bd30f27f8e1ff4678ee193bc47f6ca810d705981cfffd6ce0d8c5", size = 1615483, upload-time = "2025-12-04T14:27:28.083Z" },
@@ -3867,6 +3879,7 @@ dependencies = [
     { name = "bmt" },
     { name = "bracex" },
     { name = "db-dtypes" },
+    { name = "everycure-datasets" },
     { name = "faker" },
     { name = "gcsfs" },
     { name = "google-cloud-bigquery" },
@@ -3986,6 +3999,7 @@ requires-dist = [
     { name = "bmt" },
     { name = "bracex", specifier = ">=2.6" },
     { name = "db-dtypes" },
+    { name = "everycure-datasets", extras = ["kedro"], specifier = ">=0.2.205" },
     { name = "faker" },
     { name = "gcsfs", specifier = "==2024.3.1" },
     { name = "google-cloud-bigquery" },
