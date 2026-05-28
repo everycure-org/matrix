@@ -1,0 +1,12 @@
+origin:
+  repo_url: https://github.com/everycure-org/datasets.git
+  branch: main
+
+user:
+  name: ${git.name:}
+  email: ${git.email:}
+
+options:
+  force: false
+  pull: true
+  target_dir: data/external/data-catalog
