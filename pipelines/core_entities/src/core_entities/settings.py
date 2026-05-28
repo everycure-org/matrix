@@ -6,7 +6,7 @@ from .resolvers import env, purple_book_url
 
 load_dotenv()
 
-HOOKS = (GitStorageHook(repo_url="https://github.com/everycure-org/datasets", branch="main"),)
+HOOKS = [GitStorageHook()]
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 
