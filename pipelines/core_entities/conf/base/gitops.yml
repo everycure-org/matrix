@@ -3,8 +3,8 @@ origin:
   branch: main
 
 user:
-  name: ${git.name:}
-  email: ${git.email:}
+  name: matrix-bot
+  email: matrix-bot@everycure.org
 
 options:
   force: false
