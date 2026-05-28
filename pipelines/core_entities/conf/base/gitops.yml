@@ -1,0 +1,12 @@
+origin:
+  repo_url: https://github.com/everycure-org/datasets.git
+  branch: main
+
+user:
+  name: matrix-bot
+  email: matrix-bot@everycure.org
+
+options:
+  force: false
+  pull: true
+  target_dir: data/external/data-catalog
