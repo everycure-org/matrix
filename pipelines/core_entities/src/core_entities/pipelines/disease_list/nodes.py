@@ -260,6 +260,8 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
             "disease_name": pa.Column(dtype=str, nullable=False),
             "umn_score": pa.Column(dtype=str, nullable=True),
             "strategically_viable": pa.Column(dtype=bool, nullable=False),
+            "strategically_viable_assigned_by": pa.Column(dtype=str, nullable=False),
+            "reviewed_by": pa.Column(dtype=str, nullable=False),
             "is_umn_high": pa.Column(dtype=bool, nullable=True),
             "is_clinically_recognized": pa.Column(dtype=bool, nullable=True),
             "is_treatable": pa.Column(dtype=bool, nullable=True),
@@ -342,6 +344,9 @@ def ingest_strategic_disease_list(raw_strategic_disease_list: pd.DataFrame) -> p
 
     # drop duplicates
     strategic_disease_list = resolve_and_drop_duplicates(strategic_disease_list)
+    strategic_disease_list["strategically_viable_assigned_by"] = (
+        "human"  # for tracking if SVD label was assigned by a human/agent/not assigned at all
+    )
     return strategic_disease_list.astype(dtypes_dict)
 
 
@@ -403,6 +408,7 @@ def collapse_parent_diseases(
                 "disease_name": [disease_name],
                 "umn_score": [None],
                 "strategically_viable": [True],
+                "strategically_viable_assigned_by": ["human"],
                 "is_clinically_recognized": [False],
                 "is_treatable": [False],
                 "is_diagnosable": [False],
@@ -712,6 +718,7 @@ def ingest_manual_disease_remapping(
             "prevalence_experimental": pa.Column(nullable=True),
             "prevalence_world": pa.Column(dtype=str, nullable=True),
             "strategically_viable": pa.Column(dtype=bool, nullable=True),
+            "strategically_viable_assigned_by": pa.Column(dtype=str, nullable=False),
         },
         unique=["id"],
     )
@@ -793,16 +800,22 @@ def merge_disease_lists(
 
     _log_merge_statistics(
         primary_df=disease_list,
-        secondary_df=strategic_disease_list[["id", "strategically_viable"]],
+        secondary_df=strategic_disease_list[["id", "strategically_viable", "strategically_viable_assigned_by"]],
         primary_name="disease list",
         secondary_name="strategic disease list",
         primary_only_action="will be kept with nulls",
         secondary_only_action="will be dropped",
     )
     merged_disease_list = pd.merge(
-        disease_list, strategic_disease_list[["id", "strategically_viable"]], on="id", how="left"
+        disease_list,
+        strategic_disease_list[["id", "strategically_viable", "strategically_viable_assigned_by"]],
+        on="id",
+        how="left",
     )
     merged_disease_list["strategically_viable"] = merged_disease_list["strategically_viable"].fillna(False).astype(bool)
+    merged_disease_list["strategically_viable_assigned_by"] = (
+        merged_disease_list["strategically_viable_assigned_by"].fillna("not assigned").astype(str)
+    )
 
     if merged_disease_list.isna().any().any():
         logger.warning("⚠️ Disease list has null values")
@@ -915,6 +928,7 @@ def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) 
             **{col: pa.Column(nullable=True) for col in curated_list_speciality_columns},
             "core": pa.Column(nullable=True),
             "strategically_viable": pa.Column(nullable=True),
+            "strategically_viable_assigned_by": pa.Column(nullable=True),
             "anatomical_deformity": pa.Column(nullable=True),
             "benign_malignant": pa.Column(nullable=True),
             "precancerous": pa.Column(nullable=True),
@@ -1052,6 +1066,7 @@ _DISEASE_HF_COLUMNS_TO_DROP = [
     "is_infectious_disease",
     "is_glucose_dysfunction",
     "strategically_viable",
+    "strategically_viable_assigned_by",
 ]
 
 

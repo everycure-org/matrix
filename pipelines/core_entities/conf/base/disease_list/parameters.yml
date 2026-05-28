@@ -30,6 +30,7 @@ disease_list:
     - speciality_syndromic
     - core
     - strategically_viable
+    - strategically_viable_assigned_by
     - anatomical_deformity
     - benign_malignant
     - precancerous
