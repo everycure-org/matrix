@@ -34,7 +34,7 @@ dependencies = [
     "decorator",
     "distro",
     "eval_type_backport",
-    "everycure-datasets[kedro]>=0.2.9",
+    "everycure-datasets[kedro]>=0.2.214",
     "exceptiongroup",
     "executing",
     "fastavro",
