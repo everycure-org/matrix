@@ -38,7 +38,7 @@ raw.curated_disease_list:
 raw.strategic_disease_list:
   type: matrix_gcp_datasets.gcp.GoogleSheetsDataset
   spreadsheet_url: https://docs.google.com/spreadsheets/d/1l8hCuhNepTScy26s4tcaCLra4JrnEGuC8yQ-kgXwVCU/edit?gid=0#gid=0
-  worksheet_gid: 1048797242 
+  worksheet_gid: 0
   service_account_file_path: ${globals:service_account_file_path}
   
 raw.disease_categories:
