@@ -101,3 +101,35 @@ resource "google_storage_bucket_iam_member" "compute_engine_default_ordchard_dev
   role   = "roles/storage.bucketViewer"
   member = local.orchard_dev_compute_service_account
 }
+
+resource "google_project_iam_custom_role" "storage_bucket_lister" {
+  project     = var.project_id
+  role_id     = "storageBucketLister"
+  title       = "Storage Bucket Lister"
+  description = "Allows listing storage buckets in the project without granting object access"
+  permissions = ["storage.buckets.list"]
+}
+
+resource "google_project_iam_member" "matrix_subcontractors_bucket_lister" {
+  project = var.project_id
+  role    = google_project_iam_custom_role.storage_bucket_lister.id
+  member  = "group:matrix-subcontractors@everycure.org"
+}
+
+resource "google_storage_bucket_iam_member" "matrix_subcontractors_object_viewer" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "group:matrix-subcontractors@everycure.org"
+}
+
+resource "google_storage_bucket_iam_member" "matrix_subcontractors_object_creator" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.objectCreator"
+  member = "group:matrix-subcontractors@everycure.org"
+}
+
+resource "google_storage_bucket_iam_member" "matrix_subcontractors_bucket_reader" {
+  bucket = var.storage_bucket_name
+  role   = "roles/storage.legacyBucketReader"
+  member = "group:matrix-subcontractors@everycure.org"
+}
