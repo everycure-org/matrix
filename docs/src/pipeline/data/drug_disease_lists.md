@@ -58,7 +58,11 @@ The pipeline than creates tags based on those groups that are then exported into
 
 As not all entities within a MONDO ontology will correspond to diseases relevant to drug repurposing and recognized by medical community, we manually annotated all MONDO diseases based on their clinical recognizability. 
 
-This was done to 'collapse' clinically identical subtypes of diseases represented by different leaf nodes (e.g. due to varying chromosome mutations, such as in the case of [Alzheimer 17](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014036?lang=en) and [Alzheimer 18](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014265?lang=en)).
+To each disease, we assigned a `level` attribute which describes whether the ontological entity describes a clinically recognized disease, its subgroup or a high-level grouping.
+
+* Groupings were assigned when entity was representing a high-level disease grouping which cannot be easily targettable by drugs, such as [neurodegenerative disease](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0005559?lang=en) 
+* Clinically recognized label was assigned when an entity was representing a disease which would be recognized by both a physician and a patient diagnosed with the disease, such as [Alzheimer disease](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004975?lang=en) 
+* Subgroups were assigned for clinically identical subtypes of diseases represented by different leaf nodes (e.g. due to varying chromosome mutations, such as in the case of [Alzheimer 17](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014036?lang=en) and [Alzheimer 18](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014265?lang=en)).
 
 Note that the motivation for those groupings is to try to capture what physicians or patients would recognize. We acknowledge that disease definition is a very complex issue and this classification is only 
 present to help navigate ontologies rather than replace any existing guidelines.
