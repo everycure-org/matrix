@@ -29,6 +29,7 @@ disease_list:
     - speciality_renal_and_urinary
     - speciality_syndromic
     - core
+    - is_clinically_recognized
     - strategically_viable
     - strategically_viable_assigned_by
     - anatomical_deformity
