@@ -36,7 +36,6 @@ There are three major ways we add these groupings:
 2. LLM-generated subset tags. We have developed a [Kedro pipeline](https://github.com/everycure-org/matrix/tree/main/pipelines/core_entities) which generates disease tags flexibly using LLMs.
 3. Manual curation of subset grouping classes. We have provided a way to manually curate subset groupings, so that new subsets can be defined as needed.
 
-
 ### Mondo subset tags
 
 (Note this list may be out of date)
@@ -55,7 +54,16 @@ The curator simply specifies the root nodes of the Mondo ontology to include in 
 
 The pipeline than creates tags based on those groups that are then exported into the disease grouping list.
 
-### Outputs
+### Mannual annotations of clinical recognizability
+
+As not all entities within a MONDO ontology will correspond to diseases relevant to drug repurposing and recognized by medical community, we manually annotated all MONDO diseases based on their clinical recognizability. 
+
+This was done to 'collapse' clinically identical subtypes of diseases represented by different leaf nodes (e.g. due to varying chromosome mutations, such as in the case of [Alzheimer 17](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014036?lang=en) and [Alzheimer 18](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014265?lang=en)).
+
+Note that the motivation for those groupings is to try to capture what physicians or patients would recognize. We acknowledge that disease definition is a very complex issue and this classification is only 
+present to help navigate ontologies rather than replace any existing guidelines.
+
+#### Outputs
 
 [A table](https://raw.githubusercontent.com/everycure-org/matrix-disease-list/refs/heads/main/matrix-disease-groupings.tsv) is generated that looks like this:
 
@@ -76,12 +84,3 @@ All the remaining columns corresponds to different groupings. In the example we 
 1. `mondo_top_grouping`
 
 The values are the tags, so which specific disease group a disease corresponds to. For example: "adrenocortical insufficiency" (`MONDO:0000004`) corresponds to an `endocrine_system_disorder` according to the `harrisons_view`.
-
-### Pipeline
-
-The general pipeline works like this:
-
-1. All externally provided subsets (llm-based, manually curated) are provided as ROBOT templates.
-1. All subsets are included as ontology annotations into Mondo during the release my converting the templates into ontology annotations.
-1. For ontology-based subsets, the grouping classes are selected and downfilled according to the class hierarchy (so all diseases under "endocrine disorder" get an "endocrine disorder" tag).
-1. During the disease list processing, those subsets are extracted and formatted into the "disease grouping" spreadsheet.
