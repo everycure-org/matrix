@@ -47,7 +47,7 @@ DYNAMIC_PIPELINES_MAPPING = lambda: disable_private_datasets(
             "cross_validation": {
                 "n_cross_val_folds": int(os.getenv("N_CROSS_VAL", 5)),
             },
-            "num_shards": int(os.getenv("N_SHARDS", 3)),
+            "num_shards": int(os.getenv("N_SHARDS", 1)),
             "integration": [
                 {"name": "rtx_kg2", "integrate_in_kg": True, "is_private": False},
                 {"name": "spoke", "integrate_in_kg": True, "is_private": True},
