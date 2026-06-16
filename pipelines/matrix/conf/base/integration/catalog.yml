@@ -75,9 +75,9 @@ integration.prm.unified_edges_simplified:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/unified/edges_simplified
 
-integration.int.unified_ground_truth_edges:
-  <<: [*_spark_parquet, *_layer_prm]
-  filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
+# integration.int.unified_ground_truth_edges:
+#   <<: [*_spark_parquet, *_layer_prm]
+#   filepath: ${globals:paths.integration}/int/ground_truth/edges.norm
 
 integration.prm.nodes_edges_consistency_check:
   type: text.TextDataset
@@ -136,3 +136,7 @@ integration.prm.metric_core_connectivity_summary:
   <<: [*_spark_parquet, *_layer_prm]
   filepath: ${globals:paths.integration}/prm/metric_core_connectivity_summary
 
+# Ground Truth used for KG Manuscript
+integration.int.unified_ground_truth_edges:
+  <<: [*_spark_parquet, *_layer_prm]
+  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.15.19/datasets/integration/int/kgml_xdtd_edges_publication
