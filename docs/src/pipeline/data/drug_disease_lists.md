@@ -19,7 +19,7 @@ EC team members looking for the full dataset, including all internal fields, sho
 ## Workflow and Method for creating the MATRIX disease list
 
 Details for how MATRIX disease list is created can be found within the [core entities pipeline project](../../../../pipelines/core_entities/src/core_entities/pipelines/disease_list/).
-In short, MONDO disease ontology is used to extract diseases which are then enriched with curated annotations, producing the final MATRIX disease list availalbe on Huggin Face.
+In short, the MONDO disease ontology is used to extract diseases which are then enriched with curated annotations, producing the final MATRIX disease list available on Hugging Face.
 
 ## Disease list subsets / tagging / grouping
 
@@ -64,8 +64,8 @@ To each disease, we assigned a `level` attribute which describes whether the ont
 * Clinically recognized label was assigned when an entity was representing a disease which would be recognized by both a physician and a patient diagnosed with the disease, such as [Alzheimer disease](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0004975?lang=en) 
 * Subgroups were assigned for clinically identical subtypes of diseases represented by different leaf nodes (e.g. due to varying chromosome mutations, such as in the case of [Alzheimer 17](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014036?lang=en) and [Alzheimer 18](https://www.ebi.ac.uk/ols4/ontologies/mondo/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMONDO_0014265?lang=en)).
 
-Note that the motivation for those groupings is to try to capture what physicians or patients would recognize. We acknowledge that disease definition is a very complex issue and this classification is only 
-present to help navigate ontologies rather than replace any existing guidelines.
+Note that the motivation for those groupings is to try to capture what physicians or patients would recognize. We acknowledge that the definition of what is a disease is a very complex issue and this classification is only 
+here to help navigate ontologies rather than replace any existing guidelines.
 
 #### Outputs
 
