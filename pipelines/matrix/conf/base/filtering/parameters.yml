@@ -5,6 +5,8 @@ filtering:
       column: upstream_data_source
       keep_list:
         - rtxkg2
+        - robokop
+        - primekg
 
     # filter_node_labels:
     #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumn
@@ -49,6 +51,8 @@ filtering:
       column: upstream_data_source
       keep_list:
         - rtxkg2
+        - robokop
+        - primekg
 
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
