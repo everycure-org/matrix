@@ -4,7 +4,7 @@ filtering:
       _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
-        - robokop
+        - rtxkg2
 
     # filter_node_labels:
     #     _object: matrix.pipelines.filtering.filters.RemoveRowsByColumn
@@ -48,7 +48,7 @@ filtering:
       _object: matrix.pipelines.filtering.filters.KeepRowsContaining
       column: upstream_data_source
       keep_list:
-        - robokop
+        - rtxkg2
 
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
