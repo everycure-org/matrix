@@ -133,6 +133,7 @@ resource "google_storage_bucket_iam_member" "matrix_subcontractors_bucket_reader
   role   = "roles/storage.legacyBucketReader"
   member = "group:matrix-subcontractors@everycure.org"
 }
+
 # Temporary scoped access for Alan Hueb (Scripps) to v0.8.2 release data
 resource "google_storage_bucket_iam_member" "alan_hueb_release_viewer" {
   bucket = "mtrx-us-central1-hub-dev-storage"
@@ -143,4 +144,11 @@ resource "google_storage_bucket_iam_member" "alan_hueb_release_viewer" {
     title      = "only_v0_8_2_release"
     expression = "resource.name.startsWith('projects/_/buckets/mtrx-us-central1-hub-dev-storage/objects/kedro/data/releases/v0.8.2')"
   }
+}
+
+# Bucket-level read access for Alan (needed for gsutil/SDK navigation; no condition possible on bucket-level perms)
+resource "google_storage_bucket_iam_member" "alan_hueb_bucket_reader" {
+  bucket = "mtrx-us-central1-hub-dev-storage"
+  role   = "roles/storage.legacyBucketReader"
+  member = "user:alan@hueb.org"
 }
