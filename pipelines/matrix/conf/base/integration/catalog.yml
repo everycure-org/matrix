@@ -139,20 +139,20 @@ integration.prm.metric_core_connectivity_summary:
 # Ground Truth used for KG Manuscript
 integration.int.unified_ground_truth_edges:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.15.19/datasets/integration/int/kgml_xdtd_edges_publication
+  filepath: gs://data.dev.everycure.org/kedro/data/releases/v0.15.19/datasets/integration/int/kgml_xdtd_edges_publication
 
 integration.int.disease_list.nodes.norm@pandas:
   <<: [*_pandas_parquet, *_layer_prm]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.15.19/datasets/integration/int/disease_list_overlapping_manuscript.parquet
+  filepath: gs://data.dev.everycure.org/kedro/data/releases/v0.15.19/datasets/integration/int/disease_list_overlapping_manuscript.parquet
 
 integration.int.disease_list.nodes.norm@spark:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.15.19/datasets/integration/int/disease_list_overlapping_manuscript.parquet
+  filepath: gs://data.dev.everycure.org/kedro/data/releases/v0.15.19/datasets/integration/int/disease_list_overlapping_manuscript.parquet
 
 integration.int.drug_list.nodes.norm@pandas:
   <<: [*_pandas_parquet, *_layer_prm]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.15.19/datasets/integration/int/drug_list_overlapping_manuscript.parquet
+  filepath: gs://data.dev.everycure.org/kedro/data/releases/v0.15.19/datasets/integration/int/drug_list_overlapping_manuscript.parquet
 
 integration.int.drug_list.nodes.norm@spark:
   <<: [*_spark_parquet, *_layer_prm]
-  filepath: gs://mtrx-us-central1-hub-dev-storage/kedro/data/releases/v0.15.19/datasets/integration/int/drug_list_overlapping_manuscript.parquet
+  filepath: gs://data.dev.everycure.org/kedro/data/releases/v0.15.19/datasets/integration/int/drug_list_overlapping_manuscript.parquet
