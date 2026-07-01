@@ -70,7 +70,7 @@ dependencies = [
     "jmespath",
     "jupyter_client",
     "jupyter_core",
-    "jupyterlab>=3.0",
+    "jupyterlab>=4.5.9",
     "jupyterlab_widgets",
     "kedro>=0.19.15",
     "kedro-datasets>=6.0.0",
