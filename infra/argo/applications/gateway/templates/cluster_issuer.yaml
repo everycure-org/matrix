@@ -21,7 +21,6 @@ spec:
       # DNS01 solver configuration for wildcard certificate validation
       - selector:
           dnsNames:
-          - "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
           - "*.platform.{{ .Values.spec.source.environment }}.everycure.org"
           - "*.api.{{ .Values.spec.source.environment }}.everycure.org"
         dns01:
