@@ -24,4 +24,11 @@ spec:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     automated: 
-      prune: true
+      prune: true  # Ignore replica count so we can scale the StatefulSet to 0 (stop the pod, keep the PVC/disk)
+  # without Argo CD reverting it back to the chart's hardcoded replicas: 1 on the next sync.
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: neo4j
+      jsonPointers:
+        - /spec/replicas
