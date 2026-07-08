@@ -20,17 +20,15 @@ spec:
           value: {{ .Values.spec.source.environment}}
         - name: spec.source.project_id
           value: {{ .Values.spec.source.project_id}}
-      values: |
-        neo4j:
-          config:
-            server.default_advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
-            server.bolt.advertised_address: "neo4j.{{ .Values.spec.source.environment }}.everycure.org:7687"
-          services:
-            neo4j:
-              annotations:
-                external-dns.alpha.kubernetes.io/hostname: "neo4j.{{ .Values.spec.source.environment }}.everycure.org"
   syncPolicy:
     syncOptions:     # Sync options which modifies sync behavior
     - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
     automated: 
-      prune: true
+      prune: true  # Ignore replica count so we can scale the StatefulSet to 0 (stop the pod, keep the PVC/disk)
+  # without Argo CD reverting it back to the chart's hardcoded replicas: 1 on the next sync.
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: neo4j
+      jsonPointers:
+        - /spec/replicas
