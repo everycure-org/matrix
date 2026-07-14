@@ -14,7 +14,7 @@ locals {
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
-    max_count          = 30
+    max_count          = 0 # Scaled to 0: TECH-418
     disk_type          = "pd-ssd"
     disk_size_gb       = 200
     enable_gcfs        = true
@@ -30,7 +30,7 @@ locals {
       machine_type       = "g2-standard-16"
       node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 16
+      max_count          = 0 # Scaled to 0: TECH-418
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -50,14 +50,14 @@ locals {
       name               = "management-nodes"
       machine_type       = "n2-standard-16" # 8 vCPUs, 32GB RAM
       node_locations     = "us-central1-c"  # Single location.
-      min_count          = 1                # Single instance, no HA
-      max_count          = 1                # Single instance, no HA
+      min_count          = 0                # Scaled to 0: TECH-418
+      max_count          = 0                # Scaled to 0: TECH-418
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
       disk_size_gb       = 200
       enable_gcfs        = true
       enable_gvnic       = true
-      initial_node_count = 1
+      initial_node_count = 0
       location_policy    = "ANY"
     }
   ]
@@ -68,7 +68,7 @@ locals {
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
-    max_count          = 20 # Higher max count for spot instances
+    max_count          = 0 # Scaled to 0: TECH-418
     disk_type          = "pd-ssd"
     disk_size_gb       = 200
     enable_gcfs        = true
@@ -86,7 +86,7 @@ locals {
       machine_type       = "g2-standard-16"
       node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 16 # Higher max count for spot instances
+      max_count          = 0 # Scaled to 0: TECH-418
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -108,7 +108,7 @@ locals {
       machine_type       = "e2-standard-8" # 8 vCPUs, 32GB RAM - good for CI/CD and Docker in Docker (dind)
       node_locations     = local.default_node_locations
       min_count          = 0
-      max_count          = 50
+      max_count          = 0 # Scaled to 0: TECH-418
       local_ssd_count    = 0
       disk_size_gb       = 100 # Smaller disk for CI runners
       disk_type          = "pd-ssd"
@@ -126,7 +126,7 @@ locals {
       machine_type       = "h3-standard-88"
       node_locations     = local.h3_node_locations
       min_count          = 0
-      max_count          = 50
+      max_count          = 0 # Scaled to 0: TECH-418
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-balanced"
@@ -141,7 +141,7 @@ locals {
       machine_type       = "h3-standard-88"
       node_locations     = local.h3_node_locations
       min_count          = 0
-      max_count          = 50
+      max_count          = 0 # Scaled to 0: TECH-418
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-balanced"
