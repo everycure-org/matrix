@@ -51,7 +51,7 @@ dependencies = [
     "ipython>=8.10",
     "ipywidgets",
     "jsonpath-ng",
-    "jupyterlab>=3.0",
+    "jupyterlab>=4.6.1",
     "kedro-datasets>=6.0.0",
     "kedro-telemetry>=0.3.1",
     "kedro-viz>=11.0.0",
@@ -59,7 +59,7 @@ dependencies = [
     "langchain",
     "langchain-openai",
     "matplotlib",
-    "mlflow==2.20.3",
+    "mlflow==3.11.1",
     "neo4j>=5.5.0",
     "notebook",
     "numpy==1.24.4", # This was pinned during refit refactor; fabricator pipeline fails on 1.26.4
@@ -69,9 +69,9 @@ dependencies = [
     "pandas>=2.1.1", #due to pandera requiring this or higher
     "polars-lts-cpu>=1.30.0",
     "proto-plus==1.24.0.dev1", # Temp. fix for the gcloud cli
-    "pyarrow>=14.0.2",
+    "pyarrow>=25.0.0",
     "gspread>=6.2.1",
-    "pyspark==3.5.1",
+    "pyspark==4.1.2",
     "rustworkx>=0.15.0",
     "python-cypher==0.20.1",
     "responses",
@@ -82,7 +82,7 @@ dependencies = [
     "seaborn",
     "tenacity",
     "termplotlib",
-    "torch==2.7.1",
+    "torch==2.13.0",
     "transformers",
     "typer", # used for convenience libraries, to be moved to a dev requirements eventually
     "xgboost-cpu",
