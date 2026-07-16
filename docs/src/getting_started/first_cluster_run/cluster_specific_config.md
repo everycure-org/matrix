@@ -35,8 +35,9 @@ Configure your `.env` file based on your target environment:
 
     # MLflow Configuration
     MLFLOW_URL=https://mlflow.platform.dev.everycure.org/
-    # Generate at https://mlflow.platform.dev.everycure.org/oidc/ui/user
-    MLFLOW_TRACKING_TOKEN=add_token_with_mlflow_access_from_https://mlflow.platform.dev.everycure.org/oidc/ui/user
+    # The MLflow tracking server only accepts HTTP Basic Auth, not bearer tokens
+    MLFLOW_TRACKING_USERNAME=add_your_mlflow_username
+    MLFLOW_TRACKING_PASSWORD=add_your_mlflow_password
 
     # Argo Platform
     ARGO_PLATFORM_URL=https://argo.platform.dev.everycure.org
@@ -57,8 +58,9 @@ Configure your `.env` file based on your target environment:
 
     # MLflow Configuration
     MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
-    # Generate at https://mlflow.platform.prod.everycure.org/oidc/ui/user
-    MLFLOW_TRACKING_TOKEN=add_token_with_mlflow_access_from_https://mlflow.platform.prod.everycure.org/oidc/ui/user
+    # The MLflow tracking server only accepts HTTP Basic Auth, not bearer tokens
+    MLFLOW_TRACKING_USERNAME=add_your_mlflow_username
+    MLFLOW_TRACKING_PASSWORD=add_your_mlflow_password
 
     # Argo Platform
     ARGO_PLATFORM_URL=https://argo.platform.prod.everycure.org

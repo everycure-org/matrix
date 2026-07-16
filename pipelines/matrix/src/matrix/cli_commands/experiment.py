@@ -60,9 +60,10 @@ console = Console()
 EXPERIMENT_BRANCH_PREFIX = "experiment/"
 
 
-def configure_mlflow_tracking(token: str) -> None:
+def configure_mlflow_tracking(token: Optional[str] = None) -> None:
     mlflow.set_tracking_uri(os.environ["MLFLOW_URL"])
-    os.environ["MLFLOW_TRACKING_TOKEN"] = token
+    if token:
+        os.environ["MLFLOW_TRACKING_TOKEN"] = token
 
 
 def get_user_account_token() -> str:
@@ -76,6 +77,14 @@ def get_user_account_token() -> str:
 @click.group()
 def experiment() -> None:
     _validate_env_vars_for_private_data()
+    if os.getenv("MLFLOW_TRACKING_USERNAME") and os.getenv("MLFLOW_TRACKING_PASSWORD"):
+        # The MLflow tracking server only accepts HTTP Basic Auth; bearer tokens (whether a
+        # native MLflow access token or a GCP IAP token) are rejected with
+        # "Authentication required". mlflow reads these two env vars automatically, so we
+        # only need to make sure the tracking URI is set.
+        click.echo("Using MLflow Basic Auth from MLFLOW_TRACKING_USERNAME/MLFLOW_TRACKING_PASSWORD")
+        configure_mlflow_tracking()
+        return
     if os.getenv("MLFLOW_TRACKING_TOKEN"):
         # Native MLflow access token, e.g. sourced from a GitHub Actions secret
         click.echo("Using MLflow access token from MLFLOW_TRACKING_TOKEN environment variable")

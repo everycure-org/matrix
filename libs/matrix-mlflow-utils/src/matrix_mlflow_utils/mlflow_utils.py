@@ -25,9 +25,10 @@ class DeletedExperimentExistsWithName(Exception):
 
 
 MLFLOW_AUTH_ERROR_MESSAGE = (
-    "❌ MLflow authentication failed. Please set MLFLOW_TRACKING_TOKEN in your .env file. "
-    "Generate a token by visiting https://mlflow.platform.dev.everycure.org/oidc/ui/user "
-    "(or the `prod` equivalent) and copying the access token shown there."
+    "❌ MLflow authentication failed. The tracking server only accepts HTTP Basic Auth; "
+    "bearer tokens (MLFLOW_TRACKING_TOKEN / GCP IAP tokens) are rejected with "
+    "'Authentication required'. Set MLFLOW_TRACKING_USERNAME and MLFLOW_TRACKING_PASSWORD "
+    "in your .env file (or as CI secrets) instead."
 )
 
 
