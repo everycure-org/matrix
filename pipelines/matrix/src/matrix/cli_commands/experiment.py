@@ -76,7 +76,11 @@ def get_user_account_token() -> str:
 @click.group()
 def experiment() -> None:
     _validate_env_vars_for_private_data()
-    if os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_TOKEN"):
+    if os.getenv("MLFLOW_TRACKING_TOKEN"):
+        # Native MLflow access token, e.g. sourced from a GitHub Actions secret
+        click.echo("Using MLflow access token from MLFLOW_TRACKING_TOKEN environment variable")
+        token = os.getenv("MLFLOW_TRACKING_TOKEN")
+    elif os.getenv("GITHUB_ACTIONS") and os.getenv("GCP_TOKEN"):
         # Running in GitHub Actions, get the IAP token of service acccount from the secrets
         click.echo("Running in GitHub Actions, using service account IAP token")
         token = os.getenv("GCP_TOKEN")

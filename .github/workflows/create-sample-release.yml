@@ -98,6 +98,7 @@ jobs:
         working-directory: pipelines/matrix
         env:
           GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
+          MLFLOW_TRACKING_TOKEN: ${{ secrets.MLFLOW_TRACKING_TOKEN }}
         run: |
           DATE=$(date +%Y%m%d)
           echo "Run the kedro sampling pipeline"
