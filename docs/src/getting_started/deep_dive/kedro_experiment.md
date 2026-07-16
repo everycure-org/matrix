@@ -57,6 +57,13 @@ kedro experiment create --experiment-name={EXPERIMENT_NAME}
     ```
     Make sure to run `make fetch_secrets` first.
 
+!!! Error "MLflow authentication required"
+    If you encounter
+    ```
+    RestException: INTERNAL_ERROR: Response: {'detail': 'Authentication required'}
+    ```
+    Set `MLFLOW_TRACKING_TOKEN` in your `.env` file. Generate a token by visiting [https://mlflow.platform.dev.everycure.org/oidc/ui/user](https://mlflow.platform.dev.everycure.org/oidc/ui/user) (or the `prod` equivalent) and copying the access token shown there.
+
 Note that running the pipeline with real data requires a lot of time. If you want to check if your pipeline will even work (e.g. let's assume you developed a new feature which works with fabricated data but you are unsure about real data) you can test it using `sample` environment as described in [first steps section](./../first_steps/environments_overview.md)
 
 [Jupyter Setup :material-skip-next:](./kedro_jupyter.md){ .md-button .md-button--primary }
