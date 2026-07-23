@@ -1,5 +1,5 @@
 ---
-title: Cluster Specific Config 
+title: Cluster Specific Config
 ---
 
 # Matrix Pipeline on the Cluster
@@ -7,9 +7,9 @@ title: Cluster Specific Config
 This guide covers running the complete Matrix pipeline on the Kubernetes cluster using Argo Workflows. The cluster provides distributed computing capabilities that allow for parallel processing of large datasets.
 
 !!! warning
-    Note that this section is heavily focusing on the infrastructure which can be only applicable to the Matrix Project & Matrix GCP. Therefore, this section is useful and applicable if you can access our infrastructure.
-    
-    If you intend to adapt Matrix Codebase & Infrastructure to your own cloud system, these instructions might be also helpful to give you an idea how we utilize the cluster however they might not be 1:1 comparable. 
+Note that this section is heavily focusing on the infrastructure which can be only applicable to the Matrix Project & Matrix GCP. Therefore, this section is useful and applicable if you can access our infrastructure.
+
+    If you intend to adapt Matrix Codebase & Infrastructure to your own cloud system, these instructions might be also helpful to give you an idea how we utilize the cluster however they might not be 1:1 comparable.
 
 ## Prerequisites
 
@@ -32,16 +32,19 @@ Configure your `.env` file based on your target environment:
     # GCP Project and Storage
     RUNTIME_GCP_PROJECT_ID=mtrx-hub-dev-3of
     RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-dev-storage
-    
+
     # MLflow Configuration
     MLFLOW_URL=https://mlflow.platform.dev.everycure.org/
-    
+    # The MLflow tracking server only accepts HTTP Basic Auth, not bearer tokens
+    MLFLOW_TRACKING_USERNAME=add_your_mlflow_username
+    MLFLOW_TRACKING_PASSWORD=add_your_mlflow_password
+
     # Argo Platform
     ARGO_PLATFORM_URL=https://argo.platform.dev.everycure.org
-    
+
     # Authentication
     GOOGLE_APPLICATION_CREDENTIALS=/Users/<YOUR_USERNAME>/.config/gcloud/application_default_credentials.json
-    
+
     # Dataset Access (development only has public datasets)
     INCLUDE_PRIVATE_DATASETS=0
     ```
@@ -52,16 +55,19 @@ Configure your `.env` file based on your target environment:
     # GCP Project and Storage
     RUNTIME_GCP_PROJECT_ID=mtrx-hub-prod-sms
     RUNTIME_GCP_BUCKET=mtrx-us-central1-hub-prod-storage
-    
+
     # MLflow Configuration
     MLFLOW_URL=https://mlflow.platform.prod.everycure.org/
-    
+    # The MLflow tracking server only accepts HTTP Basic Auth, not bearer tokens
+    MLFLOW_TRACKING_USERNAME=add_your_mlflow_username
+    MLFLOW_TRACKING_PASSWORD=add_your_mlflow_password
+
     # Argo Platform
     ARGO_PLATFORM_URL=https://argo.platform.prod.everycure.org
-    
+
     # Authentication
     GOOGLE_APPLICATION_CREDENTIALS=/Users/<YOUR_USERNAME>/.config/gcloud/application_default_credentials.json
-    
+
     # Dataset Access (production includes private datasets)
     INCLUDE_PRIVATE_DATASETS=1
     ```
@@ -146,9 +152,7 @@ ArgoNode(
 Note that this ArgoNode is just a wrapper around a kedro node that's specifically designed for cluster runs, allowing us to granularly control resources for specific parts of the pipeline. Alternatively you can also just extract pre-existing argo node configurations:
 
 !!! note "Fuse Tags"
-    You might have noticed that, additionally to the Argo Config Resources, there are some `argo-related` tags. These tags allow to fuse kedro nodes into one argo node, meaning that series of kedro nodes uner a specific argo-tag (e.g. `argowf.fuse-group.<group_name>`) will be executed on a single machine. This is beneficial when we don't want to keep a transient intermediate data product (e.g. bucketized embeddings for parallel processing)
-    
-
+You might have noticed that, additionally to the Argo Config Resources, there are some `argo-related` tags. These tags allow to fuse kedro nodes into one argo node, meaning that series of kedro nodes uner a specific argo-tag (e.g. `argowf.fuse-group.<group_name>`) will be executed on a single machine. This is beneficial when we don't want to keep a transient intermediate data product (e.g. bucketized embeddings for parallel processing)
 
 ```python
 from matrix.kedro4argo_node import ArgoNode, ARGO_GPU_NODE_MEDIUM
@@ -181,4 +185,3 @@ mlflow:
 ```
 
 [Full Cluster Run :material-skip-previous:](../first_cluster_run/full_cluster_run.md){ .md-button .md-button--secondary }
-

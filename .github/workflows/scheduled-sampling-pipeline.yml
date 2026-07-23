@@ -114,6 +114,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
           GCP_TOKEN: ${{ steps.id_auth.outputs.id_token }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
           
           DATE=$(date +%Y%m%d)

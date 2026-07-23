@@ -5,6 +5,7 @@ from typing import Optional
 
 import mlflow
 from mlflow.entities import Run, ViewType
+from mlflow.exceptions import RestException
 from mlflow.tracking import MlflowClient
 from rich.console import Console
 
@@ -21,6 +22,24 @@ class DeletedExperimentExistsWithName(Exception):
     "Raised when an experiment exists with the desired name, but has been soft-deleted"
 
     pass
+
+
+MLFLOW_AUTH_ERROR_MESSAGE = (
+    "❌ MLflow authentication failed. The tracking server only accepts HTTP Basic Auth; "
+    "bearer tokens (MLFLOW_TRACKING_TOKEN / GCP IAP tokens) are rejected with "
+    "'Authentication required'. Set MLFLOW_TRACKING_USERNAME and MLFLOW_TRACKING_PASSWORD "
+    "in your .env file (or as CI secrets) instead."
+)
+
+
+def get_experiment_by_name(experiment_name: str):
+    """Wraps `mlflow.get_experiment_by_name` to surface a friendly error on authentication failures."""
+    try:
+        return mlflow.get_experiment_by_name(name=experiment_name)
+    except RestException as e:
+        if "Authentication required" in str(e) or "UNAUTHENTICATED" in str(e):
+            console.print(MLFLOW_AUTH_ERROR_MESSAGE, style="bold yellow")
+        raise
 
 
 EXPERIMENT_ARCHIVE_EXCLUSION_LIST = [
@@ -49,7 +68,7 @@ def create_mlflow_experiment(experiment_name: str) -> str:
     to rename the deleted experiment to allow creation of a new one.
     """
 
-    existing_exp = mlflow.get_experiment_by_name(name=experiment_name)
+    existing_exp = get_experiment_by_name(experiment_name)
 
     if existing_exp:
         if existing_exp.lifecycle_stage == "deleted":
@@ -70,7 +89,7 @@ def create_mlflow_experiment(experiment_name: str) -> str:
 
 def get_experiment_id_from_name(experiment_name: str) -> Optional[str]:
     """Fetches the experiment ID from MLflow by experiment name."""
-    experiment = mlflow.get_experiment_by_name(name=experiment_name)
+    experiment = get_experiment_by_name(experiment_name)
 
     if experiment and experiment.lifecycle_stage == "active":
         console.print(
