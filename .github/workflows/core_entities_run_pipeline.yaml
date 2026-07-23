@@ -2,8 +2,8 @@ name: Run Core Entities pipeline
 
 on:
   schedule:
-    # Run every two weeks on Monday at 00:00 UTC
-    - cron: '0 0 * * 1/14'
+    # Run on the 1st of every month at 00:00 UTC
+    - cron: '0 0 1 * *'
   workflow_dispatch:
     inputs:
       pipeline_name:
