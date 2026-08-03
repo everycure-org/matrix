@@ -40,7 +40,7 @@ def ingest_source_disease_list(disease_list: pd.DataFrame) -> pd.DataFrame:
     disease_list["synonyms"] = disease_list.synonyms.apply(
         lambda x: [] if pd.isna(x) else [xx.strip() for xx in x.split(";") if xx.strip() != ""]
     )
-    return disease_list.rename(columns={"category_class": "id", "label": "name"})[["id", "name", "synonyms"]].head(10)
+    return disease_list.rename(columns={"category_class": "id", "label": "name"})[["id", "name", "synonyms"]]
 
 
 @pa.check_input(
@@ -170,6 +170,25 @@ def merge_disease_list_with_labels(disease_list: pd.DataFrame, disease_labels: p
 
 def patch_disease_name(disease_list: pd.DataFrame, disease_name_patch: pd.DataFrame) -> pd.DataFrame:
     return apply_patch(disease_list, disease_name_patch, ["name"], "id")
+
+
+def split_new_diseases(disease_list: pd.DataFrame, previous_output: pd.DataFrame) -> pd.DataFrame:
+    """Keep only diseases that are not already present in a previous LLM output, so the LLM graph only runs on new diseases."""
+    previously_processed_ids = set(previous_output["id"])
+    new_diseases = disease_list[~disease_list["id"].isin(previously_processed_ids)]
+    logger.info(
+        f"{len(new_diseases)} new diseases out of {len(disease_list)} will be processed by the LLM graph "
+        f"({len(disease_list) - len(new_diseases)} reused from previous output)"
+    )
+    return new_diseases.reset_index(drop=True)
+
+
+def merge_with_previous_output(
+    new_output: pd.DataFrame, previous_output: pd.DataFrame, disease_list: pd.DataFrame
+) -> pd.DataFrame:
+    """Combine freshly computed LLM output with reused rows from a previous output, for diseases still in the current list."""
+    reused_output = previous_output[previous_output["id"].isin(disease_list["id"])]
+    return pd.concat([reused_output, new_output], ignore_index=True)
 
 
 @pa.check_input(
