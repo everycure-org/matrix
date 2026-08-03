@@ -72,7 +72,7 @@ def create_disease_categories_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.disease_categories_new",
             ),
             node(
-                func=nodes.merge_with_previous_output,
+                func=nodes.merge_with_categories_previous_output,
                 inputs={
                     "new_output": "primary.disease_categories_new",
                     "previous_output": "raw.disease_categories",
@@ -131,7 +131,7 @@ def create_disease_umn_pipeline(**kwargs) -> Pipeline:
                 outputs="primary.disease_umn_new",
             ),
             node(
-                func=nodes.merge_with_previous_output,
+                func=nodes.merge_with_umn_previous_output,
                 inputs={
                     "new_output": "primary.disease_umn_new",
                     "previous_output": "raw.disease_umn",

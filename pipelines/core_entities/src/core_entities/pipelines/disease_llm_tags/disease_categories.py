@@ -225,4 +225,9 @@ class DiseaseCategoriesGraphWithConsensus(InvokableGraph):
         return graph.compile()
 
     async def safe_invoke(self, disease_name: str, synonyms: list[str]) -> dict[str, Any]:
-        return await self.invoke({"entity": disease_name, "synonyms": synonyms})
+        result = await self.invoke({"entity": disease_name, "synonyms": synonyms})
+
+        result["name"] = result["entity"]
+        del result["entity"]
+
+        return result
