@@ -20,7 +20,7 @@ nest_asyncio.apply()
         columns={
             "category_class": pa.Column(nullable=False),
             "label": pa.Column(nullable=False),
-            "synonyms": pa.Column(nullable=False),
+            "synonyms": pa.Column(nullable=True),
         },
         unique=["category_class"],
     )
@@ -30,14 +30,17 @@ nest_asyncio.apply()
         columns={
             "id": pa.Column(nullable=False),
             "name": pa.Column(nullable=False),
-            "synonyms": pa.Column(nullable=False),
+            "synonyms": pa.Column(dtype=list[str], nullable=False),
         },
         unique=["id"],
         strict=True,
     )
 )
 def ingest_source_disease_list(disease_list: pd.DataFrame) -> pd.DataFrame:
-    return disease_list.rename(columns={"category_class": "id", "label": "name"})[["id", "name", "synonyms"]]
+    disease_list["synonyms"] = disease_list.synonyms.apply(
+        lambda x: [] if pd.isna(x) else [xx.strip() for xx in x.split(";") if xx.strip() != ""]
+    )
+    return disease_list.rename(columns={"category_class": "id", "label": "name"})[["id", "name", "synonyms"]].head(10)
 
 
 @pa.check_input(
@@ -227,5 +230,4 @@ def invoke_graph(
     except Exception as e:
         logger.error(f"Error in move_tokens_from_tuple_to_dict: {str(e)}")
         return llm_output
-
     return llm_output

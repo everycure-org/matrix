@@ -8,7 +8,7 @@ def create_llm_preprocessing_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=nodes.ingest_source_disease_list,
-                inputs="raw.disease_list",
+                inputs="disease_mondo.prm.disease_list",
                 outputs="primary.disease_list",
                 name="ingest_source_disease_list",
             ),
