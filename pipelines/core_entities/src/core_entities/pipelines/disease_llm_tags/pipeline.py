@@ -51,16 +51,35 @@ def create_disease_categories_pipeline(**kwargs) -> Pipeline:
         [
             create_llm_preprocessing_pipeline(),
             node(
-                func=nodes.invoke_graph,
+                func=nodes.split_new_diseases,
                 inputs={
                     "disease_list": "primary.disease_list_patched",
+                    "previous_output": "raw.disease_categories",
+                },
+                outputs="primary.disease_list_patched_new_categories",
+                name="split_new_diseases_for_categories",
+            ),
+            node(
+                func=nodes.invoke_graph,
+                inputs={
+                    "disease_list": "primary.disease_list_patched_new_categories",
                     "graph": "params:disease_categories.graph",
                     "invoke_parameters": "params:disease_categories.invoke_parameters",
                     "parallelism": "params:disease_categories.parallelism",
                     "ignore_errors": "params:ignore_llm_pipeline_errors",
                 },
                 name="get_disease_categories",
+                outputs="primary.disease_categories_new",
+            ),
+            node(
+                func=nodes.merge_with_previous_output,
+                inputs={
+                    "new_output": "primary.disease_categories_new",
+                    "previous_output": "raw.disease_categories",
+                    "disease_list": "primary.disease_list_patched",
+                },
                 outputs="primary.release.disease_categories",
+                name="merge_disease_categories_with_previous_output",
             ),
         ]
     )
@@ -91,16 +110,35 @@ def create_disease_umn_pipeline(**kwargs) -> Pipeline:
         [
             create_llm_preprocessing_pipeline(),
             node(
-                func=nodes.invoke_graph,
+                func=nodes.split_new_diseases,
                 inputs={
                     "disease_list": "primary.disease_list_patched",
+                    "previous_output": "raw.disease_umn",
+                },
+                outputs="primary.disease_list_patched_new_umn",
+                name="split_new_diseases_for_umn",
+            ),
+            node(
+                func=nodes.invoke_graph,
+                inputs={
+                    "disease_list": "primary.disease_list_patched_new_umn",
                     "graph": "params:disease_umn.graph",
                     "invoke_parameters": "params:disease_umn.invoke_parameters",
                     "parallelism": "params:disease_umn.parallelism",
                     "ignore_errors": "params:ignore_llm_pipeline_errors",
                 },
                 name="get_disease_umn",
+                outputs="primary.disease_umn_new",
+            ),
+            node(
+                func=nodes.merge_with_previous_output,
+                inputs={
+                    "new_output": "primary.disease_umn_new",
+                    "previous_output": "raw.disease_umn",
+                    "disease_list": "primary.disease_list_patched",
+                },
                 outputs="primary.release.disease_umn",
+                name="merge_disease_umn_with_previous_output",
             ),
         ]
     )
