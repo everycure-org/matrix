@@ -31,9 +31,13 @@ RUN --mount=type=cache,target=/root/.cache uv sync --frozen  --no-install-worksp
 ENV PATH=/matrix/.venv/bin:$PATH
 
 # Cache spark drivers as part of image
+# NOTE: no BuildKit cache mount on /root/.ivy2/cache here - that is the exact directory
+# Spark/Ivy reads from at runtime, so a cache mount would discard the resolved jars
+# from the final image, forcing every container to re-resolve them from Maven Central
+# at startup (and fail if there is no network access at that moment).
 COPY pipelines/matrix/conf/base/spark.yml ./conf/base/spark.yml
 COPY pipelines/matrix/scripts/maven-deps.py ./maven-deps.py
-RUN --mount=type=cache,target=/root/.ivy2/cache python maven-deps.py
+RUN python maven-deps.py
 
 # We copy in the libs folder here and run a full sync which leads to only the delta
 # being installed which are... just the libs. the matrix pipeline 
