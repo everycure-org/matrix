@@ -93,6 +93,9 @@ jobs:
           workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
           service_account: ${{vars.SERVICE_ACCOUNT_RO}}
 
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
         env:
@@ -132,7 +135,18 @@ jobs:
           git add "${FILENAME}" && \
           git commit -m "added primary knowledge source md file" && \
           git push
-      
+
+      - name: Install GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null; then
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh -y
+          fi
+          gh --version
+
       - name: Discover Latest Official Release on GitHub
         env:
           GH_TOKEN: ${{ github.token }}
@@ -144,8 +158,7 @@ jobs:
         working-directory: docs
         # this script sets a 'generate_article' env variable
         run: |
-          pip install semver
-          python scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+          uv run --no-project --with semver python scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
       - name: Setup Node.js for Claude Code
         # only create release notes for minor and major
