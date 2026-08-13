@@ -158,8 +158,7 @@ jobs:
         working-directory: docs
         # this script sets a 'generate_article' env variable
         run: |
-          pip install semver
-          python scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
+          uv run --no-project --with semver python scripts/bump_detection.py "${{env.latest_official_release}}" "${{env.release}}" >> "${GITHUB_ENV}"
 
       - name: Setup Node.js for Claude Code
         # only create release notes for minor and major
