@@ -14,7 +14,7 @@ locals {
     machine_type       = "n2d-highmem-${size}"
     node_locations     = local.default_node_locations
     min_count          = 0
-    max_count          = 0 # Scaled to 0: TECH-418
+    max_count          = 30
     disk_type          = "pd-ssd"
     disk_size_gb       = 200
     enable_gcfs        = true
@@ -30,7 +30,7 @@ locals {
       machine_type       = "g2-standard-16"
       node_locations     = local.gpu_node_locations
       min_count          = 0
-      max_count          = 0 # Scaled to 0: TECH-418
+      max_count          = 16
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-ssd"
@@ -50,53 +50,14 @@ locals {
       name               = "management-nodes"
       machine_type       = "n2-standard-16" # 8 vCPUs, 32GB RAM
       node_locations     = "us-central1-c"  # Single location.
-      min_count          = 0                # Scaled to 0: TECH-418
-      max_count          = 0                # Scaled to 0: TECH-418
+      min_count          = 1                # Single instance, no HA
+      max_count          = 1                # Single instance, no HA
       local_ssd_count    = 0
       disk_type          = "pd-standard" # Cost-effective for management workloads
       disk_size_gb       = 200
       enable_gcfs        = true
       enable_gvnic       = true
-      initial_node_count = 0
-      location_policy    = "ANY"
-    }
-  ]
-
-  # Spot node pools for cost-effective compute workloads
-  n2d_spot_node_pools = [for size in [8, 16, 32, 48, 64, 80] : {
-    name               = "n2d-highmem-${size}-spot-nodes"
-    machine_type       = "n2d-highmem-${size}"
-    node_locations     = local.default_node_locations
-    min_count          = 0
-    max_count          = 0 # Scaled to 0: TECH-418
-    disk_type          = "pd-ssd"
-    disk_size_gb       = 200
-    enable_gcfs        = true
-    enable_gvnic       = true
-    initial_node_count = 0
-    spot               = true
-    location_policy    = "ANY"
-    }
-  ]
-
-  # Spot GPU node pools for cost-effective GPU workloads
-  gpu_spot_node_pools = [
-    {
-      name               = "g2-standard-16-l4-spot-nodes" # 1 GPU, 16vCPUs, 64GB RAM
-      machine_type       = "g2-standard-16"
-      node_locations     = local.gpu_node_locations
-      min_count          = 0
-      max_count          = 0 # Scaled to 0: TECH-418
-      local_ssd_count    = 0
-      disk_size_gb       = 200
-      disk_type          = "pd-ssd"
-      enable_gcfs        = true
-      enable_gvnic       = true
-      initial_node_count = 0
-      accelerator_count  = 1
-      accelerator_type   = "nvidia-l4"
-      gpu_driver_version = "LATEST"
-      spot               = true
+      initial_node_count = 1
       location_policy    = "ANY"
     }
   ]
@@ -108,7 +69,7 @@ locals {
       machine_type       = "e2-standard-8" # 8 vCPUs, 32GB RAM - good for CI/CD and Docker in Docker (dind)
       node_locations     = local.default_node_locations
       min_count          = 0
-      max_count          = 0 # Scaled to 0: TECH-418
+      max_count          = 50
       local_ssd_count    = 0
       disk_size_gb       = 100 # Smaller disk for CI runners
       disk_type          = "pd-ssd"
@@ -126,50 +87,29 @@ locals {
       machine_type       = "h3-standard-88"
       node_locations     = local.h3_node_locations
       min_count          = 0
-      max_count          = 0 # Scaled to 0: TECH-418
+      max_count          = 50
       local_ssd_count    = 0
       disk_size_gb       = 200
       disk_type          = "pd-balanced"
       initial_node_count = 0
       location_policy    = "ANY"
-    }
-  ]
-
-  h3_spot_node_pools = [
-    {
-      name               = "h3-standard-88-nodes-spot" # 88 CPUs, 512GB RAM - for largest ML workloads
-      machine_type       = "h3-standard-88"
-      node_locations     = local.h3_node_locations
-      min_count          = 0
-      max_count          = 0 # Scaled to 0: TECH-418
-      local_ssd_count    = 0
-      disk_size_gb       = 200
-      disk_type          = "pd-balanced"
-      initial_node_count = 0
-      location_policy    = "ANY"
-      spot               = true
     }
   ]
 
   # Combine all node pools
   node_pools_combined = concat(
     local.n2d_node_pools,
-    local.n2d_spot_node_pools,
     local.management_node_pools,
     local.github_runner_node_pools,
     local.h3_node_pools,
-    local.h3_spot_node_pools
   )
 
   # Define node pools that should have the large memory taint
   large_memory_pools = concat(
     [for size in [8, 16, 32, 48, 64, 80] : "n2d-highmem-${size}-nodes"],
-    [for size in [8, 16, 32, 48, 64, 80] : "n2d-highmem-${size}-spot-nodes"],
     [for size in [16, 32, 48, 64, 80] : "n2-standard-${size}-nodes"],
     ["g2-standard-16-l4-nodes"],
-    ["g2-standard-16-l4-spot-nodes"],
     ["h3-standard-88-nodes"],
-    ["h3-standard-88-nodes-spot"]
   )
 
   # Create a map of node pool taints
@@ -182,25 +122,6 @@ locals {
       {
         key    = "nvidia.com/gpu"
         value  = "present"
-        effect = "NO_SCHEDULE"
-      },
-      {
-        key    = "workload"
-        value  = "true"
-        effect = "NO_SCHEDULE"
-      }
-    ],
-
-    # Add GPU and spot taints to GPU spot node pool
-    "g2-standard-16-l4-spot-nodes" = [
-      {
-        key    = "nvidia.com/gpu"
-        value  = "present"
-        effect = "NO_SCHEDULE"
-      },
-      {
-        key    = "spot"
-        value  = "true"
         effect = "NO_SCHEDULE"
       },
       {
@@ -255,23 +176,6 @@ locals {
         effect = "NO_SCHEDULE"
       }
     ],
-    "h3-standard-88-nodes-spot" = [
-      {
-        key    = "node-memory-size"
-        value  = "large"
-        effect = "NO_SCHEDULE"
-      },
-      {
-        key    = "spot"
-        value  = "true"
-        effect = "NO_SCHEDULE"
-      },
-      {
-        key    = "workload"
-        value  = "true"
-        effect = "NO_SCHEDULE"
-      }
-    ]
   }
 
   # Add large memory taints for the appropriate node pools
@@ -292,29 +196,6 @@ locals {
         }
       ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
     },
-    {
-      # Add spot taints for spot node pools
-      for pool in concat(
-        [for size in [8, 16, 32, 48, 64, 80] : "n2d-highmem-${size}-spot-nodes"]
-      ) :
-      pool => [
-        {
-          key    = "node-memory-size"
-          value  = "large"
-          effect = "NO_SCHEDULE"
-        },
-        {
-          key    = "spot"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        },
-        {
-          key    = "workload"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        }
-      ] if !contains(keys(merge(local.node_pools_taints_map)), pool)
-    }
   )
 }
 
@@ -362,8 +243,7 @@ module "gke" {
   node_pools_labels = {
     for pool in local.node_pools_combined : pool.name => merge(
       {
-        gpu_node  = can(pool.accelerator_count) ? "true" : "false"
-        spot_node = lookup(pool, "spot", false) ? "true" : "false"
+        gpu_node = can(pool.accelerator_count) ? "true" : "false"
         # Billing labels for cost tracking
         cost-center       = pool.name == "management-nodes" ? "infrastructure-management" : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? "ci-cd-infrastructure" : "compute-workloads"
         workload-category = pool.name == "management-nodes" ? "platform-services" : contains(["github-runner-standard-nodes", "github-runner-spot-nodes"], pool.name) ? "ci-cd" : "data-science"

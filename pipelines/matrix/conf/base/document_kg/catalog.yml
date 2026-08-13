@@ -27,6 +27,12 @@ document_kg.raw.kgregistry:
   type: yaml.YAMLDataset
   <<: *_layer_raw
   filepath: https://raw.githubusercontent.com/Knowledge-Graph-Hub/kg-registry/refs/heads/main/registry/kgs.yml
+  # raw.githubusercontent.com sometimes sends a Content-Encoding: gzip header that doesn't
+  # match the actual body, which aiohttp fails to decompress (ContentEncodingError).
+  # Requesting uncompressed content avoids the issue.
+  fs_args:
+    headers:
+      Accept-Encoding: identity
 
 #TODO add to preprocessing pipeline
 document_kg.raw.matrix_curated_pks@pandas:

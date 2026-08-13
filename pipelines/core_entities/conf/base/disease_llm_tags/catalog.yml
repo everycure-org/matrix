@@ -5,6 +5,27 @@ _pandas_parquet: &_pandas_parquet
   save_args:
     engine: pyarrow
 
+
+# -------------------------------------------------------------------------
+# Primary
+# -------------------------------------------------------------------------
+
+primary.disease_list_patched_new_categories:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease_list_patched_new_categories.parquet
+
+primary.disease_categories_new:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease_categories_new.parquet
+
+primary.disease_list_patched_new_umn:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease_list_patched_new_umn.parquet
+
+primary.disease_umn_new:
+  <<: [*_pandas_parquet]
+  filepath: ${globals:paths.primary}/disease_umn_new.parquet
+
 # -------------------------------------------------------------------------
 # Release
 # -------------------------------------------------------------------------

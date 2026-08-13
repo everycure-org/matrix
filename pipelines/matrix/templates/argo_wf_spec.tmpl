@@ -32,7 +32,7 @@ spec:
       - name: neo4j_host
         value: "bolt+ssc://neo4j.neo4j.svc.cluster.local:7687"
       - name: mlflow_endpoint
-        value: "http://mlflow-tracking.mlflow.svc.cluster.local:80"
+        value: "http://mlflow.everycure.dev.everycure.internal"
       - name: openai_endpoint
         value: "https://api.openai.com/v1"
       - name: env
@@ -210,6 +210,16 @@ spec:
         - name: MLFLOW_URL
           value: {% raw %} "{{workflow.parameters.mlflow_url}}"
           {% endraw %}
+        - name: MLFLOW_TRACKING_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: MLFLOW_TRACKING_USERNAME
+        - name: MLFLOW_TRACKING_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: matrix-secrets
+              key: MLFLOW_TRACKING_PASSWORD
         - name: INCLUDE_PRIVATE_DATASETS
           value: {% raw %} "{{workflow.parameters.include_private_datasets}}"
           {% endraw %}
@@ -272,7 +282,7 @@ spec:
               name: gh-password
               key: GH_CREDS
       command: ["/bin/sh", "-c"]
-      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %} --from-run {% raw %}\"{{workflow.parameters.from_run}}\"{% endraw %} --from-run-datasets {% raw %}\"{{workflow.parameters.from_run_datasets}}\"{% endraw %}"]
+      args: ["mkdir -p /data/tmp /data/spark-temp /data/spark-warehouse /data/checkpoints && git config --global url.\"https://${GH_TOKEN}@github.com/\".insteadOf \"https://github.com/\" && kedro run -p {{ pipeline_name }} -e {% raw %}\"{{workflow.parameters.env}}\"{% endraw %} -n {% raw %}\"{{inputs.parameters.kedro_nodes}}\"{% endraw %} --from-run {% raw %}\"{{workflow.parameters.from_run}}\"{% endraw %} --from-run-datasets {% raw %}\"{{workflow.parameters.from_run_datasets}}\"{% endraw %}"]
 
   - <<: *_kedro_template
     name: neo4j
@@ -377,6 +387,7 @@ spec:
               sleep 5
             done
             echo "Neo4j is ready. Starting main application..."
+            git config --global url."https://${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
             kedro run -p {{ pipeline_name }} -e {% raw %}"{{workflow.parameters.env}}"{% endraw %} -n {% raw %}"{{inputs.parameters.kedro_nodes}}"{% endraw %} --from-run {% raw %}"{{workflow.parameters.from_run}}"{% endraw %} --from-run-datasets {% raw %}"{{workflow.parameters.from_run_datasets}}"{% endraw %}
     
     volumes:
