@@ -93,6 +93,9 @@ jobs:
           workload_identity_provider: ${{vars.WORKLOAD_IDENTITY_PROVIDER_RO}}
           service_account: ${{vars.SERVICE_ACCOUNT_RO}}
 
+      - name: Set up Cloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+
       - name: Download & commit release info file
         working-directory: docs/src/releases/changelog_files
         env:
