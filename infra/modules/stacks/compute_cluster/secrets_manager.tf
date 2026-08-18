@@ -24,4 +24,7 @@ resource "google_secret_manager_secret_version" "secret_values" {
   for_each       = local.secret_keys
   secret         = google_secret_manager_secret.secrets[each.key].id
   secret_data_wo = var.k8s_secrets[each.key]
+  # write-only attributes aren't stored in state, so a version bump is required to
+  # signal a new value; derive it from the content so edits are picked up automatically.
+  secret_data_wo_version = parseint(substr(sha256(var.k8s_secrets[each.key]), 0, 15), 16)
 }
