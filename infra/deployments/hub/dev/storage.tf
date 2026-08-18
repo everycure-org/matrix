@@ -139,3 +139,44 @@ resource "google_storage_bucket_iam_member" "alan_hueb_bucket_reader" {
   role   = "roles/storage.legacyBucketReader"
   member = "user:alan@hueb.org"
 }
+
+# Scoped access for Alexei to run `make docker_cloud_build` (gcloud builds submit)
+# against the auto-created Cloud Build staging bucket.
+resource "google_project_iam_member" "alexei_serviceusage_consumer" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "user:alexei@everycure.org"
+}
+
+resource "google_storage_bucket_iam_member" "alexei_cloudbuild_staging_bucket_admin" {
+  bucket = "${var.project_id}_cloudbuild"
+  role   = "roles/storage.objectAdmin"
+  member = "user:alexei@everycure.org"
+}
+
+# needed for bucket-level navigation (e.g. `gcloud builds submit` resolving the bucket before upload)
+resource "google_storage_bucket_iam_member" "alexei_cloudbuild_staging_bucket_reader" {
+  bucket = "${var.project_id}_cloudbuild"
+  role   = "roles/storage.legacyBucketReader"
+  member = "user:alexei@everycure.org"
+}
+
+# lets alexei create Cloud Build runs directly (equivalent to group grants in modules/components/cloudbuild/sa.tf)
+resource "google_project_iam_member" "alexei_cloudbuild_editor" {
+  project = var.project_id
+  role    = "roles/cloudbuild.builds.editor"
+  member  = "user:alexei@everycure.org"
+}
+
+# cloudbuild.yaml pins a custom SA; alexei needs to impersonate it to submit builds using it
+resource "google_service_account_iam_member" "alexei_cloudbuild_sa_impersonation" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/custom-cloud-build-sa@${var.project_id}.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "user:alexei@everycure.org"
+}
+
+resource "google_service_account_iam_member" "alexei_cloudbuild_sa_token_creator" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/custom-cloud-build-sa@${var.project_id}.iam.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "user:alexei@everycure.org"
+}
