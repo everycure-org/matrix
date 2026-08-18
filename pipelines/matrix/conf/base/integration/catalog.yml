@@ -94,7 +94,8 @@ integration.prm.original.unified_nodes:
 
 integration.prm.original.unified_edges:
   <<: [*_spark_parquet]
-  filepath: ${globals:paths.integration}/prm/unified/edges
+  # filepath: ${globals:paths.integration}/prm/unified/edges
+  filepath: gs://mtrx-us-central1-hub-dev-storage/Alexei/arpa_proteomics/output/1.5.0/union_edges.parquet
 
 # Normalization summary tables
 integration.int.{source}.normalization_summary:
