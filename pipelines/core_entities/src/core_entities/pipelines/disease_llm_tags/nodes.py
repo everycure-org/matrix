@@ -98,7 +98,6 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
     return filtered_curated_disease_list.rename(columns={"mondo_id": "id"})
 
 
-
 @pa.check_output(
     pa.DataFrameSchema(
         columns={
@@ -122,7 +121,6 @@ def merge_disease_lists(disease_list: pd.DataFrame, curated_disease_list: pd.Dat
     merged_disease_list = pd.merge(disease_list, curated_disease_list, on="id", how="inner")
 
     return merged_disease_list.drop(columns=["level"])
-
 
 
 def patch_disease_name(disease_list: pd.DataFrame, disease_name_patch: pd.DataFrame) -> pd.DataFrame:

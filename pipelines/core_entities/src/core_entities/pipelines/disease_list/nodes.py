@@ -516,7 +516,6 @@ def ingest_disease_umn(
     return disease_umn.rename(columns={"umn_score": "unmet_medical_need"})
 
 
-
 @pa.check_input(
     pa.DataFrameSchema(
         parsers=pa.Parser(

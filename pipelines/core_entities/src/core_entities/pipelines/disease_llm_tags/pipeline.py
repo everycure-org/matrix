@@ -85,7 +85,6 @@ def create_disease_categories_pipeline(**kwargs) -> Pipeline:
     )
 
 
-
 def create_disease_umn_pipeline(**kwargs) -> Pipeline:
     return pipeline(
         [
@@ -123,7 +122,6 @@ def create_disease_umn_pipeline(**kwargs) -> Pipeline:
             ),
         ]
     )
-
 
 
 def create_disease_txgnn_pipeline(**kwargs) -> Pipeline:
