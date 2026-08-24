@@ -13,8 +13,6 @@ from core_entities.pipelines.disease_list import (
 )
 from core_entities.pipelines.disease_llm_tags import (
     create_disease_categories_pipeline,
-    create_disease_labels_pipeline,
-    create_disease_prevalence_pipeline,
     create_disease_txgnn_pipeline,
     create_disease_umn_pipeline,
 )
@@ -52,8 +50,6 @@ def register_pipelines() -> dict[str, Pipeline]:
         "publish_disease_list_hf": create_disease_list_publish_hf_pipeline(),
         "publish_drug_list_hf": create_drug_list_publish_hf_pipeline(),
         "publish_indications_list_hf": create_indications_list_publish_hf_pipeline(),
-        "disease_labels": create_disease_labels_pipeline(),
-        "disease_prevalence": create_disease_prevalence_pipeline(),
         "disease_txgnn": create_disease_txgnn_pipeline(),
     }
 

@@ -18,10 +18,6 @@ raw.curated_disease_list:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/curated-disease-list.tsv
 
-raw.disease_labels:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/disease-labels.tsv
-
 raw.disease_categories:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-categories.tsv

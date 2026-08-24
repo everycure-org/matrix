@@ -48,12 +48,6 @@ def create_ingestion_pipeline(**kwargs) -> Pipeline:
                 name="ingest_disease_umn",
             ),
             node(
-                func=nodes.ingest_disease_prevalence,
-                inputs="raw.disease_prevalence",
-                outputs="primary.disease_prevalence",
-                name="ingest_disease_prevalence",
-            ),
-            node(
                 func=nodes.ingest_disease_txgnn,
                 inputs="raw.disease_txgnn",
                 outputs="primary.disease_txgnn",
@@ -100,7 +94,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "disease_list": "primary.disease_list",
                     "disease_categories": "primary.disease_categories",
                     "disease_umn": "primary.disease_umn",
-                    "disease_prevalence": "primary.disease_prevalence",
                     "disease_txgnn": "primary.disease_txgnn",
                     "curated_disease_list": "primary.curated_disease_list",
                     "strategic_disease_list": "primary.strategic_disease_list",

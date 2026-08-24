@@ -100,8 +100,7 @@ We make a difference between release pipelines and LLM pipelines. Release pipeli
   * `drug_list`
 * LLM pipelines: 
   * `disease_umn`
-  * `disease_labels`
-  * `disease_prevalence`
+  * `disease_categories`
 
 ### Kedro environments
 

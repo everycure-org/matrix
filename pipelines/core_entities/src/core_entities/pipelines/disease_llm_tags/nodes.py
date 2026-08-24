@@ -98,39 +98,6 @@ def ingest_curated_disease_list(curated_disease_list: pd.DataFrame) -> pd.DataFr
     return filtered_curated_disease_list.rename(columns={"mondo_id": "id"})
 
 
-@pa.check_input(
-    pa.DataFrameSchema(
-        parsers=pa.Parser(
-            lambda df: df[
-                [
-                    "id",
-                    "disease_label",
-                    "disease_label_explanation",
-                ]
-            ]
-        ),
-        columns={
-            "id": pa.Column(nullable=False),
-            "disease_label": pa.Column(nullable=False),
-            "disease_label_explanation": pa.Column(nullable=False),
-        },
-        unique=["id"],
-    )
-)
-@pa.check_output(
-    pa.DataFrameSchema(
-        columns={
-            "id": pa.Column(nullable=False),
-            "disease_label": pa.Column(nullable=False),
-            "disease_label_explanation": pa.Column(nullable=False),
-        },
-        unique=["id"],
-        strict=True,
-    )
-)
-def ingest_disease_labels(disease_labels: pd.DataFrame) -> pd.DataFrame:
-    return disease_labels
-
 
 @pa.check_output(
     pa.DataFrameSchema(
@@ -156,18 +123,6 @@ def merge_disease_lists(disease_list: pd.DataFrame, curated_disease_list: pd.Dat
 
     return merged_disease_list.drop(columns=["level"])
 
-
-def merge_disease_list_with_labels(disease_list: pd.DataFrame, disease_labels: pd.DataFrame) -> pd.DataFrame:
-    _log_merge_statistics(
-        primary_df=disease_list,
-        secondary_df=disease_labels,
-        primary_name="disease list",
-        secondary_name="disease labels",
-        primary_only_action="will be dropped",
-        secondary_only_action="will be dropped",
-    )
-    merged_disease_list = pd.merge(disease_list, disease_labels, on="id", how="inner")
-    return merged_disease_list
 
 
 def patch_disease_name(disease_list: pd.DataFrame, disease_name_patch: pd.DataFrame) -> pd.DataFrame:
