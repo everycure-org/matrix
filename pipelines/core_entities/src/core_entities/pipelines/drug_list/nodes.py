@@ -639,13 +639,51 @@ def resolve_drug_curies(
     obj_getter="normalized_drug_curies",
 )
 def normalize_drug_curies(drug_curies: pd.DataFrame, node_normalizer_base_url: str, node_normalizer_path: str) -> dict:
+    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(5))
     async def get_nodenorm_version(node_normalizer_base_url: str) -> str:
         nn_openapi_json_url = f"{node_normalizer_base_url}/openapi.json"
         async with aiohttp.ClientSession() as session:
             async with session.get(nn_openapi_json_url) as response:
+                if response.status != 200:
+                    raise aiohttp.ClientError(f"Failed to fetch nodenorm version: {response.status}")
                 json_response = await response.json()
                 version = json_response["info"]["version"]
                 return version
+
+    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(5))
+    async def post_normalize_curies(
+        session: aiohttp.ClientSession, node_normalizer_url: str, payload: dict
+    ) -> list[dict]:
+        results = []
+        async with session.post(node_normalizer_url, json=payload) as response:
+            if response.status == 200:
+                result = await response.json()
+                for curie, node_data in result.items():
+                    if node_data:
+                        results.append(
+                            {
+                                "original_curie": curie,
+                                "normalized_curie": node_data["id"]["identifier"] if node_data.get("id") else None,
+                                "all_categories": node_data.get("type", None),
+                            }
+                        )
+                    else:
+                        results.append(
+                            {
+                                "original_id": curie,
+                                "id": None,
+                                "all_categories": None,
+                            }
+                        )
+
+                return results
+
+            if response.status == 502:
+                logger.error("Server overloaded (502). Retrying batch after delay...")
+                raise aiohttp.ClientError("Server overloaded")
+            if response.status == 422:
+                raise Exception("Invalid data (422).")
+            raise aiohttp.ClientError(f"Error status {response.status}")
 
     async def normalize_curies(curies: list[str], node_normalizer_url: str) -> list[dict]:
         # Configure connection pool with increased timeouts
@@ -659,38 +697,7 @@ def normalize_drug_curies(drug_curies: pd.DataFrame, node_normalizer_base_url: s
                 "description": True,
                 "drug_chemical_conflate": False,
             }
-
-            results = []
-            async with session.post(node_normalizer_url, json=payload) as response:
-                if response.status == 200:
-                    result = await response.json()
-                    for curie, node_data in result.items():
-                        if node_data:
-                            results.append(
-                                {
-                                    "original_curie": curie,
-                                    "normalized_curie": node_data["id"]["identifier"] if node_data.get("id") else None,
-                                    "all_categories": node_data.get("type", None),
-                                }
-                            )
-                        else:
-                            results.append(
-                                {
-                                    "original_id": curie,
-                                    "id": None,
-                                    "all_categories": None,
-                                }
-                            )
-
-                    return results
-
-                elif response.status == 502:
-                    logger.error("Server overloaded (502). Retrying batch after delay...")
-                    raise aiohttp.ClientError("Server overloaded")
-                elif response.status == 422:
-                    raise Exception("Invalid data (422).")
-                else:
-                    raise Exception(f"Error status {response.status}")
+            return await post_normalize_curies(session, node_normalizer_url, payload)
 
     node_normalizer_url = f"{node_normalizer_base_url}{node_normalizer_path}"
     curies = drug_curies["curie"].unique().tolist()
