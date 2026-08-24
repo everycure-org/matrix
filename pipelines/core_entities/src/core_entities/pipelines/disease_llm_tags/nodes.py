@@ -202,7 +202,10 @@ def merge_with_categories_previous_output(
     """Combine freshly computed LLM output with reused rows from a previous output, for diseases still in the current list."""
     reused_output = previous_output[previous_output["id"].isin(disease_list["id"])]
 
-    formatted_new_output = new_output[reused_output.columns]
+    if not new_output.empty:
+        formatted_new_output = new_output[reused_output.columns]
+    else:
+        formatted_new_output = pd.DataFrame(columns=reused_output.columns)
 
     for column in reused_output.columns:
         if column in ["id", "name"]:
