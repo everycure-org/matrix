@@ -13,7 +13,6 @@ import os
 from everycure.datasets.kedro.hooks import GitStorageHook
 from everycure.datasets.kedro.resolvers import next_version
 from kedro.config import OmegaConfigLoader  # noqa: E402
-from kedro_mlflow.framework.hooks import MlflowHook
 
 import matrix.hooks as matrix_hooks
 from matrix.utils.hook_utilities import (
@@ -26,7 +25,6 @@ from .resolvers import cast_to_int, env, if_null, merge_dicts
 
 hooks = {
     "node_timer": matrix_hooks.NodeTimerHooks(),
-    "mlflow": MlflowHook(),
     "mlflow_kedro": matrix_hooks.MLFlowHooks(),
     "spark": matrix_hooks.SparkHooks(),
     "release": matrix_hooks.ReleaseInfoHooks(),
