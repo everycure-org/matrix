@@ -302,7 +302,7 @@ def merge_with_umn_previous_output(
 ) -> pd.DataFrame:
     """Combine freshly computed LLM output with reused rows from a previous output, for diseases still in the current list."""
     reused_output = previous_output[previous_output["id"].isin(disease_list["id"])].copy()
-    
+
     if not new_output.empty:
         formatted_new_output = new_output[reused_output.columns].copy()
     else:
