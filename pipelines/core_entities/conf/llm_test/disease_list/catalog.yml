@@ -25,3 +25,7 @@ raw.disease_labels:
 raw.disease_categories:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-categories.tsv
+
+raw.disease_umn:
+  <<: [*_pandas_tsv]
+  filepath: ${globals:paths.raw}/disease-umn.tsv
