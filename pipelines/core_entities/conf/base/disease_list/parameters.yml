@@ -37,8 +37,6 @@ disease_list:
     - anatomical_id
     - anatomical_name
     - unmet_medical_need
-    - prevalence_experimental
-    - prevalence_world
     - is_psychiatric_disease
     - is_malignant_cancer
     - is_benign_tumour
