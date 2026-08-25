@@ -49,13 +49,6 @@ raw.disease_umn:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.raw_llm}/disease_umn/${globals:data_sources.disease_umn.version}/03_primary/release/disease_umn.parquet
 
-raw.disease_labels:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.raw_llm}/disease_labels/${globals:data_sources.disease_labels.version}/03_primary/release/disease_labels.parquet
-
-raw.disease_prevalence:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.raw_llm}/disease_prevalence/${globals:data_sources.disease_prevalence.version}/03_primary/release/disease_prevalence.parquet
 
 raw.disease_txgnn:
   <<: [*_pandas_parquet]
@@ -97,9 +90,6 @@ primary.disease_umn:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.primary}/disease/disease-umn.parquet
 
-primary.disease_prevalence:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.primary}/disease/disease-prevalence.parquet
 
 primary.disease_txgnn:
   <<: [*_pandas_parquet]

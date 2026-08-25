@@ -34,17 +34,9 @@ primary.release.disease_categories:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.release}/disease_categories.parquet
 
-primary.release.disease_labels:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.release}/disease_labels.parquet
-
 primary.release.disease_umn:
   <<: [*_pandas_parquet]
   filepath: ${globals:paths.release}/disease_umn.parquet
-
-primary.release.disease_prevalence:
-  <<: [*_pandas_parquet]
-  filepath: ${globals:paths.release}/disease_prevalence.parquet
 
 primary.release.disease_txgnn:
   <<: [*_pandas_parquet]

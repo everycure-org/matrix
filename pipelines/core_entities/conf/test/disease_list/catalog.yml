@@ -30,10 +30,6 @@ raw.disease_umn:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/disease-umn.tsv
 
-raw.disease_prevalence:
-  <<: [*_pandas_tsv]
-  filepath: ${globals:paths.raw}/disease-prevalence.tsv
-
 raw.orchard_reviews:
   <<: [*_pandas_tsv]
   filepath: ${globals:paths.raw}/orchard-reviews.tsv

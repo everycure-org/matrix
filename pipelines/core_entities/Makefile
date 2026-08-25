@@ -33,9 +33,7 @@ test:
 
 test_llm:
 	uv run kedro run -e llm_test --pipeline=disease_categories
-	uv run kedro run -e llm_test --pipeline=disease_prevalence
 	uv run kedro run -e llm_test --pipeline=disease_umn
-	uv run kedro run -e llm_test --pipeline=disease_labels
 
 check_release_folder_is_empty:
 	@echo "Checking if release folder is empty..."

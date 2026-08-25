@@ -22,15 +22,9 @@ data_sources:
   disease_categories:
     # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_categories
     version: v0.2.0
-  disease_labels: 
-    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_labels
-    version: v0.0.2
   disease_umn:
     # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_umn
     version: v0.1.0
-  disease_prevalence:
-    # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_prevalence
-    version: v0.0.3
   disease_txgnn:
     # check releases here: https://console.cloud.google.com/storage/browser/mtrx-us-central1-hub-dev-storage/kedro/data/core-entities/disease_txgnn
     version: v0.0.1

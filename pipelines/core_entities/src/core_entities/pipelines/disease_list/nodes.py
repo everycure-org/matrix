@@ -521,72 +521,6 @@ def ingest_disease_umn(
         parsers=pa.Parser(
             lambda df: df[
                 [
-                    "id",
-                    "primary_disease_world_prevalence_explanation",
-                    "experimental",
-                    "disease_world_prevalence",
-                ]
-            ]
-        ),
-        columns={
-            "id": pa.Column(nullable=False),
-            "primary_disease_world_prevalence_explanation": pa.Column(nullable=False),
-            "experimental": pa.Column(nullable=False),
-            "disease_world_prevalence": pa.Column(nullable=False),
-        },
-        unique=["id"],
-    )
-)
-@pa.check_output(
-    pa.DataFrameSchema(
-        {
-            "id": pa.Column(dtype=str, nullable=False),
-            "prevalence_experimental": pa.Column(
-                nullable=True,
-                checks=pa.Check(
-                    lambda col: col.apply(lambda x: x is None or x in ["True", "False"]),
-                    title="prevalence_experimental is valid",
-                ),
-            ),
-            "prevalence_world": pa.Column(
-                dtype=str,
-                nullable=False,
-                checks=pa.Check(
-                    lambda col: col.apply(lambda x: x.strip() != "" and x.strip() != "null"),
-                    title="prevalence_world is not empty",
-                ),
-            ),
-        },
-        strict=True,
-        unique=["id"],
-    )
-)
-def ingest_disease_prevalence(disease_prevalence: pd.DataFrame) -> pd.DataFrame:
-    disease_prevalence.loc[:, "prevalence_experimental"] = disease_prevalence["experimental"].apply(
-        lambda x: x if x in ["True", "False"] else None
-    )
-    disease_prevalence.loc[:, "prevalence_world"] = disease_prevalence.apply(
-        lambda row: "prevalence not generated because disease is iatrogenic or drug-induced"
-        if row["primary_disease_world_prevalence_explanation"]
-        == "['prevalence not generated because disease is iatrogenic or drug-induced']"
-        else row["disease_world_prevalence"],
-        axis=1,
-    )
-
-    return disease_prevalence.drop(
-        columns=[
-            "primary_disease_world_prevalence_explanation",
-            "experimental",
-            "disease_world_prevalence",
-        ]
-    )
-
-
-@pa.check_input(
-    pa.DataFrameSchema(
-        parsers=pa.Parser(
-            lambda df: df[
-                [
                     "category_class",
                     "txgnn",
                 ]
@@ -714,8 +648,6 @@ def ingest_manual_disease_remapping(
             "anatomical_id": pa.Column(dtype=str, nullable=True),
             "anatomical_name": pa.Column(dtype=str, nullable=True),
             "unmet_medical_need": pa.Column(dtype=float, nullable=True),
-            "prevalence_experimental": pa.Column(nullable=True),
-            "prevalence_world": pa.Column(dtype=str, nullable=True),
             "strategically_viable": pa.Column(dtype=bool, nullable=True),
             "strategically_viable_assigned_by": pa.Column(dtype=str, nullable=False),
         },
@@ -726,7 +658,6 @@ def merge_disease_lists(
     disease_list: pd.DataFrame,
     disease_categories: pd.DataFrame,
     disease_umn: pd.DataFrame,
-    disease_prevalence: pd.DataFrame,
     disease_txgnn: pd.DataFrame,
     curated_disease_list: pd.DataFrame,
     strategic_disease_list: pd.DataFrame,
@@ -752,21 +683,6 @@ def merge_disease_lists(
     disease_list = pd.merge(
         disease_list,
         disease_umn,
-        on="id",
-        how="left",
-    )
-
-    _log_merge_statistics(
-        primary_df=disease_list,
-        secondary_df=disease_prevalence,
-        primary_name="disease list",
-        secondary_name="disease prevalence",
-        primary_only_action="will be kept with nulls",
-        secondary_only_action="will be dropped",
-    )
-    disease_list = pd.merge(
-        disease_list,
-        disease_prevalence,
         on="id",
         how="left",
     )
@@ -880,8 +796,6 @@ def apply_name_patch(disease_list: pd.DataFrame, disease_name_patch: pd.DataFram
             "anatomical_id": pa.Column(dtype=str, nullable=True),
             "anatomical_name": pa.Column(dtype=str, nullable=True),
             "unmet_medical_need": pa.Column(nullable=True),
-            "prevalence_experimental": pa.Column(nullable=True),
-            "prevalence_world": pa.Column(nullable=True),
             "is_psychiatric_disease": pa.Column(nullable=True),
             "is_malignant_cancer": pa.Column(nullable=True),
             "is_benign_tumour": pa.Column(nullable=True),
@@ -935,8 +849,6 @@ def format_disease_list(disease_list: pd.DataFrame, release_columns: list[str]) 
             "anatomical_id": pa.Column(nullable=True),
             "anatomical_name": pa.Column(nullable=True),
             "unmet_medical_need": pa.Column(nullable=True),
-            "prevalence_experimental": pa.Column(nullable=True),
-            "prevalence_world": pa.Column(nullable=True),
             "is_psychiatric_disease": pa.Column(nullable=True),
             "is_malignant_cancer": pa.Column(nullable=True),
             "is_benign_tumour": pa.Column(nullable=True),
