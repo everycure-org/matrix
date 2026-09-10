@@ -86,6 +86,7 @@ def get_boolean_column_schema(column_name: str):
                     "drug_function",
                     "drug_target",
                     "approved_usa",
+                    "gras_usa",
                     "is_antipsychotic",
                     "is_sedative",
                     "is_antimicrobial",
@@ -148,6 +149,15 @@ def get_boolean_column_schema(column_name: str):
                 checks=pa.Check(
                     lambda col: col.apply(lambda x: x in ["APPROVED", "NOT_APPROVED", "DISCONTINUED"]),
                     title="approved_usa must be APPROVED, NOT_APPROVED or DISCONTINUED",
+                ),
+            ),
+            "gras_usa": pa.Column(
+                nullable=False,
+                checks=pa.Check(
+                    lambda col: col.apply(
+                        lambda x: isinstance(x, bool) or (isinstance(x, str) and x in ["TRUE", "FALSE"])
+                    ),
+                    title="gras_usa must be a boolean or a string that can be converted to a boolean",
                 ),
             ),
             "is_antipsychotic": get_boolean_column_schema("is_antipsychotic"),
@@ -279,6 +289,7 @@ def get_boolean_column_schema(column_name: str):
                 ],
             ),
             "approved_usa": pa.Column(nullable=False),
+            "gras_usa": pa.Column(nullable=False),
             "is_antipsychotic": pa.Column(dtype=bool, nullable=False),
             "is_sedative": pa.Column(dtype=bool, nullable=False),
             "is_antimicrobial": pa.Column(dtype=bool, nullable=False),
@@ -906,8 +917,8 @@ def get_log_nan_check(column_name: str):
                         title="name must not be empty",
                     ),
                     pa.Check(
-                        lambda col: col.apply(lambda x: x[0].isupper()),
-                        title="name must start with a capital letter",
+                        lambda col: col.apply(lambda x: x[0].isupper() or x[0].isdigit()),
+                        title="name must start with a capital letter or a number",
                     ),
                     pa.Check(
                         lambda col: col.apply(lambda x: x == x.strip()),
@@ -988,6 +999,7 @@ def get_log_nan_check(column_name: str):
                 ],
             ),
             "approved_usa": pa.Column(nullable=False),
+            "gras_usa": pa.Column(nullable=False),
             "is_antipsychotic": pa.Column(dtype=bool, nullable=False),
             "is_sedative": pa.Column(dtype=bool, nullable=False),
             "is_antimicrobial": pa.Column(dtype=bool, nullable=False),
