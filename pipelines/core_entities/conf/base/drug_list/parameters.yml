@@ -34,6 +34,7 @@ drug_list:
     - drug_function
     - drug_target
     - approved_usa
+    - gras_usa
     - is_antipsychotic
     - is_sedative
     - is_antimicrobial
