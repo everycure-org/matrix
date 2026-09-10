@@ -154,7 +154,9 @@ def get_boolean_column_schema(column_name: str):
             "gras_usa": pa.Column(
                 nullable=False,
                 checks=pa.Check(
-                    lambda col: col.apply(lambda x: isinstance(x, bool) or (isinstance(x, str) and x in ["TRUE", "FALSE"])),
+                    lambda col: col.apply(
+                        lambda x: isinstance(x, bool) or (isinstance(x, str) and x in ["TRUE", "FALSE"])
+                    ),
                     title="gras_usa must be a boolean or a string that can be converted to a boolean",
                 ),
             ),
