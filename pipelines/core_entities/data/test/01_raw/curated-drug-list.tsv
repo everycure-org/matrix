@@ -1,21 +1,21 @@
-id	name	drug_class	synonyms	aggregated_with	approved_usa	is_antipsychotic	is_sedative	is_antimicrobial	is_glucose_regulator	is_chemotherapy	is_steroid	is_analgesic	is_cardiovascular	is_cell_therapy	deleted	deleted_reason	new_id	therapeutic_area	drug_function	drug_target	available_in_combo_with
-EC:00001	Abacavir	Antimuscarinic			APPROVED	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Infectious Disease	Antiviral	Reverse transcriptase	
-EC:00002	Abaloparatide	Beta-3 agonist			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Endocrinology	Bone formation agent	Parathyroid hormone receptor	
-EC:00003	Abatacept	Imidazole derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Rheumatology	Immunosuppressant	CTLA-4	
-EC:00004	Abemaciclib	5 Alpha-Reductase inhibitor			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Oncology	Antineoplastic	CDK4/6	
-EC:00005	Abiraterone	Androgen-anabolic steroid	Abiraterone acetate		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Oncology	Antineoplastic	CYP17A1	
-EC:00006	Abrocitinib	Quinoline derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Dermatology	Anti-inflammatory	JAK1	
-EC:00007	Acalabrutinib	Imidazole derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Oncology	Antineoplastic	BTK	
-EC:00008	Acamprosate	Antimuscarinic	Acamprosate calcium		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Psychiatry	Anti-addiction	NMDA receptor	
-EC:00009	Acarbose	DHEA analog			APPROVED	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Endocrinology	Antidiabetic	Alpha-glucosidase	
-EC:01516	Sotatercept	Topical cytotoxic			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE			Cardiology	Vasodilator	Activin receptor	
-EC:00011	Aceclofenac	Botox			NOT_APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE			Pain Management	Analgesic	COX-2	
-EC:00012	Acenocoumarol	5 Alpha-Reductase inhibitor			NOT_APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Hematology	Anticoagulant	Vitamin K epoxide reductase	
-EC:00013	Acetaminophen	Antimuscarinic	paracetamol		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE			Pain Management	Analgesic	COX	
-EC:00014	Acetazolamide	Imidazole derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Ophthalmology	Diuretic	Carbonic anhydrase	
-EC:00015	Acetylcysteine	Beta-3 agonist	N-acetylcysteine		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Respiratory	Mucolytic	Glutathione	
-EC:00020	Acoramidis	Quinoline derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE			Cardiology	Stabilizer	Transthyretin	
-EC:00017	Acitretin	Topical cytotoxic			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Dermatology	Antipsoriatic	Retinoic acid receptor	
-EC:00018	Aclidinium	Antimuscarinic	Aclidinium bromide		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Respiratory	Bronchodilator	Muscarinic receptor	
-EC:00019	Acoltremon	DHEA analog			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Endocrinology	Hormone replacement	DHEA receptor	
-EC:01466	Sebetralstat	Botox			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE			Immunology	Inhibitor	Plasma kallikrein	
+id	name	drug_class	synonyms	aggregated_with	approved_usa	is_antipsychotic	is_sedative	is_antimicrobial	is_glucose_regulator	is_chemotherapy	is_steroid	is_analgesic	is_cardiovascular	is_cell_therapy	deleted	deleted_reason	new_id	therapeutic_area	drug_function	drug_target	available_in_combo_with	gras_usa
+EC:00001	Abacavir	Antimuscarinic			APPROVED	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Infectious Disease	Antiviral	Reverse transcriptase		TRUE
+EC:00002	Abaloparatide	Beta-3 agonist			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Endocrinology	Bone formation agent	Parathyroid hormone receptor		TRUE
+EC:00003	Abatacept	Imidazole derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Rheumatology	Immunosuppressant	CTLA-4		TRUE
+EC:00004	Abemaciclib	5 Alpha-Reductase inhibitor			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Oncology	Antineoplastic	CDK4/6		TRUE
+EC:00005	Abiraterone	Androgen-anabolic steroid	Abiraterone acetate		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Oncology	Antineoplastic	CYP17A1		TRUE
+EC:00006	Abrocitinib	Quinoline derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Dermatology	Anti-inflammatory	JAK1		TRUE
+EC:00007	Acalabrutinib	Imidazole derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Oncology	Antineoplastic	BTK		TRUE
+EC:00008	Acamprosate	Antimuscarinic	Acamprosate calcium		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Psychiatry	Anti-addiction	NMDA receptor		TRUE
+EC:00009	Acarbose	DHEA analog			APPROVED	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Endocrinology	Antidiabetic	Alpha-glucosidase		TRUE
+EC:01516	Sotatercept	Topical cytotoxic			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE			Cardiology	Vasodilator	Activin receptor		TRUE
+EC:00011	Aceclofenac	Botox			NOT_APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE			Pain Management	Analgesic	COX-2		FALSE
+EC:00012	Acenocoumarol	5 Alpha-Reductase inhibitor			NOT_APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Hematology	Anticoagulant	Vitamin K epoxide reductase		FALSE
+EC:00013	Acetaminophen	Antimuscarinic	paracetamol		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE	FALSE			Pain Management	Analgesic	COX		TRUE
+EC:00014	Acetazolamide	Imidazole derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Ophthalmology	Diuretic	Carbonic anhydrase		TRUE
+EC:00015	Acetylcysteine	Beta-3 agonist	N-acetylcysteine		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Respiratory	Mucolytic	Glutathione		TRUE
+EC:00020	Acoramidis	Quinoline derivative			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE			Cardiology	Stabilizer	Transthyretin		TRUE
+EC:00017	Acitretin	Topical cytotoxic			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Dermatology	Antipsoriatic	Retinoic acid receptor		TRUE
+EC:00018	Aclidinium	Antimuscarinic	Aclidinium bromide		APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Respiratory	Bronchodilator	Muscarinic receptor		TRUE
+EC:00019	Acoltremon	DHEA analog			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE			Endocrinology	Hormone replacement	DHEA receptor		TRUE
+EC:01466	Sebetralstat	Botox			APPROVED	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	FALSE	TRUE	FALSE	FALSE			Immunology	Inhibitor	Plasma kallikrein		TRUE
