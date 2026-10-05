@@ -11,7 +11,7 @@ on:
       - ready_for_review
     paths: 
       - pipelines/core_entities/**
-      - .github/workflows/core_entities_ci.yml
+      - .github/workflows/core_entities_ci.yaml
 
 jobs:
   integration-test:
