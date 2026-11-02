@@ -1082,7 +1082,7 @@ def test_neo4j_template_environment_setup() -> None:
 
 
 def test_neo4j_sidecar_configuration() -> None:
-    """Test that the neo4j sidecar is properly configured with environment variables and volumes."""
+    """Test that the neo4j sidecar is properly configured with environment variables."""
     argo_default_resources = ArgoResourceConfig(
         num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
         cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
@@ -1110,7 +1110,6 @@ def test_neo4j_sidecar_configuration() -> None:
 
     expected_env_vars = [
         "NEO4J_AUTH",
-        "NEO4J_gds_enterprise_license__file",
         "NEO4J_apoc_export_file_enabled",
         "NEO4J_apoc_import_file_enabled",
         "NEO4J_apoc_import_file_use__neo4j__config",
@@ -1127,10 +1126,9 @@ def test_neo4j_sidecar_configuration() -> None:
     for expected_env in expected_env_vars:
         assert expected_env in env_names
 
-    # Verify volume mounts
-    volume_mounts = neo4j_sidecar["volumeMounts"]
-    mount_paths = [vm["mountPath"] for vm in volume_mounts]
-    assert "/licences" in mount_paths
+    # GDS refuses to run with an expired license file, so we run it unlicensed
+    assert "NEO4J_gds_enterprise_license__file" not in env_names
+    assert "volumeMounts" not in neo4j_sidecar
 
 
 def test_neo4j_template_args_with_directory_setup() -> None:
