@@ -743,6 +743,32 @@ def test_pipeline_task_arguments_include_ephemeral_storage_parameters() -> None:
         assert parameters["ephemeral_storage_limit"] == argo_default_resources.ephemeral_storage_limit
 
 
+def test_neo4j_template_fits_pinned_machine() -> None:
+    """Ensure the topological embeddings pod fits the machine type the neo4j template is pinned to."""
+    from matrix.pipelines.embeddings.pipeline import create_pipeline as create_embeddings_pipeline
+
+    argo_default_resources = ArgoResourceConfig(
+        num_gpus=KUBERNETES_DEFAULT_NUM_GPUS,
+        cpu_request=KUBERNETES_DEFAULT_REQUEST_CPU,
+        cpu_limit=KUBERNETES_DEFAULT_LIMIT_CPU,
+        memory_request=KUBERNETES_DEFAULT_REQUEST_RAM,
+        memory_limit=KUBERNETES_DEFAULT_LIMIT_RAM,
+    )
+    argo_config, _ = get_argo_config(argo_default_resources)
+    neo4j_template = next(t for t in argo_config["spec"]["templates"] if t["name"] == "neo4j")
+    assert neo4j_template["nodeSelector"] == {"node.kubernetes.io/instance-type": "n2d-highmem-16"}
+
+    # Allocatable resources of an n2d-highmem-16 node, minus headroom for system pods
+    allocatable_memory_gi, allocatable_cpu = 116 - 2, 15.89 - 1
+    main_memory_gi = 32
+    assert f"memory: {main_memory_gi}Gi" in neo4j_template["podSpecPatch"]
+
+    group = next(f for f in fuse(create_embeddings_pipeline()) if f.fuse_group == "topological_embeddings")
+    assert group.argo_config is not None
+    assert group.argo_config.memory_request + main_memory_gi <= allocatable_memory_gi
+    assert group.argo_config.cpu_request <= allocatable_cpu
+
+
 def test_neo4j_template_ephemeral_storage_configuration() -> None:
     """Ensure the neo4j template includes ephemeral storage configuration."""
     argo_default_resources = ArgoResourceConfig(

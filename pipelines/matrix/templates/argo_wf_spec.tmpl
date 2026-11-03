@@ -286,6 +286,10 @@ spec:
 
   - <<: *_kedro_template
     name: neo4j
+    # Pin to the smallest machine fitting the pod (8 CPU / 112Gi). Otherwise it can land on a
+    # larger node that is up for other steps, and then keeps it for the hours Node2Vec runs.
+    nodeSelector:
+      node.kubernetes.io/instance-type: n2d-highmem-16
     tolerations:
     - key: "workload"
       operator: "Equal"
