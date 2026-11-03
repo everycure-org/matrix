@@ -66,12 +66,14 @@ def create_pipeline(**kwargs) -> Pipeline:
                     "argowf.fuse-group.topological_embeddings",
                     "argowf.template-neo4j",
                 ],
-                # FUTURE: Ensure we define "packages / tshirt size standard configurations" for resources
+                # Sizes the Neo4j sidecar of the whole fused group. Unlicensed GDS runs Node2Vec on
+                # 4 threads, and GDS estimates it needs 47GiB heap for the full KG. Together with the
+                # main container this fits an n2d-highmem-16 node.
                 argo_config=ArgoResourceConfig(
-                    cpu_request=48,
-                    cpu_limit=48,
-                    memory_limit=350,
-                    memory_request=350,
+                    cpu_request=8,
+                    cpu_limit=8,
+                    memory_limit=80,
+                    memory_request=80,
                     ephemeral_storage_request=256,
                     ephemeral_storage_limit=256,
                 ),

@@ -1062,7 +1062,9 @@ def test_neo4j_template_environment_setup() -> None:
     assert "SPARK_LOCAL_DIRS" in pod_spec_patch
     assert "value: /data/spark-temp" in pod_spec_patch
     assert "SPARK_DRIVER_MEMORY" in pod_spec_patch
-    assert 'value: "60"' in pod_spec_patch
+    assert 'value: "24"' in pod_spec_patch
+    # Main container is kept small so the pod fits an n2d-highmem-16 node
+    assert "memory: 32Gi" in pod_spec_patch
 
     # Check for Neo4j host override
     assert "NEO4J_HOST" in pod_spec_patch

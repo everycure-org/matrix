@@ -330,17 +330,18 @@ spec:
           {% endraw %}
           template: "neo4j"
       containers:
+        # Kept small so that the pod, together with the Neo4j sidecar, fits an n2d-highmem-16 node
         - name: main
           resources:
             requests:
-              memory: 100Gi
+              memory: 32Gi
             limits:
-              memory: 100Gi
+              memory: 32Gi
           env:
             - name: SPARK_LOCAL_DIRS
               value: /data/spark-temp
             - name: SPARK_DRIVER_MEMORY
-              value: "60"
+              value: "24"
             # NOTE: We're passing in a regular bolt connection as ephemeral Neo4J has no SSL
             - name: NEO4J_HOST
               value: "bolt://127.0.0.1:7687"

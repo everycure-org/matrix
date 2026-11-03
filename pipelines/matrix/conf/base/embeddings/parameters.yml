@@ -50,6 +50,7 @@ embeddings.topological:
 # uncomment for node2vec
 embeddings.topological_estimator:
   _object: matrix.pipelines.embeddings.graph_algorithms.GDSNode2Vec 
+  # GDS runs unlicensed, which rejects a concurrency above 4
   concurrency: 4
   embedding_dim: 512
   random_seed: 42
