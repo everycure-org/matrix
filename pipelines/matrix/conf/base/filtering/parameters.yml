@@ -53,6 +53,7 @@ filtering:
         - rtxkg2
         - ec_medical
         - robokop
+        - arpa_proteomics
 
     filter_biolink_edges:
       _object: matrix.pipelines.filtering.filters.BiolinkDeduplicateEdges
