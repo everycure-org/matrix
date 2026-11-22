@@ -93,7 +93,7 @@ The node `write_rtx_kg2_nodes` reads the raw `ingestion.raw.rtx_kg2.nodes` datas
 - **Read**: `gs://data.dev.everycure.org/data/01_RAW/KGs/rtx_kg2/v2.7.3/nodes_c.tsv`
 - **Write**: `gs://mtrx-us-central1-hub-dev-storage/runs/run-sept-first-node2vec-e5962a18/02_intermediate/rtx_kg2/nodes/nodes_c.tsv`
 
-Importantly, the **version** is defined statically in the `.yml` file. On the other hand, `RUN_NAME` is pulled from enviornment variables via `run_name: ${oc.env:RUN_NAME}`. 
+Importantly, the **version** is defined statically in the `.yml` file. On the other hand, `RUN_NAME` is pulled from environment variables via `run_name: ${oc.env:RUN_NAME}`. 
 
 These environment variables are defined within `.env` file for local runs.
 
