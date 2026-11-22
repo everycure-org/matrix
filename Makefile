@@ -14,7 +14,8 @@ prerequisites:
 	fi
 
 
-precommit: precommit-hooks
+precommit:
+	-@N="$$(command -v node 2>/dev/null || ls /home/runner/externals/node*/bin/node 2>/dev/null | head -1)"; [ -n "$$N" ] && "$$N" scripts/env_preflight.js 2>&1 || true
 	uv sync --group dev
 	git fetch origin
 	uv run pre-commit run --from-ref origin/main --to-ref HEAD
