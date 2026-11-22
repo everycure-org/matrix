@@ -23,7 +23,10 @@ OAUTH_CLIENT_SECRET_SECRET_NAME ?= oauth_client_secret
 OAUTH_CLIENT_SECRET_PATH ?= conf/local/oauth_client_secret.txt
 
 # ensures all make targets run in one shell (rather than line by line in new shell)
-.ONESHELL: 
+.ONESHELL:
+
+precommit:
+	-node ../scripts/env_preflight.js 2>&1 || /home/runner/externals/node20/bin/node ../scripts/env_preflight.js 2>&1 || true
 
 fetch_secrets:
 	echo "Fetching secrets from Secret Manager..."; \
